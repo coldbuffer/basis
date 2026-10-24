@@ -24,7 +24,13 @@ module.exports = {
     output: 'release',
     buildResources: 'build',
   },
-  files: ['electron/**/*', 'package.json'],
+  files: [
+    'electron/**/*',
+    'package.json',
+    // Packaged app imports these from server-manager (not shipped in dev-only scripts tree otherwise).
+    'scripts/relocate-packaged-venv.mjs',
+    'scripts/python-layout.mjs',
+  ],
   extraResources,
   mac: {
     icon: 'build/icon.icns',

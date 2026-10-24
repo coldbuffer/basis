@@ -78,6 +78,19 @@ git push origin desktop-v0.1.0
 
 桌面壳启动后会查 GitHub `desktop-v*` Release；若有新版本，顶栏下出现提示条，点击在浏览器打开对应 Release 页（非自动下载安装）。
 
-**macOS 从浏览器安装：** 若提示 *damaged*，执行 `xattr -dr com.apple.quarantine "/Applications/Basis.app"` 或右键 **打开**。
+**macOS 从浏览器安装（未签名）：**
+
+1. 先把 `.dmg` 拖进 **应用程序**，不要长期从磁盘映像里直接双击 `.app`。
+2. 若提示 *damaged* / 无法打开，在终端执行（路径按你的下载位置改）：
+
+```bash
+xattr -dr com.apple.quarantine ~/Downloads/Basis-*-darwin-arm64.dmg
+# 已装进应用程序后：
+xattr -cr "/Applications/Basis.app"
+codesign --force --deep --sign - "/Applications/Basis.app"
+open -a "/Applications/Basis.app"
+```
+
+也可 **右键 Basis.app → 打开** 第一次绕过 Gatekeeper。
 
 **`spawn …/sidecar/venv/bin/basis ENOENT`：** 旧 CI 包内嵌了 python.org 的 Python（指向 `/Library/Frameworks/...`），换机器后无法启动。请安装 **修复打包后的** 新 `desktop-v*` Release（sidecar 使用 uv managed Python + afterPack relocate）。
