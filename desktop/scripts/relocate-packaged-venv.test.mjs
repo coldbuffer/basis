@@ -63,7 +63,7 @@ describe('relocatePackagedVenv', () => {
     fs.chmodSync(basis, 0o755);
     relocatePackagedVenv(venv);
     const first = fs.readFileSync(basis, 'utf8').split('\n')[0];
-    assert.ok(first.startsWith(`#!${py}`));
+    assert.equal(first, '#!./python3.12');
     fs.rmSync(root, { recursive: true, force: true });
   });
 });

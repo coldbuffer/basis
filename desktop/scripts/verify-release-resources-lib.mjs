@@ -35,8 +35,20 @@ export function collectReleaseResourceErrors({ webDistDir, profilesDir, apiStage
 
   if (manifest.kind === 'bundled-venv') {
     const sidecarRoot = path.join(apiStageDir, 'sidecar');
-    missing('bundled basis CLI', venvBasisBin(path.join(sidecarRoot, 'venv')));
+    const venvDir = path.join(sidecarRoot, 'venv');
+    missing('bundled basis CLI', venvBasisBin(venvDir));
     missing('bundled CPython runtime', bundledRuntimeMarker(sidecarRoot));
+    const site = path.join(venvDir, 'lib', 'python3.12', 'site-packages');
+    if (fs.existsSync(site)) {
+      for (const name of fs.readdirSync(site)) {
+        if (name.startsWith('__editable__.basis') || name.startsWith('__editable___basis')) {
+          errors.push(
+            `bundled venv must use uv sync --no-editable (found ${name} in site-packages)`,
+          );
+          break;
+        }
+      }
+    }
   } else if (manifest.kind === 'uv-monorepo') {
     missing('monorepo-root.json', path.join(apiStageDir, 'monorepo-root.json'));
   } else {

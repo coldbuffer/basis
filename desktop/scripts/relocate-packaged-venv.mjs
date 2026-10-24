@@ -236,7 +236,10 @@ export function relocatePackagedVenv(venvDir) {
     const first = buf.slice(0, nl);
     if (!first.includes('python')) continue;
     const rest = buf.slice(nl + 1);
-    fs.writeFileSync(file, `#!${venvPython}\n${rest}`, 'utf8');
+    const shebangPython = path.dirname(file) === path.dirname(venvPython)
+      ? `./${path.basename(venvPython)}`
+      : venvPython;
+    fs.writeFileSync(file, `#!${shebangPython}\n${rest}`, 'utf8');
     try {
       fs.chmodSync(file, 0o755);
     } catch {

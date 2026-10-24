@@ -4,8 +4,12 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { bundledBasisExecutable, loadPackagedApiManifest } from './api-manifest.mjs';
+import { loadPackagedApiManifest } from './api-manifest.mjs';
 import { isPackagedApp } from './paths.mjs';
+import {
+  relocatePackagedVenv,
+  resolvePackagedVenvPython,
+} from '../scripts/relocate-packaged-venv.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const REPO_ROOT = path.resolve(__dirname, '../..');
@@ -15,13 +19,16 @@ const READY_EVENTS = new Set(['basis.ready', 'gateway.ready']);
 function resolveLaunch(opts) {
   const manifest = opts.apiManifest ?? loadPackagedApiManifest(opts.resourcesPath);
   if (manifest?.kind === 'bundled-venv' && opts.resourcesPath) {
-    const basisBin = bundledBasisExecutable(opts.resourcesPath, manifest);
-    if (!fs.existsSync(basisBin)) {
-      throw new Error(`Bundled Basis API missing: ${basisBin}. Rebuild with npm run dist:mac:unsigned.`);
+    const venvRelative = manifest.venvRelative ?? 'sidecar/venv';
+    const venvDir = path.join(opts.resourcesPath, venvRelative);
+    if (!fs.existsSync(venvDir)) {
+      throw new Error(`Bundled venv missing: ${venvDir}. Rebuild with npm run dist:mac:unsigned.`);
     }
+    relocatePackagedVenv(venvDir);
+    const python = resolvePackagedVenvPython(venvDir);
     return {
-      cmd: basisBin,
-      args: ['serve', '--profile', 'desktop'],
+      cmd: python,
+      args: ['-m', 'basis.cli', 'serve', '--profile', 'desktop'],
       cwd: opts.resourcesPath,
       bundled: true,
     };

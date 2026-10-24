@@ -44,11 +44,15 @@ export function bundleSidecarVenv({ repoRoot: root, packDir }) {
     UV_PROJECT_ENVIRONMENT: venvDir,
   };
   execFileSync('uv', ['venv', venvDir, '--python', '3.12'], { cwd: root, env: uvEnv, stdio: 'inherit' });
-  execFileSync('uv', ['sync', '--extra', 'dev', '--extra', 'explorer', '--directory', root], {
-    cwd: root,
-    env: uvEnv,
-    stdio: 'inherit',
-  });
+  execFileSync(
+    'uv',
+    ['sync', '--no-editable', '--extra', 'dev', '--extra', 'explorer', '--directory', root],
+    {
+      cwd: root,
+      env: uvEnv,
+      stdio: 'inherit',
+    },
+  );
   const basisBin = venvBasisBin(venvDir);
   if (!fs.existsSync(basisBin)) {
     throw new Error(`[stage-api] Missing ${basisBin} after uv sync`);
