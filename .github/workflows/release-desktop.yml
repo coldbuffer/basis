@@ -125,8 +125,3 @@ jobs:
             Installers are not code-signed; macOS may require Gatekeeper override, Windows SmartScreen may warn.
 
             Tag format: `desktop-v*` (separate from container releases `v*`).
-
-      - name: Keep release as draft
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh release edit "${{ github.ref_name }}" --draft

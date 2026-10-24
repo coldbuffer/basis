@@ -65,9 +65,3 @@ jobs:
             Container image: `ghcr.io/${{ github.repository }}:${{ github.ref_name }}`
 
             See [docker/production/README.md](https://github.com/${{ github.repository }}/blob/main/docker/production/README.md) for compose deployment.
-
-      # Updating an already-published release ignores draft: true; force draft until you Publish.
-      - name: Keep release as draft
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh release edit "${{ github.ref_name }}" --draft
