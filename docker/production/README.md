@@ -39,7 +39,7 @@ docker build -f docker/production/Dockerfile -t basis:local .
 4. 满意后在 GitHub **Releases** 对该草稿点 **Publish release**（由你决定何时对外公布）
 5. **Publish** 后会触发 [`.github/workflows/release-docker-promote-latest.yml`](../../.github/workflows/release-docker-promote-latest.yml)，把 GHCR **`latest`** 指到该版本 tag（仅容器 `v*`，与 `desktop-v*` 无关）
 
-重打同一 tag 时 workflow 会用 `gh release edit --draft` 把已发布的 Release 改回草稿。
+重打 tag 会更新同一条 Draft Release（`draft: true`）；若曾误点 Publish，可手动 `gh release edit v0.1.0 --draft`。
 
 ```bash
 git tag v0.1.0
