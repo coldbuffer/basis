@@ -64,10 +64,17 @@ export function bundleSidecarVenv({ repoRoot: root, packDir }) {
   finalizePackagedSidecar(venvDir);
 
   const python = findPackagedVenvPython(packDir);
-  const smoke = spawnSync(python, ['-m', 'basis.cli', '--help'], {
+  const profilePath = path.join(packDir, 'profiles', 'profile.desktop.yaml');
+  const smoke = spawnSync(python, ['-m', 'basis.cli', 'serve', '--help'], {
     encoding: 'utf8',
     cwd: packDir,
-    env: { ...process.env, ...bundledSidecarChildEnv(packDir) },
+    env: {
+      ...process.env,
+      ...bundledSidecarChildEnv(packDir),
+      BASIS_PROFILE_PATH: profilePath,
+      BASIS_DEPLOYMENT_PROFILE: 'desktop',
+      BASIS_PROFILE: '',
+    },
   });
   if (smoke.status !== 0) {
     throw new Error('[stage-api] bundled `basis --help` failed');

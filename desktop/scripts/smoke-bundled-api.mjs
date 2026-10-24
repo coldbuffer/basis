@@ -55,7 +55,6 @@ async function main() {
     ...process.env,
     ...bundledSidecarChildEnv(res),
     BASIS_PROFILE_PATH: profilePath,
-    BASIS_PROFILE: 'desktop',
     BASIS_DEPLOYMENT_PROFILE: 'desktop',
     BASIS_HOST: '127.0.0.1',
     BASIS_PORT: '0',
@@ -67,7 +66,7 @@ async function main() {
   delete env.BASIS_LISTEN_PORT_RESOLVED;
 
   const stderrChunks = [];
-  const child = spawn(python, ['-m', 'basis.cli', 'serve', '--profile', 'desktop'], {
+  const child = spawn(python, ['-m', 'basis.cli', 'serve'], {
     cwd: res,
     env,
     stdio: ['ignore', 'ignore', 'pipe'],

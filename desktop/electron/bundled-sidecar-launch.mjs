@@ -33,7 +33,7 @@ export function bundledSidecarChildEnv(resourcesPath) {
 export function resolveBundledSidecarLaunch(resourcesPath) {
   return {
     cmd: findPackagedVenvPython(resourcesPath),
-    args: ['-m', 'basis.cli', 'serve', '--profile', 'desktop'],
+    args: ['-m', 'basis.cli', 'serve'],
     cwd: resourcesPath,
     env: bundledSidecarChildEnv(resourcesPath),
   };

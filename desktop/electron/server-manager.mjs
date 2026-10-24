@@ -64,7 +64,6 @@ export async function spawnBasisApi(opts = {}) {
   delete env.BASIS_PORT;
   Object.assign(env, {
     BASIS_PROFILE_PATH: profilePath,
-    BASIS_PROFILE: 'desktop',
     BASIS_HOME: home,
     BASIS_DATA_DIR: dataDir,
     BASIS_SQLITE_PATH: path.join(dataDir, 'basis.db'),
@@ -75,6 +74,7 @@ export async function spawnBasisApi(opts = {}) {
   });
   if (launch.sidecarEnv) {
     Object.assign(env, launch.sidecarEnv);
+    delete env.BASIS_PROFILE;
   }
 
   const child = spawn(launch.cmd, launch.args, {
