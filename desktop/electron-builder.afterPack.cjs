@@ -20,7 +20,7 @@ module.exports = async function afterPack(context) {
   const relocateUrl = pathToFileURL(
     path.join(__dirname, 'scripts', 'relocate-packaged-venv.mjs'),
   ).href;
-  const { relocatePackagedVenv } = await import(relocateUrl);
-  relocatePackagedVenv(venvDir);
-  console.log('[afterPack] Relocated bundled Python sidecar:', venvDir);
+  const { finalizePackagedSidecar } = await import(relocateUrl);
+  finalizePackagedSidecar(venvDir);
+  console.log('[afterPack] Finalized bundled Python sidecar:', venvDir);
 };

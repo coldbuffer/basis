@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Headless smoke: run bundled `basis serve` from a built .app and hit /api/v1/health.
+ * Headless smoke: run bundled API from a built .app and hit /api/v1/health.
  * Usage: node scripts/smoke-bundled-api.mjs [path/to/Basis.app]
  */
 import { spawn } from 'node:child_process';
@@ -8,6 +8,11 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+import {
+  bundledSidecarChildEnv,
+  findPackagedVenvPython,
+} from '../electron/bundled-sidecar-launch.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const desktopRoot = path.resolve(__dirname, '..');
@@ -39,15 +44,16 @@ async function waitForReady(stderrChunks, timeoutMs) {
 async function main() {
   const appPath = path.resolve(process.argv[2] ?? defaultAppPath());
   const res = resourcesDir(appPath);
-  const basisBin = path.join(res, 'sidecar', 'venv', 'bin', 'basis');
+  const python = findPackagedVenvPython(res);
   const profilePath = path.join(res, 'profiles', 'profile.desktop.yaml');
-  if (!fs.existsSync(basisBin)) {
-    throw new Error(`Missing bundled API (build with dist:mac:unsigned): ${basisBin}`);
+  if (!fs.existsSync(profilePath)) {
+    throw new Error(`Missing desktop profile: ${profilePath}`);
   }
 
   const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'basis-smoke-'));
   const env = {
     ...process.env,
+    ...bundledSidecarChildEnv(res),
     BASIS_PROFILE_PATH: profilePath,
     BASIS_PROFILE: 'desktop',
     BASIS_DEPLOYMENT_PROFILE: 'desktop',
@@ -61,7 +67,7 @@ async function main() {
   delete env.BASIS_LISTEN_PORT_RESOLVED;
 
   const stderrChunks = [];
-  const child = spawn(basisBin, ['serve', '--profile', 'desktop'], {
+  const child = spawn(python, ['-m', 'basis.cli', 'serve', '--profile', 'desktop'], {
     cwd: res,
     env,
     stdio: ['ignore', 'ignore', 'pipe'],

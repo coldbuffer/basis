@@ -4,12 +4,9 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { resolveBundledSidecarLaunch } from './bundled-sidecar-launch.mjs';
 import { loadPackagedApiManifest } from './api-manifest.mjs';
 import { isPackagedApp } from './paths.mjs';
-import {
-  relocatePackagedVenv,
-  resolvePackagedVenvPython,
-} from '../scripts/relocate-packaged-venv.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const REPO_ROOT = path.resolve(__dirname, '../..');
@@ -19,19 +16,8 @@ const READY_EVENTS = new Set(['basis.ready', 'gateway.ready']);
 function resolveLaunch(opts) {
   const manifest = opts.apiManifest ?? loadPackagedApiManifest(opts.resourcesPath);
   if (manifest?.kind === 'bundled-venv' && opts.resourcesPath) {
-    const venvRelative = manifest.venvRelative ?? 'sidecar/venv';
-    const venvDir = path.join(opts.resourcesPath, venvRelative);
-    if (!fs.existsSync(venvDir)) {
-      throw new Error(`Bundled venv missing: ${venvDir}. Rebuild with npm run dist:mac:unsigned.`);
-    }
-    relocatePackagedVenv(venvDir);
-    const python = resolvePackagedVenvPython(venvDir);
-    return {
-      cmd: python,
-      args: ['-m', 'basis.cli', 'serve', '--profile', 'desktop'],
-      cwd: opts.resourcesPath,
-      bundled: true,
-    };
+    const launch = resolveBundledSidecarLaunch(opts.resourcesPath);
+    return { ...launch, bundled: true, sidecarEnv: launch.env };
   }
 
   const repoRoot = opts.repoRoot ?? REPO_ROOT;
@@ -87,6 +73,9 @@ export async function spawnBasisApi(opts = {}) {
     BASIS_PORT: opts.port !== undefined ? String(opts.port) : '0',
     PYTHONUNBUFFERED: '1',
   });
+  if (launch.sidecarEnv) {
+    Object.assign(env, launch.sidecarEnv);
+  }
 
   const child = spawn(launch.cmd, launch.args, {
     cwd: launch.cwd,

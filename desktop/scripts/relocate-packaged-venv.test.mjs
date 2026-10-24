@@ -64,6 +64,8 @@ describe('relocatePackagedVenv', () => {
     relocatePackagedVenv(venv);
     const first = fs.readFileSync(basis, 'utf8').split('\n')[0];
     assert.equal(first, '#!./python3.12');
+    const cfg = fs.readFileSync(path.join(venv, 'pyvenv.cfg'), 'utf8');
+    assert.match(cfg, /^home = \.\.\/runtime\/cpython\/bin/m);
     fs.rmSync(root, { recursive: true, force: true });
   });
 });

@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+import { assertPackagedSidecarPortable } from './relocate-packaged-venv.mjs';
 import { bundledRuntimeMarker, venvBasisBin } from './python-layout.mjs';
 
 /**
@@ -38,15 +39,11 @@ export function collectReleaseResourceErrors({ webDistDir, profilesDir, apiStage
     const venvDir = path.join(sidecarRoot, 'venv');
     missing('bundled basis CLI', venvBasisBin(venvDir));
     missing('bundled CPython runtime', bundledRuntimeMarker(sidecarRoot));
-    const site = path.join(venvDir, 'lib', 'python3.12', 'site-packages');
-    if (fs.existsSync(site)) {
-      for (const name of fs.readdirSync(site)) {
-        if (name.startsWith('__editable__.basis') || name.startsWith('__editable___basis')) {
-          errors.push(
-            `bundled venv must use uv sync --no-editable (found ${name} in site-packages)`,
-          );
-          break;
-        }
+    if (errors.length === 0) {
+      try {
+        assertPackagedSidecarPortable(sidecarRoot);
+      } catch (err) {
+        errors.push(err instanceof Error ? err.message : String(err));
       }
     }
   } else if (manifest.kind === 'uv-monorepo') {

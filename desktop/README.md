@@ -93,4 +93,4 @@ open -a "/Applications/Basis.app"
 
 也可 **右键 Basis.app → 打开** 第一次绕过 Gatekeeper。
 
-**`spawn …/sidecar/venv/bin/basis ENOENT`：** 旧 CI 包内嵌了 python.org 的 Python（指向 `/Library/Frameworks/...`），换机器后无法启动。请安装 **修复打包后的** 新 `desktop-v*` Release（sidecar 使用 uv managed Python + afterPack relocate）。
+**Sidecar 打包：** `stage-api` + `afterPack` 会 `finalizePackagedSidecar`（实体化 venv、相对路径 `pyvenv.cfg`、可移植校验）。启动时 **不再改** sidecar 文件，只设 `PYTHONHOME` 并 `python -m basis.cli serve`（见 `electron/bundled-sidecar-launch.mjs`）。

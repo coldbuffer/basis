@@ -11,8 +11,10 @@ import { fileURLToPath } from 'node:url';
 
 import {
   assertBundledPythonIsPortable,
+  finalizePackagedSidecar,
   stageSidecarPythonRuntime,
 } from './relocate-packaged-venv.mjs';
+import { bundledSidecarChildEnv, findPackagedVenvPython } from '../electron/bundled-sidecar-launch.mjs';
 import { venvBasisBin } from './python-layout.mjs';
 import { apiStageDir, desktopRoot, repoRoot } from './paths.mjs';
 
@@ -59,8 +61,14 @@ export function bundleSidecarVenv({ repoRoot: root, packDir }) {
   }
   stageSidecarPythonRuntime(venvDir, sidecarRoot);
   assertBundledPythonIsPortable(sidecarRoot);
+  finalizePackagedSidecar(venvDir);
 
-  const smoke = spawnSync(basisBin, ['--help'], { encoding: 'utf8' });
+  const python = findPackagedVenvPython(packDir);
+  const smoke = spawnSync(python, ['-m', 'basis.cli', '--help'], {
+    encoding: 'utf8',
+    cwd: packDir,
+    env: { ...process.env, ...bundledSidecarChildEnv(packDir) },
+  });
   if (smoke.status !== 0) {
     throw new Error('[stage-api] bundled `basis --help` failed');
   }

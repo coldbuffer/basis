@@ -200,10 +200,48 @@ export function stageSidecarPythonRuntime(venvDir, sidecarRoot) {
   return destRoot;
 }
 
+const PACKAGED_PATH_MARKERS = ['/runner/work/', '/Users/runner/'];
+
 /**
- * Fix pyvenv.cfg + console script shebangs for the final on-disk layout (.app Resources).
+ * Fail if the sidecar still references CI monorepo paths (must be finalized at pack time).
+ * @param {string} sidecarRoot
  */
-export function relocatePackagedVenv(venvDir) {
+export function assertPackagedSidecarPortable(sidecarRoot) {
+  const errors = [];
+  const pyvenv = path.join(sidecarRoot, 'venv', 'pyvenv.cfg');
+  if (fs.existsSync(pyvenv)) {
+    const text = fs.readFileSync(pyvenv, 'utf8');
+    for (const marker of PACKAGED_PATH_MARKERS) {
+      if (text.includes(marker)) {
+        errors.push(`pyvenv.cfg references CI path (${marker})`);
+        break;
+      }
+    }
+  }
+  const venvLib = path.join(sidecarRoot, 'venv', 'lib');
+  if (fs.existsSync(venvLib)) {
+    for (const pyDir of fs.readdirSync(venvLib)) {
+      if (!pyDir.startsWith('python')) continue;
+      const site = path.join(venvLib, pyDir, 'site-packages');
+      if (!fs.existsSync(site)) continue;
+      for (const name of fs.readdirSync(site)) {
+        if (name.startsWith('__editable__')) {
+          errors.push(`site-packages contains ${name} (use uv sync --no-editable)`);
+          break;
+        }
+      }
+    }
+  }
+  if (errors.length > 0) {
+    throw new Error(`[relocate-venv] sidecar not portable:\n${errors.join('\n')}`);
+  }
+}
+
+/**
+ * Finalize bundled sidecar at pack time (stage afterPack). Uses paths relative to the venv
+ * so the tree is install-location agnostic; Electron sets PYTHONHOME at launch.
+ */
+export function finalizePackagedSidecar(venvDir) {
   const sidecarRoot = path.dirname(venvDir);
   finalizeBundledSidecar(sidecarRoot);
 
@@ -214,7 +252,8 @@ export function relocatePackagedVenv(venvDir) {
   }
   const venvPython = resolvePackagedVenvPython(venvDir);
 
-  writePyvenvHome(venvDir, runtimeHome);
+  const portableHome = path.relative(venvDir, runtimeHome);
+  writePyvenvHome(venvDir, portableHome.split(path.sep).join('/'));
 
   if (process.platform === 'win32') {
     return;
@@ -246,4 +285,9 @@ export function relocatePackagedVenv(venvDir) {
       // ignore
     }
   }
+
+  assertPackagedSidecarPortable(sidecarRoot);
 }
+
+/** @deprecated Use finalizePackagedSidecar */
+export const relocatePackagedVenv = finalizePackagedSidecar;
