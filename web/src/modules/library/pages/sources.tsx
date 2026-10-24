@@ -82,6 +82,7 @@ import { DocumentTimelinePanel } from '../components/document-timeline-panel.js'
 import { uploadExceedsMaxBytes } from '@/modules/library/lib/ingest-upload-limit.js';
 import { formatUserFacingApiError } from '@/lib/errors/api-error-message.js';
 import { processingStartIdempotencyKey } from '@/modules/processing/lib/processing-idempotency.js';
+import { ExtractLlmModelSelect } from '@/modules/library/components/extract-llm-model-select.js';
 
 const PAGE_SIZE = 10;
 
@@ -164,13 +165,7 @@ function chunkOptionsValid(
   );
 }
 
-function methodChoices(copy: LocaleMessages['library']['sources']): { value: string; label: string }[] {
-  return [
-    { value: 'pattern', label: copy.method_pattern },
-    { value: 'ml', label: copy.method_ml },
-    { value: 'llm', label: copy.method_llm },
-  ];
-}
+const EXTRACT_LLM_METHOD = 'llm';
 
 function chunkMethodChoices(
   copy: LocaleMessages['library']['sources'],
@@ -269,10 +264,8 @@ export function SourcesPage() {
   const [chunkSize, setChunkSize] = useState(1800);
   const [chunkOverlap, setChunkOverlap] = useState(250);
   const [extract, setExtract] = useState(true);
-  const [nerMethod, setNerMethod] = useState('pattern');
-  const [nerModel, setNerModel] = useState('');
-  const [relationMethod, setRelationMethod] = useState('pattern');
-
+  const [extractLlmEndpointId, setExtractLlmEndpointId] = useState('');
+  const [extractLlmModel, setExtractLlmModel] = useState('');
   const processDialogOptions = useMemo(
     () => ({
       chunk,
@@ -280,21 +273,15 @@ export function SourcesPage() {
       chunk_size: chunkSize,
       chunk_overlap: chunkOverlap,
       extract,
-      ner_method: nerMethod,
-      ner_model: nerMethod === 'ml' ? nerModel.trim() || undefined : undefined,
-      relation_method: relationMethod,
+      ner_method: EXTRACT_LLM_METHOD,
+      relation_method: EXTRACT_LLM_METHOD,
       extract_relations: true,
+      ...(extract && extractLlmEndpointId.trim()
+        ? { llm_endpoint_id: extractLlmEndpointId.trim() }
+        : {}),
+      ...(extract && extractLlmModel.trim() ? { llm_model: extractLlmModel.trim() } : {}),
     }),
-    [
-      chunk,
-      chunkMethod,
-      chunkSize,
-      chunkOverlap,
-      extract,
-      nerMethod,
-      nerModel,
-      relationMethod,
-    ],
+    [chunk, chunkMethod, chunkSize, chunkOverlap, extract, extractLlmEndpointId, extractLlmModel],
   );
 
 
@@ -670,9 +657,6 @@ export function SourcesPage() {
     setChunkSize(DEFAULT_CHUNK_SIZE);
     setChunkOverlap(DEFAULT_CHUNK_OVERLAP);
     setExtract(true);
-    setNerMethod('pattern');
-    setNerModel('');
-    setRelationMethod('pattern');
     setConfigVersionId(versionId);
     const next = new URLSearchParams(searchParams);
     next.set('version', versionId);
@@ -949,12 +933,16 @@ export function SourcesPage() {
   ]);
 
   const configDoc = documents.find((doc) => doc.version_id === configVersionId);
-  const methods = methodChoices(k);
   const chunkMethods = chunkMethodChoices(k);
   const chunkOverlapEnabled = chunkMethod === 'recursive';
   const chunkReady = !chunk || chunkOptionsValid(chunkMethod, chunkSize, chunkOverlap);
   const canStartProcessing =
-    Boolean(configVersionId) && (chunk || extract) && chunkReady && busyVersionId !== configVersionId;
+    Boolean(configVersionId) &&
+    (chunk || extract) &&
+    chunkReady &&
+    busyVersionId !== configVersionId &&
+    (!extract ||
+      (Boolean(extractLlmEndpointId.trim()) && Boolean(extractLlmModel.trim())));
 
   const documentCountLabel = fmt(
     pickCountForm(locale, filteredDocuments.length, k.document_count_one, k.document_count),
@@ -1382,70 +1370,34 @@ export function SourcesPage() {
                 checked={extract}
                 onCheckedChange={setExtract}
               >
-                <div className="space-y-1.5">
-                  <Label>{k.entity_recognition}</Label>
-                  <Select value={nerMethod} onValueChange={setNerMethod}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {methods.map((item) => (
-                        <SelectItem key={item.value} value={item.value}>
-                          {item.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">
-                    {k.ner_hint}
-                  </p>
-                  {nerMethod === 'llm' ? (
-                    <p
-                      className="text-xs text-muted-foreground"
-                      data-testid="sources-llm-ner-hint"
-                    >
-                      {isAdmin ? (
-                        <>
-                          {k.llm_ner_hint_prefix}{' '}
-                          <Link to="/admin/models" className="text-primary hover:underline">
-                            {k.llm_ner_models_link}
-                          </Link>
-                        </>
-                      ) : (
-                        k.llm_ner_hint_non_admin
-                      )}
-                    </p>
-                  ) : null}
-                </div>
-                {nerMethod === 'ml' ? (
-                  <div className="space-y-1.5">
-                    <Label htmlFor="ner-model">{k.spacy_model}</Label>
-                    <Input
-                      id="ner-model"
-                      value={nerModel}
-                      placeholder={k.spacy_model_placeholder}
-                      onChange={(event) => setNerModel(event.target.value)}
-                    />
-                  </div>
+                <p className="text-sm text-muted-foreground">{k.extract_llm_only}</p>
+                {id ? (
+                  <ExtractLlmModelSelect
+                    workspaceId={id}
+                    active={extract}
+                    endpointId={extractLlmEndpointId}
+                    onEndpointIdChange={setExtractLlmEndpointId}
+                    modelId={extractLlmModel}
+                    onModelIdChange={setExtractLlmModel}
+                    disabled={busyVersionId === configVersionId}
+                  />
                 ) : null}
-                <div className="space-y-1.5">
-                  <Label>{k.relation_recognition}</Label>
-                  <Select
-                    value={relationMethod}
-                    onValueChange={setRelationMethod}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {methods.map((item) => (
-                        <SelectItem key={`relation-${item.value}`} value={item.value}>
-                          {item.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                <p
+                  className="text-xs text-muted-foreground"
+                  data-testid="sources-llm-ner-hint"
+                >
+                  {isAdmin ? (
+                    <>
+                      {k.llm_credentials_hint_prefix}{' '}
+                      <Link to="/admin/models" className="text-primary hover:underline">
+                        {k.llm_ner_models_link}
+                      </Link>
+                      {k.llm_credentials_hint_suffix}
+                    </>
+                  ) : (
+                    k.llm_ner_hint_non_admin
+                  )}
+                </p>
               </ProcessSection>
               {!chunk && !extract ? (
                 <p className="text-xs text-muted-foreground">

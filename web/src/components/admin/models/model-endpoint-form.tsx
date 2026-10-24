@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button.js';
+import { Checkbox } from '@/components/ui/checkbox.js';
 import {
   Form,
   FormControl,
@@ -15,17 +16,12 @@ import {
 import { Input } from '@/components/ui/input.js';
 import { Label } from '@/components/ui/label.js';
 import { resourceCardSurfaceClass } from '@/lib/ui-classes/card-surface.js';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select.js';
 import { useI18n } from '@/i18n/context.js';
+import { fmt } from '@/i18n/format.js';
 import { openApiGET, openApiPOST } from '@/lib/openapi/client.js';
 import { useApiErrorMessage } from '@/lib/errors/use-api-error-message.js';
 import { cn } from '@/lib/utils.js';
+import { ModelProviderIcon } from '@/components/admin/models/model-provider-icon.js';
 import type { ModelKind } from '@/components/admin/models/model-endpoint-panel.js';
 
 type ProviderInfo = {
@@ -38,8 +34,6 @@ type ProviderInfo = {
 };
 
 type RemoteModel = { id: string; name: string; display_name: string };
-
-const CUSTOM_MODEL_VALUE = '__custom__';
 
 function providerLabel(
   provider: ProviderInfo,
@@ -58,8 +52,6 @@ type EndpointFormValues = {
   providerId: string;
   apiKey: string;
   apiBase: string;
-  modelSelect: string;
-  modelId: string;
 };
 
 export function ModelEndpointForm({ kind, onCreated, onCancel }: Props) {
@@ -69,33 +61,26 @@ export function ModelEndpointForm({ kind, onCreated, onCancel }: Props) {
   const emptyCell = t.core.common.emptyCell;
   const [providers, setProviders] = useState<ProviderInfo[]>([]);
   const [remoteModels, setRemoteModels] = useState<RemoteModel[]>([]);
+  const [customModelIds, setCustomModelIds] = useState<string[]>([]);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
+  const [customModelInput, setCustomModelInput] = useState('');
   const [fetching, setFetching] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [modelSelectionError, setModelSelectionError] = useState<string | null>(null);
 
   const formSchema = useMemo(
     () =>
-      z
-        .object({
-          providerId: z.string().min(1),
-          apiKey: z.string(),
-          apiBase: z.string(),
-          modelSelect: z.string(),
-          modelId: z.string(),
-        })
-        .superRefine((data, ctx) => {
-          const resolved =
-            data.modelSelect === CUSTOM_MODEL_VALUE
-              ? data.modelId.trim()
-              : data.modelSelect.trim() || data.modelId.trim();
-          if (!resolved) {
-            ctx.addIssue({ code: 'custom', message: m.model_required, path: ['modelSelect'] });
-          }
-          if (data.providerId === 'custom' && !data.apiBase.trim()) {
-            ctx.addIssue({ code: 'custom', message: m.api_base_required, path: ['apiBase'] });
-          }
-        }),
-    [m.api_base_required, m.model_required],
+      z.object({
+        providerId: z.string().min(1),
+        apiKey: z.string(),
+        apiBase: z.string(),
+      }).superRefine((data, ctx) => {
+        if (data.providerId === 'custom' && !data.apiBase.trim()) {
+          ctx.addIssue({ code: 'custom', message: m.api_base_required, path: ['apiBase'] });
+        }
+      }),
+    [m.api_base_required],
   );
 
   const form = useForm<EndpointFormValues>({
@@ -104,13 +89,10 @@ export function ModelEndpointForm({ kind, onCreated, onCancel }: Props) {
       providerId: 'openai',
       apiKey: '',
       apiBase: '',
-      modelSelect: '',
-      modelId: '',
     },
   });
 
   const providerId = form.watch('providerId');
-  const modelSelect = form.watch('modelSelect');
   const apiBase = form.watch('apiBase');
 
   const selected = useMemo(
@@ -120,14 +102,51 @@ export function ModelEndpointForm({ kind, onCreated, onCancel }: Props) {
 
   const modelOptions = useMemo(() => {
     const map = new Map<string, string>();
-    for (const item of selected?.models ?? []) {
-      map.set(item.model, item.display_name || item.model);
-    }
     for (const item of remoteModels) {
-      if (!map.has(item.id)) map.set(item.id, item.display_name || item.id);
+      map.set(item.id, item.display_name || item.id);
+    }
+    for (const id of customModelIds) {
+      if (!map.has(id)) map.set(id, id);
     }
     return [...map.entries()].map(([id, label]) => ({ id, label }));
-  }, [selected, remoteModels]);
+  }, [remoteModels, customModelIds]);
+
+  const probeModels = useCallback(
+    async (opts?: { silent?: boolean }) => {
+      setLoadError(null);
+      setFetching(true);
+      const values = form.getValues();
+      try {
+        const data = await openApiPOST<{
+          ok: boolean;
+          error?: string;
+          models?: RemoteModel[];
+        }>('/api/v1/model-providers/probe', {
+          body: {
+            kind,
+            provider: values.providerId,
+            api_key: values.apiKey.trim(),
+            api_base: values.apiBase.trim(),
+          },
+        });
+        if (!data.ok) {
+          setRemoteModels([]);
+          setLoadError(data.error ?? m.probe_failed);
+          return;
+        }
+        setRemoteModels(data.models ?? []);
+        if (!opts?.silent) {
+          toast.success(m.probe_success);
+        }
+      } catch (err) {
+        setRemoteModels([]);
+        setLoadError(apiError(err));
+      } finally {
+        setFetching(false);
+      }
+    },
+    [kind, form, m.probe_failed, m.probe_success, apiError],
+  );
 
   useEffect(() => {
     openApiGET<{ providers: ProviderInfo[] }>('/api/v1/model-providers', {
@@ -139,21 +158,10 @@ export function ModelEndpointForm({ kind, onCreated, onCancel }: Props) {
         if (first) {
           form.setValue('providerId', first.id);
           form.setValue('apiBase', first.default_api_base);
-          if (first.models[0]) {
-            form.setValue('modelSelect', first.models[0].model);
-            form.setValue('modelId', first.models[0].model);
-          }
         }
       })
       .catch((err) => setLoadError(apiError(err)));
   }, [kind, apiError, form]);
-
-  useEffect(() => {
-    if (modelOptions.length > 0 && !form.getValues('modelSelect')) {
-      form.setValue('modelSelect', modelOptions[0].id);
-      form.setValue('modelId', modelOptions[0].id);
-    }
-  }, [modelOptions, form]);
 
   const selectProvider = useCallback(
     (id: string) => {
@@ -162,65 +170,78 @@ export function ModelEndpointForm({ kind, onCreated, onCancel }: Props) {
       form.setValue('providerId', p.id);
       form.setValue('apiBase', p.default_api_base);
       setRemoteModels([]);
+      setCustomModelIds([]);
+      setSelectedIds(new Set());
       setLoadError(null);
-      if (p.models[0]) {
-        form.setValue('modelSelect', p.models[0].model);
-        form.setValue('modelId', p.models[0].model);
-      }
+      setModelSelectionError(null);
     },
     [providers, form],
   );
 
-  async function probeModels() {
-    setLoadError(null);
-    setFetching(true);
-    const values = form.getValues();
-    try {
-      const data = await openApiPOST<{
-        ok: boolean;
-        error?: string;
-        models?: RemoteModel[];
-      }>('/api/v1/model-providers/probe', {
-        body: {
-          kind,
-          provider: values.providerId,
-          api_key: values.apiKey.trim(),
-          api_base: values.apiBase.trim(),
-        },
-      });
-      if (!data.ok) {
-        setLoadError(data.error ?? m.probe_failed);
-        return;
-      }
-      setRemoteModels(data.models ?? []);
-      toast.success(m.probe_success);
-    } catch (err) {
-      setLoadError(apiError(err));
-    } finally {
-      setFetching(false);
-    }
+  useEffect(() => {
+    if (!providerId) return;
+    const base = apiBase.trim() || selected?.default_api_base || '';
+    if (!base && providerId === 'custom') return;
+    const timer = window.setTimeout(() => {
+      void probeModels({ silent: true });
+    }, 280);
+    return () => window.clearTimeout(timer);
+  }, [providerId, apiBase, kind, selected?.default_api_base, probeModels]);
+
+  function toggleModel(id: string, checked: boolean) {
+    setModelSelectionError(null);
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }
+
+  function selectAllModels() {
+    setModelSelectionError(null);
+    setSelectedIds(new Set(modelOptions.map((opt) => opt.id)));
+  }
+
+  function clearModelSelection() {
+    setSelectedIds(new Set());
+  }
+
+  function addCustomModelId() {
+    const trimmed = customModelInput.trim();
+    if (!trimmed) return;
+    setCustomModelIds((prev) => (prev.includes(trimmed) ? prev : [...prev, trimmed]));
+    setSelectedIds((prev) => new Set(prev).add(trimmed));
+    setCustomModelInput('');
+    setModelSelectionError(null);
   }
 
   async function onSubmit(values: EndpointFormValues) {
-    const resolved =
-      values.modelSelect === CUSTOM_MODEL_VALUE
-        ? values.modelId.trim()
-        : values.modelSelect.trim() || values.modelId.trim();
+    const ids = [...selectedIds].map((id) => id.trim()).filter(Boolean);
+    if (ids.length === 0) {
+      setModelSelectionError(m.model_required);
+      return;
+    }
     const base = values.apiBase.trim() || selected?.default_api_base || '';
     setSaving(true);
     setLoadError(null);
+    setModelSelectionError(null);
     try {
       const apiKey = values.apiKey.trim();
-      await openApiPOST('/api/v1/models', {
-        body: {
-          kind,
-          provider: values.providerId,
-          api_base: base,
-          model: resolved,
-          api_key: apiKey,
+      const result = await openApiPOST<{ models: unknown[]; skipped?: string[] }>(
+        '/api/v1/models/batch',
+        {
+          body: {
+            kind,
+            provider: values.providerId,
+            api_base: base,
+            models: ids,
+            api_key: apiKey,
+          },
         },
-      });
-      toast.success(m.added_toast);
+      );
+      const added = result.models?.length ?? ids.length;
+      toast.success(fmt(m.batch_added_toast, { count: String(added) }));
       onCreated();
     } catch (err) {
       const message = apiError(err);
@@ -232,6 +253,7 @@ export function ModelEndpointForm({ kind, onCreated, onCancel }: Props) {
   }
 
   const providerLabels = m.providers as Record<string, string>;
+  const selectedCount = selectedIds.size;
 
   return (
     <Form {...form}>
@@ -253,9 +275,7 @@ export function ModelEndpointForm({ kind, onCreated, onCancel }: Props) {
                 )}
                 onClick={() => selectProvider(provider.id)}
               >
-                <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-foreground/[0.06] text-[10px] font-semibold uppercase">
-                  {provider.id === 'custom' ? '···' : provider.label.slice(0, 2)}
-                </span>
+                <ModelProviderIcon providerId={provider.id} size={20} className="size-6" />
                 <span className="min-w-0 truncate">{providerLabel(provider, providerLabels)}</span>
               </Button>
             ))}
@@ -287,6 +307,10 @@ export function ModelEndpointForm({ kind, onCreated, onCancel }: Props) {
                   autoComplete="new-password"
                   placeholder={m.api_key_placeholder}
                   {...field}
+                  onBlur={(e) => {
+                    field.onBlur();
+                    void probeModels({ silent: true });
+                  }}
                 />
               </FormControl>
               <FormMessage />
@@ -323,65 +347,109 @@ export function ModelEndpointForm({ kind, onCreated, onCancel }: Props) {
           </p>
         )}
 
-        <div className="flex flex-wrap items-end gap-2">
-          <FormField
-            control={form.control}
-            name="modelSelect"
-            render={({ field }) => (
-              <FormItem className="min-w-[min(100%,14rem)] flex-1">
-                <FormLabel>{m.field_model}</FormLabel>
-                <Select
-                  value={field.value || undefined}
-                  onValueChange={(value) => {
-                    field.onChange(value);
-                    if (value !== CUSTOM_MODEL_VALUE) form.setValue('modelId', value);
-                  }}
-                  disabled={modelOptions.length === 0}
-                >
-                  <FormControl>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder={m.model_placeholder} />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {modelOptions.map((opt) => (
-                      <SelectItem key={opt.id} value={opt.id}>
-                        {opt.label}
-                      </SelectItem>
-                    ))}
-                    <SelectItem value={CUSTOM_MODEL_VALUE}>{m.custom_model}</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <Label>{m.models_select_label}</Label>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[12px] text-muted-foreground">
+                {fmt(m.models_selected, { count: String(selectedCount) })}
+              </span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs"
+                disabled={modelOptions.length === 0}
+                onClick={selectAllModels}
+              >
+                {m.select_all_models}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs"
+                disabled={selectedCount === 0}
+                onClick={clearModelSelection}
+              >
+                {m.clear_model_selection}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-7"
+                disabled={fetching}
+                onClick={() => void probeModels()}
+              >
+                {fetching ? m.fetching_models : m.fetch_models}
+              </Button>
+            </div>
+          </div>
+
+          <div
+            className={cn(
+              resourceCardSurfaceClass,
+              'max-h-52 overflow-y-auto rounded-xl border p-2',
             )}
-          />
-          <Button type="button" variant="outline" disabled={fetching} onClick={() => void probeModels()}>
-            {fetching ? m.fetching_models : m.fetch_models}
-          </Button>
+          >
+            {fetching && modelOptions.length === 0 ? (
+              <p className="px-2 py-3 text-sm text-muted-foreground">{m.fetching_models}</p>
+            ) : modelOptions.length === 0 ? (
+              <p className="px-2 py-3 text-sm text-muted-foreground">{m.models_fetch_empty}</p>
+            ) : (
+              <ul className="space-y-1">
+                {modelOptions.map((opt) => (
+                  <li key={opt.id}>
+                    <label
+                      className="flex cursor-pointer items-start gap-2 rounded-md px-2 py-1.5 hover:bg-accent/50"
+                    >
+                      <Checkbox
+                        checked={selectedIds.has(opt.id)}
+                        onCheckedChange={(checked) => toggleModel(opt.id, checked === true)}
+                        className="mt-0.5"
+                      />
+                      <span className="min-w-0">
+                        <span className="block text-sm leading-snug">{opt.label}</span>
+                        {opt.label !== opt.id ? (
+                          <span className="block truncate font-mono text-[11px] text-muted-foreground">
+                            {opt.id}
+                          </span>
+                        ) : null}
+                      </span>
+                    </label>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          {modelSelectionError ? (
+            <p className="text-sm text-destructive">{modelSelectionError}</p>
+          ) : null}
         </div>
 
-        {modelSelect === CUSTOM_MODEL_VALUE ? (
-          <FormField
-            control={form.control}
-            name="modelId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel htmlFor={`${kind}-add-model-custom`}>{m.custom_model}</FormLabel>
-                <FormControl>
-                  <Input
-                    id={`${kind}-add-model-custom`}
-                    placeholder={m.manual_model_placeholder}
-                    autoComplete="off"
-                    {...field}
-                  />
-                </FormControl>
-                <p className="text-[12px] text-muted-foreground">{m.manual_model_hint}</p>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        ) : null}
+        <div className="flex flex-wrap items-end gap-2">
+          <div className="min-w-[min(100%,14rem)] flex-1 space-y-1.5">
+            <Label htmlFor={`${kind}-add-model-custom`}>{m.custom_model}</Label>
+            <Input
+              id={`${kind}-add-model-custom`}
+              placeholder={m.manual_model_placeholder}
+              autoComplete="off"
+              value={customModelInput}
+              onChange={(e) => setCustomModelInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  addCustomModelId();
+                }
+              }}
+            />
+            <p className="text-[12px] text-muted-foreground">{m.manual_model_hint}</p>
+          </div>
+          <Button type="button" variant="outline" onClick={addCustomModelId}>
+            {m.add_custom_model_id}
+          </Button>
+        </div>
 
         {loadError ? <p className="text-sm text-destructive">{loadError}</p> : null}
 
@@ -391,8 +459,8 @@ export function ModelEndpointForm({ kind, onCreated, onCancel }: Props) {
               {t.core.common.cancel}
             </Button>
           ) : null}
-          <Button type="submit" disabled={saving}>
-            {m.add_model_confirm}
+          <Button type="submit" disabled={saving || selectedCount === 0}>
+            {fmt(m.add_models_confirm, { count: String(selectedCount) })}
           </Button>
         </div>
       </form>

@@ -31,10 +31,12 @@ class StartProcessingRequest(BaseModel):
     chunk_size: int = Field(default=1800, ge=200, le=100_000)
     chunk_overlap: int = Field(default=250, ge=0, le=10_000)
     extract: bool = True
-    ner_method: str = Field(default="pattern", min_length=1, max_length=40)
-    relation_method: str = Field(default="pattern", min_length=1, max_length=40)
+    ner_method: str = Field(default="llm", min_length=1, max_length=40)
+    relation_method: str = Field(default="llm", min_length=1, max_length=40)
     extract_relations: bool = True
     ner_model: str | None = Field(default=None, max_length=120)
+    llm_model: str | None = Field(default=None, max_length=200)
+    llm_endpoint_id: str | None = Field(default=None, max_length=64)
     idempotency_key: str | None = Field(default=None, max_length=128)
 
 

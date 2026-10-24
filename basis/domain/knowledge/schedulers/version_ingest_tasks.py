@@ -130,7 +130,11 @@ def _run_version_ingest_for_app(
             graphs[workspace_id] = session
         try:
             limits = app.state.limits
-            chat_llm = app.state.store.get_chat_llm_settings()
+            endpoint_id = (options.llm_endpoint_id or "").strip()
+            if endpoint_id:
+                chat_llm = app.state.store.get_chat_llm_settings_for_entry(endpoint_id)
+            else:
+                chat_llm = app.state.store.get_chat_llm_settings()
             result = run_version_ingest(
                 knowledge,
                 session,

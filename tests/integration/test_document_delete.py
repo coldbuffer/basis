@@ -40,8 +40,8 @@ def test_delete_document_removes_chunks_and_graph_node(tmp_path: Path) -> None:
             "wait": True,
             "chunk": False,
             "extract": True,
-            "ner_method": "pattern",
-            "relation_method": "pattern",
+            "ner_method": "llm",
+            "relation_method": "llm",
         },
     )
     assert processed.status_code == 200

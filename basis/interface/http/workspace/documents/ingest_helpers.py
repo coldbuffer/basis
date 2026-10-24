@@ -34,7 +34,11 @@ def run_ingest_blocking(
     knowledge: KnowledgeStore = app.state.knowledge_store
     limits = app.state.limits
     if graph_session is not None:
-        chat_llm = app.state.store.get_chat_llm_settings()
+        endpoint_id = (options.llm_endpoint_id or "").strip()
+        if endpoint_id:
+            chat_llm = app.state.store.get_chat_llm_settings_for_entry(endpoint_id)
+        else:
+            chat_llm = app.state.store.get_chat_llm_settings()
         return run_version_ingest(
             knowledge,
             graph_session,

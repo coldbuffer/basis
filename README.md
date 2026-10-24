@@ -38,7 +38,6 @@ Basis is an open-source stack built on the [Semantica](https://github.com/semant
   - [Access tokens](#access-tokens)
   - [OpenAPI (REST)](#openapi-rest)
   - [MCP (JSON-RPC)](#mcp-json-rpc)
-- [Semantica dependency](#semantica-dependency)
 - [Development](#development)
 - [Deployment](#deployment)
   - [Desktop app](#desktop-app)
@@ -153,8 +152,6 @@ flowchart TB
 - **Python** 3.10–3.13 and [uv](https://docs.astral.sh/uv/)
 - **Node.js** ≥ 22 and npm
 
-The **Semantica** SDK installs from **PyPI** when you run `uv sync` (pinned in `uv.lock`).
-
 ### 1. Clone and configure API
 
 ```bash
@@ -261,20 +258,6 @@ Use **Integration → MCP** in the studio for the endpoint URL, tool list, and c
 ```
 
 Tune server-side limits with `BASIS_MCP_MAX_INFLIGHT` and `BASIS_MCP_TIMEOUT_SECONDS` (see [Configuration (essentials)](#configuration-essentials)).
-
-## Semantica dependency
-
-`semantica` resolves from **PyPI** (see `uv.lock`). `uv sync` installs Basis runtime extras (document parse, embeddings, SHACL, OpenAI-compatible LLM, etc.). Optional groups are `dev`, `heavy`, `explorer`, and `saml`. See [pyproject.toml](pyproject.toml).
-
-Do not add a local `[tool.uv.sources]` override for `semantica`. A gitignored `uv.toml` would still take precedence over defaults. Leave it unset to use PyPI.
-
-For ML NER in processing jobs:
-
-```bash
-uv run python -m spacy download en_core_web_sm
-```
-
-Chat/embeddings in the console need provider API keys only when you use LLM-backed features.
 
 ## Development
 

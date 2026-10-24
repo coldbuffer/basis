@@ -143,19 +143,35 @@ def processing_options(
         )
     except ValueError:
         raise AdminError(422, "bad_chunk_method", "切分方式无效") from None
+    from basis.domain.knowledge.pipeline.extract_methods import (
+        normalize_ner_method,
+        normalize_relation_method,
+    )
+
+    extract = body.extract
+    ner_method = normalize_ner_method(body.ner_method, extract=extract)
+    relation_method = normalize_relation_method(body.relation_method, extract=extract)
+    llm_model = (body.llm_model or "").strip() or None
+    llm_endpoint_id = (body.llm_endpoint_id or "").strip() or None
     payload = {
         "chunk": body.chunk,
         "chunk_method": chunk_method,
         "chunk_size": body.chunk_size,
         "chunk_overlap": body.chunk_overlap,
-        "extract": body.extract,
-        "ner_method": body.ner_method,
-        "relation_method": body.relation_method,
+        "extract": extract,
+        "ner_method": ner_method,
+        "relation_method": relation_method,
         "extract_relations": body.extract_relations,
-        "ner_model": (body.ner_model or "").strip() or None,
+        "ner_model": None,
+        "llm_model": llm_model,
+        "llm_endpoint_id": llm_endpoint_id,
     }
     options = TextIngestOptions(**payload)
     from basis.domain.knowledge.pipeline.extract_kwargs import validate_extract_options
 
-    validate_extract_options(options, store.get_chat_llm_settings())
+    if llm_endpoint_id:
+        chat_llm = store.get_chat_llm_settings_for_entry(llm_endpoint_id)
+    else:
+        chat_llm = store.get_chat_llm_settings()
+    validate_extract_options(options, chat_llm)
     return options, payload

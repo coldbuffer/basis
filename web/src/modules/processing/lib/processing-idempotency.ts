@@ -6,6 +6,8 @@ export type ProcessingStartOptions = {
   extract?: boolean;
   ner_method?: string;
   ner_model?: string;
+  llm_model?: string;
+  llm_endpoint_id?: string;
   relation_method?: string;
   extract_relations?: boolean;
 };
@@ -33,6 +35,8 @@ export function processingStartIdempotencyKey(
     chunk_overlap: options.chunk_overlap,
     extract: options.extract,
     ner_method: options.ner_method,
+    llm_model: options.llm_model,
+    llm_endpoint_id: options.llm_endpoint_id,
     relation_method: options.relation_method,
     extract_relations: options.extract_relations,
   });

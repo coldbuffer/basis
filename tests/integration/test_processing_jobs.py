@@ -43,8 +43,8 @@ def test_upload_then_process_with_immutable_options(tmp_path: Path) -> None:
             "wait": True,
             "chunk": False,
             "extract": False,
-            "ner_method": "pattern",
-            "relation_method": "pattern",
+            "ner_method": "llm",
+            "relation_method": "llm",
         },
     )
     assert processed.status_code == 200
@@ -80,8 +80,8 @@ def test_processing_job_persists_request_id_in_options(tmp_path: Path) -> None:
             "wait": False,
             "chunk": False,
             "extract": False,
-            "ner_method": "pattern",
-            "relation_method": "pattern",
+            "ner_method": "llm",
+            "relation_method": "llm",
         },
     )
     assert accepted.status_code == 202
@@ -113,8 +113,8 @@ def test_active_job_conflict_and_retry_attempt(tmp_path: Path) -> None:
         "chunk_size": 1800,
         "chunk_overlap": 250,
         "extract": False,
-        "ner_method": "pattern",
-        "relation_method": "pattern",
+        "ner_method": "llm",
+        "relation_method": "llm",
         "extract_relations": True,
         "extract_triplets": False,
     }
@@ -164,8 +164,8 @@ def test_processing_job_idempotency_key_replay(tmp_path: Path) -> None:
         "wait": True,
         "chunk": False,
         "extract": False,
-        "ner_method": "pattern",
-        "relation_method": "pattern",
+        "ner_method": "llm",
+        "relation_method": "llm",
         "idempotency_key": "process-once",
     }
     first = client.post(f"/api/v1/workspaces/{workspace_id}/processing/jobs", headers=headers, json=payload)

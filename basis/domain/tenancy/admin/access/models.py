@@ -124,6 +124,65 @@ class ModelsAccess:
             if secret:
                 self._store._put_setting("embed_api_key", secret)
 
+    def upsert_kind_endpoint(
+        self,
+        actor: User,
+        kind: ModelKind,
+        *,
+        provider: str,
+        api_base: str,
+        api_key: str = "",
+    ) -> dict[str, Any]:
+        """Add or update endpoint credentials for ``kind`` (matched by provider + api_base)."""
+        require_system_admin(actor)
+        base = api_base.strip().rstrip("/")
+        if not base:
+            raise AdminError(400, "api_base_required", "请填写 Base URL")
+        provider_norm = provider.strip()
+        base_norm = base.lower()
+        with self._store._lock:
+            conn = self._store._conn
+            catalog = self._read_model_catalog()
+            bucket = catalog.setdefault(kind, [])
+            entry: dict[str, Any] | None = None
+            for item in bucket:
+                item_provider = (item.get("provider") or "").strip()
+                item_base = (item.get("api_base") or "").strip().rstrip("/").lower()
+                if item_provider == provider_norm and item_base == base_norm:
+                    entry = item
+                    break
+            preserved_key = ""
+            if entry:
+                preserved_key = (self._store._setting(model_secret_key(entry["id"])) or "").strip()
+                entry["provider"] = provider_norm
+                entry["api_base"] = base
+                entry["enabled"] = True
+            else:
+                entry = new_entry(
+                    kind,
+                    provider=provider_norm,
+                    api_base=base,
+                    model="",
+                    display_name="",
+                    enabled=True,
+                )
+                bucket.append(entry)
+            key = api_key.strip() or preserved_key
+            if key:
+                self._store._put_setting(model_secret_key(entry["id"]), key)
+            self._write_model_catalog(catalog)
+            self._sync_legacy_model_fields(kind)
+            audit_persist.insert_audit(
+                conn,
+                actor_id=actor.id,
+                action="model.endpoint_upserted",
+                target_type="model",
+                target_id=entry["id"],
+                detail={"kind": kind, "provider": provider.strip()},
+            )
+            conn.commit()
+            return self._model_entry_public(entry)
+
     def list_configured_models(self, kind: ModelKind | None = None) -> list[dict[str, Any]]:
         with self._store._lock:
             catalog = self._read_model_catalog()
@@ -133,6 +192,93 @@ class ModelsAccess:
             for bucket in ("llm", "embed"):
                 out.extend(self._model_entry_public(e) for e in catalog.get(bucket, []))
             return out
+
+    def _catalog_has_model(
+        self,
+        catalog: dict[str, list[dict[str, Any]]],
+        kind: ModelKind,
+        provider: str,
+        api_base: str,
+        model: str,
+    ) -> bool:
+        base_norm = api_base.strip().rstrip("/").lower()
+        provider_norm = provider.strip()
+        model_norm = model.strip()
+        for entry in catalog.get(kind, []):
+            if (entry.get("model") or "").strip() != model_norm:
+                continue
+            if (entry.get("provider") or "").strip() != provider_norm:
+                continue
+            entry_base = (entry.get("api_base") or "").strip().rstrip("/").lower()
+            if entry_base == base_norm:
+                return True
+        return False
+
+    def add_configured_models_batch(
+        self,
+        actor: User,
+        kind: ModelKind,
+        *,
+        provider: str,
+        api_base: str,
+        models: list[str],
+        api_key: str = "",
+    ) -> dict[str, Any]:
+        require_system_admin(actor)
+        base = api_base.strip()
+        if not base:
+            raise AdminError(400, "api_base_required", "请填写 Base URL")
+        unique_models: list[str] = []
+        seen: set[str] = set()
+        for raw in models:
+            model_id = raw.strip()
+            if not model_id or model_id in seen:
+                continue
+            seen.add(model_id)
+            unique_models.append(model_id)
+        if not unique_models:
+            raise AdminError(400, "model_required", "请至少选择一个模型 ID")
+
+        with self._store._lock:
+            conn = self._store._conn
+            catalog = self._read_model_catalog()
+            added: list[dict[str, Any]] = []
+            skipped: list[str] = []
+            key = api_key.strip()
+            for model_id in unique_models:
+                if self._catalog_has_model(catalog, kind, provider, base, model_id):
+                    skipped.append(model_id)
+                    continue
+                entry = new_entry(
+                    kind,
+                    provider=provider,
+                    api_base=base,
+                    model=model_id,
+                    enabled=True,
+                )
+                catalog[kind].append(entry)
+                if key:
+                    self._store._put_setting(model_secret_key(entry["id"]), key)
+                added.append(self._model_entry_public(entry))
+            if not added:
+                raise AdminError(409, "models_already_configured", "所选模型均已存在")
+            self._write_model_catalog(catalog)
+            self._sync_legacy_model_fields(kind)
+            audit_persist.insert_audit(
+                conn,
+                actor_id=actor.id,
+                action="model.batch_added",
+                target_type="model",
+                target_id=added[0]["id"],
+                detail={
+                    "kind": kind,
+                    "provider": provider.strip(),
+                    "added": [e["model"] for e in added],
+                    "skipped": skipped,
+                },
+            )
+            conn.commit()
+            return {"models": added, "skipped": skipped}
 
     def add_configured_model(
         self,
@@ -237,6 +383,39 @@ class ModelsAccess:
             )
             conn.commit()
             return self._model_entry_public(entry)
+
+    def list_public_llm_endpoints(self) -> list[dict[str, Any]]:
+        with self._store._lock:
+            catalog = self._read_model_catalog()
+            out: list[dict[str, Any]] = []
+            for entry in catalog.get("llm", []):
+                if entry.get("enabled", True) is False:
+                    continue
+                if not self._model_entry_configured(entry["id"]):
+                    continue
+                out.append(
+                    {
+                        "id": entry["id"],
+                        "provider": entry.get("provider") or "",
+                        "api_base": entry.get("api_base") or "",
+                    }
+                )
+            return out
+
+    def get_chat_llm_settings_for_entry(self, entry_id: str) -> dict[str, str | None]:
+        with self._store._lock:
+            found = find_entry(self._read_model_catalog(), entry_id.strip())
+            if not found or found[0] != "llm":
+                raise AdminError(404, "llm_endpoint_not_found", "对话模型服务商不存在")
+            entry = found[2]
+            secret = self._store._setting(model_secret_key(entry["id"])) or ""
+            return {
+                "id": entry["id"],
+                "provider": entry.get("provider") or "",
+                "base_url": entry.get("api_base") or "",
+                "model": entry.get("model") or "",
+                "api_key": secret,
+            }
 
     def get_chat_llm_settings(self) -> dict[str, str | None]:
         with self._store._lock:

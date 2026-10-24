@@ -292,7 +292,7 @@ def _load_pack_content(
             job["id"],
             filename=title,
             graph_doc_id=external_key,
-            options=TextIngestOptions(extract=True, chunk=True, ner_method="pattern"),
+            options=TextIngestOptions(extract=True, chunk=True),
         )
         ingested_versions.append((outcome.version_id, external_key, _iso(recorded_at)))
 

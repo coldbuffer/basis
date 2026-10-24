@@ -29,8 +29,8 @@ _DEFAULT_PROCESSING_OPTIONS = {
     "chunk_size": 1800,
     "chunk_overlap": 250,
     "extract": True,
-    "ner_method": "pattern",
-    "relation_method": "pattern",
+    "ner_method": "llm",
+    "relation_method": "llm",
     "extract_relations": True,
 }
 

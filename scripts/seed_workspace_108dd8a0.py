@@ -163,7 +163,7 @@ def main() -> int:
                 job["id"],
                 filename=title,
                 graph_doc_id=external_key,
-                options=TextIngestOptions(extract=True, chunk=True, ner_method="pattern"),
+                options=TextIngestOptions(extract=True, chunk=True),
             )
         except Exception as exc:
             print(f"ingest failed for {external_key}: {exc}", file=sys.stderr)

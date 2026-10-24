@@ -115,8 +115,8 @@ def test_processing_fails_when_extracted_text_exceeds_cap(tmp_path: Path) -> Non
             "wait": True,
             "chunk": False,
             "extract": False,
-            "ner_method": "pattern",
-            "relation_method": "pattern",
+            "ner_method": "llm",
+            "relation_method": "llm",
         },
     )
     assert failed.status_code == 413
@@ -165,8 +165,8 @@ def test_processing_fails_when_chunk_count_exceeds_cap(tmp_path: Path, monkeypat
             "chunk_size": 200,
             "chunk_overlap": 0,
             "extract": False,
-            "ner_method": "pattern",
-            "relation_method": "pattern",
+            "ner_method": "llm",
+            "relation_method": "llm",
         },
     )
     assert failed.status_code == 413
@@ -208,8 +208,8 @@ def test_processing_fails_when_extraction_times_out(tmp_path: Path, monkeypatch)
             "wait": True,
             "chunk": False,
             "extract": True,
-            "ner_method": "pattern",
-            "relation_method": "pattern",
+            "ner_method": "llm",
+            "relation_method": "llm",
         },
     )
     assert failed.status_code == 504
@@ -255,8 +255,8 @@ def test_async_ingest_fails_with_ingest_overloaded_when_pending_full(
         "wait": False,
         "chunk": False,
         "extract": False,
-        "ner_method": "pattern",
-        "relation_method": "pattern",
+        "ner_method": "llm",
+        "relation_method": "llm",
     }
     first = client.post(
         f"/api/v1/workspaces/{workspace_id}/processing/jobs",

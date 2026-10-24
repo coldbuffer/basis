@@ -19,9 +19,11 @@ class TextIngestOptions:
     chunk_method: str = "recursive"
     chunk_size: int = 1800
     chunk_overlap: int = 250
-    ner_method: str = "pattern"
-    relation_method: str = "pattern"
-    ner_model: str | None = None  # spaCy model when ner_method=ml (e.g. zh_core_web_sm)
+    ner_method: str = "llm"
+    relation_method: str = "llm"
+    ner_model: str | None = None  # unused (LLM-only product surface)
+    llm_model: str | None = None  # Chat model id for LLM extract (per job)
+    llm_endpoint_id: str | None = None  # Catalog entry id for provider credentials
     extract_relations: bool = True
     extract_triplets: bool = False
     merge_entities: bool = True

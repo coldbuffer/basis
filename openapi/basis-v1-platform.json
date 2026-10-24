@@ -1654,6 +1654,134 @@
         "x-basis-auth": "session"
       }
     },
+    "/api/v1/models/batch": {
+      "post": {
+        "tags": [
+          "models"
+        ],
+        "summary": "Create Models Batch",
+        "description": "Create Models (batch). Add multiple model IDs for one provider endpoint. Requires session JWT (`sessionAuth`).",
+        "operationId": "create_models_batch_api_v1_models_batch_post",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateModelsBatchRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Create Models Batch Api V1 Models Batch Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-basis-surface": "platform",
+        "x-basis-auth": "session"
+      }
+    },
+    "/api/v1/models/endpoint": {
+      "put": {
+        "tags": [
+          "models"
+        ],
+        "summary": "Upsert Model Endpoint",
+        "description": "Upsert Model Endpoint. Platform LLM/embed API credentials (model id chosen per feature). Requires session JWT (`sessionAuth`).",
+        "operationId": "upsert_model_endpoint_api_v1_models_endpoint_put",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsertModelEndpointRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Upsert Model Endpoint Api V1 Models Endpoint Put"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-basis-surface": "platform",
+        "x-basis-auth": "session"
+      }
+    },
     "/api/v1/models/{model_id}": {
       "patch": {
         "tags": [
@@ -4349,6 +4477,46 @@
         ],
         "title": "CreateModelRequest"
       },
+      "CreateModelsBatchRequest": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "llm",
+              "embed"
+            ],
+            "title": "Kind"
+          },
+          "provider": {
+            "type": "string",
+            "title": "Provider",
+            "default": ""
+          },
+          "api_base": {
+            "type": "string",
+            "title": "Api Base",
+            "default": ""
+          },
+          "models": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Models"
+          },
+          "api_key": {
+            "type": "string",
+            "title": "Api Key",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "models"
+        ],
+        "title": "CreateModelsBatchRequest"
+      },
       "CreateReasoningRuleRequest": {
         "properties": {
           "name": {
@@ -6530,14 +6698,14 @@
             "maxLength": 40,
             "minLength": 1,
             "title": "Ner Method",
-            "default": "pattern"
+            "default": "llm"
           },
           "relation_method": {
             "type": "string",
             "maxLength": 40,
             "minLength": 1,
             "title": "Relation Method",
-            "default": "pattern"
+            "default": "llm"
           },
           "extract_relations": {
             "type": "boolean",
@@ -6555,6 +6723,30 @@
               }
             ],
             "title": "Ner Model"
+          },
+          "llm_model": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Llm Model"
+          },
+          "llm_endpoint_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 64
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Llm Endpoint Id"
           },
           "idempotency_key": {
             "anyOf": [
@@ -7016,6 +7208,38 @@
         },
         "type": "object",
         "title": "UpsertConnectorPolicyRequest"
+      },
+      "UpsertModelEndpointRequest": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "llm",
+              "embed"
+            ],
+            "title": "Kind"
+          },
+          "provider": {
+            "type": "string",
+            "title": "Provider",
+            "default": ""
+          },
+          "api_base": {
+            "type": "string",
+            "title": "Api Base",
+            "default": ""
+          },
+          "api_key": {
+            "type": "string",
+            "title": "Api Key",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind"
+        ],
+        "title": "UpsertModelEndpointRequest"
       },
       "UpsertOAuthConfigRequest": {
         "properties": {

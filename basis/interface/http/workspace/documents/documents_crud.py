@@ -105,8 +105,8 @@ Ingest Document. Requires workspace membership (session) or workspace API token 
                 chunk_size=body.chunk_size or 1800,
                 chunk_overlap=body.chunk_overlap if body.chunk_overlap is not None else 250,
                 extract=body.extract if body.extract is not None else True,
-                ner_method=body.ner_method or "pattern",
-                relation_method=body.relation_method or "pattern",
+                ner_method=body.ner_method or "llm",
+                relation_method=body.relation_method or "llm",
                 extract_relations=(
                     body.extract_relations if body.extract_relations is not None else True
                 ),
@@ -340,8 +340,8 @@ Upload Document. Requires workspace membership (session) or workspace API token 
                 chunk_size=chunk_size or 1800,
                 chunk_overlap=chunk_overlap if chunk_overlap is not None else 250,
                 extract=extract if extract is not None else True,
-                ner_method=ner_method or "pattern",
-                relation_method=relation_method or "pattern",
+                ner_method=ner_method or "llm",
+                relation_method=relation_method or "llm",
             ),
             request=request,
             user=user,

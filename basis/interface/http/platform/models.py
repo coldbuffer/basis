@@ -21,6 +21,21 @@ class CreateModelRequest(BaseModel):
     enabled: bool = True
 
 
+class UpsertModelEndpointRequest(BaseModel):
+    kind: ModelKind
+    provider: str = ""
+    api_base: str = ""
+    api_key: str = ""
+
+
+class CreateModelsBatchRequest(BaseModel):
+    kind: ModelKind
+    provider: str = ""
+    api_base: str = ""
+    models: list[str]
+    api_key: str = ""
+
+
 class PatchModelRequest(BaseModel):
     enabled: bool | None = None
     api_key: str | None = None
@@ -61,6 +76,47 @@ Create Model. LLM model catalog configuration. Requires session JWT (`sessionAut
         enabled=body.enabled,
     )
     return {"model": entry}
+
+
+@router.put("/endpoint")
+async def upsert_model_endpoint(
+    body: UpsertModelEndpointRequest,
+    user: User = Depends(get_current_user),
+    store: AdminStore = Depends(get_store),
+) -> dict:
+    """
+Upsert Model Endpoint. Platform LLM/embed API credentials (model id chosen per feature). Requires session JWT (`sessionAuth`).
+    """
+    require_system_admin(user)
+    entry = store.upsert_kind_endpoint(
+        user,
+        body.kind,
+        provider=body.provider,
+        api_base=body.api_base,
+        api_key=body.api_key,
+    )
+    return {"model": entry}
+
+
+@router.post("/batch")
+async def create_models_batch(
+    body: CreateModelsBatchRequest,
+    user: User = Depends(get_current_user),
+    store: AdminStore = Depends(get_store),
+) -> dict:
+    """
+Create Models (batch). Add multiple model IDs for one provider endpoint. Requires session JWT (`sessionAuth`).
+    """
+    require_system_admin(user)
+    result = store.add_configured_models_batch(
+        user,
+        body.kind,
+        provider=body.provider,
+        api_base=body.api_base,
+        models=body.models,
+        api_key=body.api_key,
+    )
+    return result
 
 
 @router.patch("/{model_id}")

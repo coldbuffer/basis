@@ -12,7 +12,7 @@ describe('processingOptionsSummaryLines', () => {
         chunk_method: 'recursive',
         chunk_size: 512,
         extract: true,
-        ner_method: 'pattern',
+        ner_method: 'llm',
       },
       copy,
     );

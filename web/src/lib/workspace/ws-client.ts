@@ -145,6 +145,16 @@ export class WorkspaceWsClient {
   };
 
   processing = {
+    listLlmProviders: () =>
+      this.request<{
+        providers: Array<{ id: string; provider: string; api_base: string }>;
+      }>('processing/llm-providers'),
+    listLlmModels: (providerId: string) =>
+      this.request<{
+        ok: boolean;
+        error?: string;
+        models?: Array<{ id: string; name: string; display_name: string }>;
+      }>(`processing/llm-models?provider_id=${encodeURIComponent(providerId)}`),
     start: (body: {
       version_id: string;
       wait?: boolean;
@@ -155,6 +165,7 @@ export class WorkspaceWsClient {
       extract?: boolean;
       ner_method?: string;
       ner_model?: string;
+      llm_model?: string;
       relation_method?: string;
       extract_relations?: boolean;
       idempotency_key?: string;

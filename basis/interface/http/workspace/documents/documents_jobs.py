@@ -31,12 +31,57 @@ from basis.interface.http.workspace.documents.documents_models import (
     RetryProcessingRequest,
     StartProcessingRequest,
 )
+from basis.domain.tenancy.catalog.remote_models import fetch_remote_models
 from basis.interface.http.workspace.documents.documents_processing_support import (
     processing_options,
     respond_idempotent_processing_job,
 )
 
 router = APIRouter(tags=["workspaces"])
+
+
+@router.get("/{workspace_id}/processing/llm-providers")
+async def list_processing_llm_providers(
+    workspace_id: str,
+    request: Request,
+    user: User = Depends(get_current_user),
+    store: AdminStore = Depends(get_store),
+) -> dict[str, Any]:
+    """
+List Processing Llm Providers. Configured Chat endpoints for document extract. Requires workspace membership (session) or workspace API token with read/write scope. All paths are scoped to `{workspace_id}`.
+    """
+    get_workspace_for_viewer(request, user, workspace_id, store)
+    return {"providers": store.list_public_llm_endpoints()}
+
+
+@router.get("/{workspace_id}/processing/llm-models")
+async def list_processing_llm_models(
+    workspace_id: str,
+    request: Request,
+    provider_id: str | None = None,
+    user: User = Depends(get_current_user),
+    store: AdminStore = Depends(get_store),
+) -> dict[str, Any]:
+    """
+List Processing Llm Models. Remote Chat models for a configured provider. Requires workspace membership (session) or workspace API token with read/write scope. All paths are scoped to `{workspace_id}`.
+    """
+    get_workspace_for_viewer(request, user, workspace_id, store)
+    entry_id = (provider_id or "").strip()
+    if not entry_id:
+        return {"ok": False, "error": "provider_required", "models": []}
+    try:
+        chat = store.get_chat_llm_settings_for_entry(entry_id)
+    except AdminError as exc:
+        if exc.code == "llm_endpoint_not_found":
+            return {"ok": False, "error": exc.code, "models": []}
+        raise
+    api_key = (chat.get("api_key") or "").strip()
+    api_base = (chat.get("base_url") or "").strip()
+    if not api_key:
+        return {"ok": False, "error": "chat_not_configured", "models": []}
+    if not api_base:
+        return {"ok": False, "error": "api_base_required", "models": []}
+    return fetch_remote_models(api_key=api_key, api_base=api_base, kind="llm")
 
 
 @router.get(

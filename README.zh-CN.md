@@ -38,7 +38,6 @@ Basis 是基于 [Semantica](https://github.com/semantica-agi/semantica) Python S
   - [访问令牌](#访问令牌)
   - [OpenAPI（REST）](#openapirest)
   - [MCP（JSON-RPC）](#mcpjson-rpc)
-- [Semantica 依赖](#semantica-依赖)
 - [开发](#开发)
 - [部署方式](#部署方式)
   - [桌面客户端](#桌面客户端)
@@ -153,8 +152,6 @@ flowchart TB
 - **Python** 3.10–3.13、[uv](https://docs.astral.sh/uv/)
 - **Node.js** ≥ 22、npm
 
-**Semantica** 在 `uv sync` 时从 **PyPI** 安装（版本见 `uv.lock`）。
-
 ### 1. 克隆并启动 API
 
 ```bash
@@ -261,21 +258,6 @@ curl -sS "http://127.0.0.1:8090/api/v1/workspaces/YOUR_WORKSPACE_ID" \
 ```
 
 服务端并发与超时见 `BASIS_MCP_MAX_INFLIGHT`、`BASIS_MCP_TIMEOUT_SECONDS`（[配置（常用）](#配置常用)）。
-
-## Semantica 依赖
-
-`semantica` 从 **PyPI** 解析（见 `uv.lock`）。`uv sync` 会安装 Basis 运行时 extras（文档解析、向量、SHACL、兼容 OpenAI 的 LLM 等）。可选分组为 `dev`、`heavy`、`explorer`、`saml`。见 [pyproject.toml](pyproject.toml)。
-
-请勿为 `semantica` 配置本地 `[tool.uv.sources]`。未提交的 `uv.toml` 仍会优先于默认源。保持未设置以使用 PyPI。
-
-处理任务使用 ML NER 时可安装：
-
-```bash
-uv run python -m spacy download en_core_web_sm
-uv run python -m spacy download zh_core_web_sm   # 中文可选
-```
-
-控制台中的对话与嵌入仅在启用 LLM 相关能力时需要配置服务商 API 密钥。
 
 ## 开发
 

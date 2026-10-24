@@ -229,9 +229,13 @@ for _name in (
 for _name in (
     "list_configured_models",
     "add_configured_model",
+    "add_configured_models_batch",
+    "upsert_kind_endpoint",
     "delete_configured_model",
     "patch_configured_model",
     "get_chat_llm_settings",
+    "get_chat_llm_settings_for_entry",
+    "list_public_llm_endpoints",
     "get_embed_settings",
     "get_stored_model_api_key",
     "get_stored_model_api_key_for_probe",

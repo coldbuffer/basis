@@ -13,7 +13,7 @@ from basis.domain.knowledge.blob_store import BlobStore
 from basis.domain.knowledge.store import KnowledgeStore
 
 
-def test_build_kg_from_text_runs_pattern_ner() -> None:
+def test_build_kg_from_text_runs_llm_ner() -> None:
     kg = build_kg_from_text(
         "english-doc",
         "Alice knows Bob.",
