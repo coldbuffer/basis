@@ -17,7 +17,8 @@
 
 Basis 是基于 [Semantica](https://github.com/semantica-agi/semantica) Python SDK 构建的开源技术栈。**业务语义**包括映射、本体、规则与 SHACL。它们落在**规范证据账本**之上。图与搜索为**可重建投影**。
 
-> **状态：** 仍在积极开发，接口可能变动。生产环境请固定发布版本。
+> **状态：** 仍在积极开发，接口可能变动。生产环境请固定发布版本。  
+> **v0.1** 对应当前已实现功能；连接器规模扩充放在后续版本 — 见 [RELEASE.md](RELEASE.md)。
 
 <p align="center">
   <img src="assets/graph.png" alt="Basis 图谱工作区：力导向图、本体导航、时间轴回放" width="900" style="border-radius: 12px;" />

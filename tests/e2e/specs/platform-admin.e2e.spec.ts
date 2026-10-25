@@ -30,13 +30,15 @@ test('platform workspaces page shows catalog table and create action', async ({ 
   });
 });
 
-test('platform models page shows LLM tab and add model action', async ({ page }) => {
+test('platform models page shows LLM tab and add provider action', async ({ page }) => {
   test.setTimeout(90_000);
 
   await ensurePlatformAdminSession(page);
   await gotoPlatformAdminPath(page, '/admin/models');
   await expect(page.getByRole('tab', { name: /^LLM$/ })).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByRole('button', { name: /Add model|添加模型/i }).first()).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: /Add provider|添加服务商/i }).first(),
+  ).toBeVisible({ timeout: 30_000 });
 });
 
 test('platform settings page shows access and org SSO sections', async ({ page }) => {

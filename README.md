@@ -17,7 +17,8 @@ Map documents, databases, and SaaS to **entities, types, and governed facts**. T
 
 Basis is an open-source stack built on the [Semantica](https://github.com/semantica-agi/semantica) Python SDK. **Business semantics** include mappings, ontologies, rules, and SHACL. They sit on a canonical **evidence ledger**. Graph and search are **rebuildable projections**.
 
-> **Status:** Under active development. APIs may change. Use a pinned release in production.
+> **Status:** Under active development. APIs may change. Use a pinned release in production.  
+> **v0.1** ships the current feature set; connector catalog expansion is planned for later releases — see [RELEASE.md](RELEASE.md).
 
 <p align="center">
   <img src="assets/graph.png" alt="Basis graph workspace: force-directed ledger projection, ontology navigation, temporal scrubber" width="900" style="border-radius: 12px;" />

@@ -57,7 +57,7 @@ Routes follow [`web/src/routes/index.tsx`](../../web/src/routes/index.tsx) (`App
 | `/admin/connectors` | S | `admin-connectors.e2e.spec.ts` | Catalog search + nav |
 | `/admin/workspaces` | S | `platform-admin.e2e.spec.ts` | Workspace table + create |
 | `/admin/users` | S | `platform-admin.e2e.spec.ts` | Lists first platform admin (`data/e2e/playwright-admin.json`) |
-| `/admin/models` | S | `platform-admin.e2e.spec.ts` | LLM tab + add model |
+| `/admin/models` | S | `platform-admin.e2e.spec.ts` | LLM tab + add provider |
 | `/admin/audit` | S | `platform-admin.e2e.spec.ts` | Workspace filter + refresh |
 | `/admin/settings` | S | `platform-admin.e2e.spec.ts`, `desktop-product.e2e.spec.ts` | Login + org SSO (server); desktop redirects away |
 
