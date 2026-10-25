@@ -109,26 +109,21 @@ jobs:
           name: desktop-windows
           path: dist/desktop/windows
 
-      # Retagging the same version leaves stale release asset IDs; softprops then 404s on delete.
-      - name: Remove prior release page (keep git tag)
+      - name: Create draft GitHub Release (desktop)
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release delete "${{ github.ref_name }}" --yes || true
+        run: |
+          set -euo pipefail
+          tag="${{ github.ref_name }}"
+          gh release delete "$tag" --yes 2>/dev/null || true
+          gh release create "$tag" \
+            --draft \
+            --verify-tag \
+            --title "Basis ${tag} (Desktop)" \
+            --notes "Unsigned desktop builds for **${tag}**.
 
-      - name: Create or update draft GitHub Release (desktop)
-        uses: softprops/action-gh-release@v2
-        with:
-          name: Basis ${{ github.ref_name }} (Desktop)
-          draft: true
-          make_latest: false
-          overwrite_files: true
-          generate_release_notes: true
-          files: |
-            dist/desktop/macos/*
-            dist/desktop/windows/*
-          body: |
-            Unsigned desktop builds for **${{ github.ref_name }}**.
+          Installers are not code-signed; macOS may require Gatekeeper override, Windows SmartScreen may warn.
 
-            Installers are not code-signed; macOS may require Gatekeeper override, Windows SmartScreen may warn.
-
-            Tag format: `desktop-v*` (separate from container releases `v*`).
+          Tag format: \`desktop-v*\` (separate from container releases \`v*\`)."
+          shopt -s nullglob
+          gh release upload "$tag" dist/desktop/macos/* dist/desktop/windows/* --clobber

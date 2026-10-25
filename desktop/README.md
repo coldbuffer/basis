@@ -72,7 +72,13 @@ git tag desktop-v0.1.0
 git push origin desktop-v0.1.0
 ```
 
-在 **macOS** / **Windows** runner 上各打一份 **未签名** 安装包（`.dmg`/`.zip`、NSIS/portable），并写入 **Draft** Release **Basis desktop-v0.1.0 (Desktop)**。在 [Releases](https://github.com/coldbuffer/basis/releases) 列表点 **Desktop** 草稿（不要和 **Docker** 草稿搞混；Docker 无安装包附件）。Apple Silicon 用 `Basis-*-darwin-arm64.dmg`。验证后点 **Publish release**。
+在 **macOS** / **Windows** runner 上各打一份 **未签名** 安装包（`.dmg`/`.zip`、NSIS/portable），并写入 **Draft** Release **Basis desktop-v0.1.0 (Desktop)**。在 [Releases](https://github.com/coldbuffer/basis/releases) 列表点 **Basis desktop-v0.1.0 (Desktop)** 草稿（**不要**点 Docker 草稿——那边没有安装包）。若 `/releases/tag/desktop-v0.1.0` 空白，从列表进或执行：
+
+```bash
+gh release download desktop-v0.1.0 -p 'Basis-*-darwin-arm64.dmg' -D ~/Downloads
+```
+
+Apple Silicon 用 `Basis-*-darwin-arm64.dmg`。验证后点 **Publish release**。
 
 **Not yet:** 签名 / notarize、Authenticode、Linux AppImage/deb。
 
