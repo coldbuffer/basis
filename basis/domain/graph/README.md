@@ -28,6 +28,6 @@ from basis.domain.graph.reads.read import get_node
 from basis.domain.ontology.hub.catalog import list_ontologies
 ```
 
-Do not reintroduce flat modules at the `graph/` package root — CI runs `scripts/audit-graph-shim-imports.py` to block new compatibility shims in `basis/` and `tests/`.
+Do not reintroduce flat modules at the `graph/` package root — CI runs `scripts/audit/audit-graph-shim-imports.py` to block new compatibility shims in `basis/` and `tests/`.
 
 Private symbols (`_parse_fact`, registry helpers, etc.) must be imported from the subpackage module that defines them.

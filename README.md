@@ -199,7 +199,7 @@ Full list: [.env.example](.env.example).
 **PostgreSQL:** `docker compose -f compose.postgres.yml up -d`, then  
 `BASIS_DATABASE_URL=postgresql://basis:basis@127.0.0.1:5432/basis` (host port **5432**).
 
-**Backups:** `./scripts/backup_basis_data.sh` (SQLite) or `./scripts/backup_basis_postgres.sh` (Postgres).
+**Backups:** `./scripts/ops/backup_basis_data.sh` (SQLite) or `./scripts/ops/backup_basis_postgres.sh` (Postgres).
 
 ## Integration
 
@@ -268,7 +268,16 @@ cd web && npm run typecheck && npm test
 cd web && CI=1 npm run test:e2e   # optional, Playwright + API
 ```
 
-Layout for contributors is `basis/interface`, `application`, `domain`, and `infra`. See [AGENTS.md](AGENTS.md).
+**Pre-push gate (optional, per clone):** run tests before `git push`.
+
+```bash
+./scripts/dev/setup-git-hooks.sh   # once per clone → core.hooksPath=.githooks
+./scripts/dev/pre-push-check.sh    # same checks manually
+```
+
+Emergency bypass: `git push --no-verify` or `BASIS_SKIP_PREPUSH=1 git push`. Full CI still runs on GitHub.
+
+Layout for contributors is `basis/interface`, `application`, `domain`, and `infra`. See [AGENTS.md](AGENTS.md). Script index: [scripts/README.md](scripts/README.md).
 
 **Schema migrations:** Alembic (`alembic.ini`); runtime and CLI use `BASIS_DATABASE_URL` when set. See [basis/infra/tooling/db/README.md](basis/infra/tooling/db/README.md).
 

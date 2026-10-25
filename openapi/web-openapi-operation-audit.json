@@ -13,16 +13,22 @@
       "operationId": "patch_model_api_v1_models__model_id__patch"
     },
     {
-      "file": "web/src/components/admin/models/model-catalog-tab.tsx",
-      "kind": "literal",
-      "path": "/api/v1/models/{model_id}",
-      "operationId": "patch_model_api_v1_models__model_id__patch"
-    },
-    {
-      "file": "web/src/components/admin/models/model-endpoint-form.tsx",
+      "file": "web/src/components/admin/models/model-credentials-form.tsx",
       "kind": "literal",
       "path": "/api/v1/model-providers",
       "operationId": "list_model_providers_api_v1_model_providers_get"
+    },
+    {
+      "file": "web/src/components/admin/models/model-credentials-form.tsx",
+      "kind": "literal",
+      "path": "/api/v1/model-providers/probe",
+      "operationId": "probe_remote_models_api_v1_model_providers_probe_post"
+    },
+    {
+      "file": "web/src/components/admin/models/model-credentials-form.tsx",
+      "kind": "literal",
+      "path": "/api/v1/models/endpoint",
+      "operationId": "upsert_model_endpoint_api_v1_models_endpoint_put"
     },
     {
       "file": "web/src/components/admin/models/model-endpoint-form.tsx",
@@ -33,8 +39,14 @@
     {
       "file": "web/src/components/admin/models/model-endpoint-form.tsx",
       "kind": "literal",
-      "path": "/api/v1/models",
-      "operationId": "list_models_api_v1_models_get"
+      "path": "/api/v1/model-providers",
+      "operationId": "list_model_providers_api_v1_model_providers_get"
+    },
+    {
+      "file": "web/src/components/admin/models/model-endpoint-form.tsx",
+      "kind": "literal",
+      "path": "/api/v1/models/batch",
+      "operationId": "create_models_batch_api_v1_models_batch_post"
     },
     {
       "file": "web/src/components/admin/org-saml-panel.tsx",
@@ -1095,6 +1107,18 @@
     {
       "file": "web/src/lib/openapi/schema-workspaces.d.ts",
       "kind": "literal",
+      "path": "/api/v1/workspaces/{workspace_id}/processing/llm-models",
+      "operationId": "list_processing_llm_models_api_v1_workspaces__workspace_id__processing_llm_models_get"
+    },
+    {
+      "file": "web/src/lib/openapi/schema-workspaces.d.ts",
+      "kind": "literal",
+      "path": "/api/v1/workspaces/{workspace_id}/processing/llm-providers",
+      "operationId": "list_processing_llm_providers_api_v1_workspaces__workspace_id__processing_llm_providers_get"
+    },
+    {
+      "file": "web/src/lib/openapi/schema-workspaces.d.ts",
+      "kind": "literal",
       "path": "/api/v1/workspaces/{workspace_id}/provenance",
       "operationId": "provenance_lineage_api_v1_workspaces__workspace_id__provenance_get"
     },
@@ -1463,6 +1487,18 @@
       "kind": "literal",
       "path": "/api/v1/models",
       "operationId": "list_models_api_v1_models_get"
+    },
+    {
+      "file": "web/src/lib/openapi/schema.d.ts",
+      "kind": "literal",
+      "path": "/api/v1/models/batch",
+      "operationId": "create_models_batch_api_v1_models_batch_post"
+    },
+    {
+      "file": "web/src/lib/openapi/schema.d.ts",
+      "kind": "literal",
+      "path": "/api/v1/models/endpoint",
+      "operationId": "upsert_model_endpoint_api_v1_models_endpoint_put"
     },
     {
       "file": "web/src/lib/openapi/schema.d.ts",
@@ -2315,6 +2351,18 @@
       "kind": "dynamic",
       "path": "/api/v1/workspaces/{workspace_id}/processing/jobs/{job_id}/retry",
       "operationId": "retry_processing_job_api_v1_workspaces__workspace_id__processing_jobs__job_id__retry_post"
+    },
+    {
+      "file": "web/src/lib/openapi/schema.d.ts",
+      "kind": "literal",
+      "path": "/api/v1/workspaces/{workspace_id}/processing/llm-models",
+      "operationId": "list_processing_llm_models_api_v1_workspaces__workspace_id__processing_llm_models_get"
+    },
+    {
+      "file": "web/src/lib/openapi/schema.d.ts",
+      "kind": "literal",
+      "path": "/api/v1/workspaces/{workspace_id}/processing/llm-providers",
+      "operationId": "list_processing_llm_providers_api_v1_workspaces__workspace_id__processing_llm_providers_get"
     },
     {
       "file": "web/src/lib/openapi/schema.d.ts",

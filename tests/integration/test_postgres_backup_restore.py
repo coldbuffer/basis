@@ -74,7 +74,7 @@ def test_postgres_backup_restore_scripts_preserve_ledger(
         "BASIS_DATA_DIR": str(data_dir),
     }
     subprocess.run(
-        [str(repo_root / "scripts/backup_basis_postgres.sh"), str(backups)],
+        [str(repo_root / "scripts/ops/backup_basis_postgres.sh"), str(backups)],
         env=backup_env,
         check=True,
         cwd=repo_root,
@@ -92,7 +92,7 @@ def test_postgres_backup_restore_scripts_preserve_ledger(
             "BASIS_RESTORE_CONFIRM": "yes",
         }
         restore_cmd = [
-            str(repo_root / "scripts/restore_basis_postgres.sh"),
+            str(repo_root / "scripts/ops/restore_basis_postgres.sh"),
             str(dumps[0]),
         ]
         if blob_archives:

@@ -58,7 +58,7 @@ jobs:
         run: uv sync --extra dev
 
       - name: Regenerate OpenAPI v1 JSON
-        run: uv run python scripts/generate-openapi-v1.py --data-dir /tmp/basis-openapi-gen
+        run: uv run python scripts/openapi/generate-openapi-v1.py --data-dir /tmp/basis-openapi-gen
 
       - name: Fail on OpenAPI drift
         run: git diff --exit-code openapi/
@@ -73,10 +73,10 @@ jobs:
           openapi/basis-v1.json openapi/basis-v1-workspaces.json openapi/basis-v1-platform.json
 
       - name: Web ↔ OpenAPI path audit (S0)
-        run: node scripts/audit-web-openapi-paths.mjs
+        run: node scripts/audit/audit-web-openapi-paths.mjs
 
       - name: Web ↔ operationId audit (S0)
-        run: uv run python scripts/audit-web-operation-ids.py
+        run: uv run python scripts/openapi/audit-web-operation-ids.py
 
   client-types:
     runs-on: ubuntu-latest
@@ -110,29 +110,29 @@ jobs:
         run: uv sync --extra dev
 
       - name: Test file naming (tests/README.md)
-        run: uv run python scripts/audit-test-naming.py
+        run: uv run python scripts/audit/audit-test-naming.py
 
       - name: Layer import contracts (import-linter)
         run: uv run lint-imports --config importlinter.ini
 
       - name: Line 1 import guards (explorer legacy)
         run: |
-          uv run python scripts/audit-semantica-explorer-imports.py
-          uv run python scripts/audit-semantica-explorer-session-imports.py
-          uv run python scripts/audit-semantica-explorer-package-imports.py
-          uv run python scripts/audit-graph-shim-imports.py
-          uv run python scripts/audit-knowledge-connector-imports.py
-          uv run python scripts/audit-knowledge-persistence-stubs.py
-          uv run python scripts/audit-knowledge-persistence-imports.py
-          uv run python scripts/audit-compat-shim-imports.py
-          uv run python scripts/audit-legacy-package-imports.py
-          uv run python scripts/audit-workspace-http-aggregators.py
-          uv run python scripts/audit-http-shared-stubs.py
-          uv run python scripts/audit-http-mount-v1.py
-          uv run python scripts/audit-http-mount-workspace.py
-          uv run python scripts/audit-http-mount-platform.py
-          uv run python scripts/audit-mcp-http-decouple.py
-          uv run python scripts/audit-connector-http-duplication.py
+          uv run python scripts/audit/audit-semantica-explorer-imports.py
+          uv run python scripts/audit/audit-semantica-explorer-session-imports.py
+          uv run python scripts/audit/audit-semantica-explorer-package-imports.py
+          uv run python scripts/audit/audit-graph-shim-imports.py
+          uv run python scripts/audit/audit-knowledge-connector-imports.py
+          uv run python scripts/audit/audit-knowledge-persistence-stubs.py
+          uv run python scripts/audit/audit-knowledge-persistence-imports.py
+          uv run python scripts/audit/audit-compat-shim-imports.py
+          uv run python scripts/audit/audit-legacy-package-imports.py
+          uv run python scripts/audit/audit-workspace-http-aggregators.py
+          uv run python scripts/audit/audit-http-shared-stubs.py
+          uv run python scripts/audit/audit-http-mount-v1.py
+          uv run python scripts/audit/audit-http-mount-workspace.py
+          uv run python scripts/audit/audit-http-mount-platform.py
+          uv run python scripts/audit/audit-mcp-http-decouple.py
+          uv run python scripts/audit/audit-connector-http-duplication.py
 
       - name: Explorer compat session (default BasisGraphSession)
         run: >-

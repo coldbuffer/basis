@@ -755,7 +755,7 @@ Bundle **符合** 当且仅当：
 
 ## 附录 C. GitHub 示例
 
-权威文件：`basis/domain/integration/providers/github.yaml`。构建：`scripts/build_connector_manifests.py`。
+权威文件：`basis/domain/integration/providers/github.yaml`。构建：`scripts/connectors/build_connector_manifests.py`。
 
 ### C.1 完整 Manifest（`connector.yaml`）
 

@@ -8,7 +8,7 @@ from tests.support.repo_root import REPO_ROOT
 def _load_gen():
     spec = importlib.util.spec_from_file_location(
         "generate_openapi_v1",
-        REPO_ROOT / "scripts" / "generate-openapi-v1.py",
+        REPO_ROOT / "scripts" / "openapi" / "generate-openapi-v1.py",
     )
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)

@@ -199,7 +199,7 @@ cd web && npm install && npm run dev
 **PostgreSQL：** `docker compose -f compose.postgres.yml up -d`，  
 `BASIS_DATABASE_URL=postgresql://basis:basis@127.0.0.1:5432/basis`（宿主机端口 **5432**）。
 
-**备份：** `./scripts/backup_basis_data.sh`（SQLite）或 `./scripts/backup_basis_postgres.sh`（Postgres）。
+**备份：** `./scripts/ops/backup_basis_data.sh`（SQLite）或 `./scripts/ops/backup_basis_postgres.sh`（Postgres）。
 
 ## 集成
 

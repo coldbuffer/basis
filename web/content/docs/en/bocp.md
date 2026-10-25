@@ -797,7 +797,7 @@ Not required manifest keys.
 
 ## Appendix C. GitHub example
 
-Informative. Canonical file: `basis/domain/integration/providers/github.yaml`. Regenerate: `scripts/build_connector_manifests.py`.
+Informative. Canonical file: `basis/domain/integration/providers/github.yaml`. Regenerate: `scripts/connectors/build_connector_manifests.py`.
 
 ### C.1 Complete manifest
 

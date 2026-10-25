@@ -15,7 +15,7 @@ Unit tests stay colocated in application code (`web/src/**/*.test.ts`, optional 
 
 Runtime E2E hooks used by the API (`is_playwright_e2e_data_dir`, OAuth stub) remain in `basis/infra/tooling/test_support/` because production HTTP imports them.
 
-Structural audits (`scripts/audit-*.py`) stay in `scripts/`; CI runs them alongside pytest. Contract tests in `contract/` invoke the web/OpenAPI audits where applicable.
+Structural audits live in `scripts/audit/`; CI runs them alongside pytest. Contract tests in `contract/` invoke OpenAPI audits under `scripts/audit/` and `scripts/openapi/`. See [scripts/README.md](../scripts/README.md).
 
 ## Test case planning
 
@@ -33,6 +33,12 @@ Pick the **layer** first (not “one OpenAPI operation = one integration file”
 Inside `integration/`, a file may use `TestClient`, domain helpers, stores, or MCP — whatever matches the behavior under test. Use `@pytest.mark.integration` when a real external DB or service is required (`uv run pytest -q -m integration`).
 
 **Do not** add pytest that reads sibling monorepo trees. Synthesis merge against upstream catalogs is a dev/release workflow; CI asserts **in-repo** manifests (`providers/*.yaml`), generators, `batches/`, and `executors-index.json` only. Use `tmp_path` / monkeypatch for `BASIS_SYNTHESIS_*` path logic, not a checkout on disk.
+
+## Git pre-push hook
+
+Repo hook (opt-in per clone): `./scripts/dev/setup-git-hooks.sh` sets `core.hooksPath` to `.githooks/`.  
+`pre-push` runs `scripts/dev/pre-push-check.sh` (`uv run pytest -q`, then `web` typecheck + unit tests).  
+Skip once: `git push --no-verify` or `BASIS_SKIP_PREPUSH=1`.
 
 ## Commands
 
@@ -66,7 +72,7 @@ Default `uv run pytest -q` uses SQLite for app tests; `@pytest.mark.integration`
 
 ## File naming (enforced)
 
-CI runs `uv run python scripts/audit-test-naming.py`. New files must match:
+CI runs `uv run python scripts/audit/audit-test-naming.py`. New files must match:
 
 | Layer | Pattern | Example |
 |-------|---------|---------|
@@ -80,7 +86,7 @@ CI runs `uv run python scripts/audit-test-naming.py`. New files must match:
 
 Checklist for a **new HTTP surface or behavior**:
 
-1. **Contract** — Does OpenAPI/MCP or a CI audit need updating? → `contract/` or `scripts/audit-*.py` / `openapi/*.json`.
+1. **Contract** — Does OpenAPI/MCP or a CI audit need updating? → `contract/` or `scripts/audit/` / `scripts/openapi/` / `openapi/*.json`.
 2. **Integration** — What BC/domain and behavior name? → new or existing `integration/test_<domain>_<behavior>.py`; prefer extending an existing domain file unless the theme is new.
 3. **Use case** — Does it close a named product journey? → `use_cases/test_uc_<slug>.py` + README row.
 4. **E2E** — Does the console need a primary-route smoke? → `tests/e2e/specs/<feature>.e2e.spec.ts` + e2e README matrix.

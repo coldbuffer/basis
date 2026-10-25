@@ -7,7 +7,7 @@ from pathlib import Path
 
 def test_web_openapi_path_audit_script() -> None:
     root = Path(__file__).resolve().parents[2]
-    script = root / "scripts" / "audit-web-openapi-paths.mjs"
+    script = root / "scripts" / "audit" / "audit-web-openapi-paths.mjs"
     result = subprocess.run(
         ["node", str(script)],
         cwd=root,

@@ -64,7 +64,7 @@ Basis 特有的 REST 扩展（其他 BOCP 宿主忽略）：entity action 上的
 | Provider bundles | `basis/domain/integration/providers/` |
 | Manifest 模式 | `basis/domain/integration/manifest_schema.py` |
 | 目录 | `basis/domain/integration/catalog.py` |
-| 构建随版 bundle | `scripts/build_connector_manifests.py` |
+| 构建随版 bundle | `scripts/connectors/build_connector_manifests.py` |
 
 ---
 
@@ -91,7 +91,7 @@ SQL 集成测试（可选环境）：`tests/test_sql_connector_integration.py`�
 
 ## 已知缺口（资料性）
 
-- 路由变更后请运行 `uv run python scripts/generate-openapi-v1.py` 更新 OpenAPI 快照。
+- 路由变更后请运行 `uv run python scripts/openapi/generate-openapi-v1.py` 更新 OpenAPI 快照。
 
 ---
 

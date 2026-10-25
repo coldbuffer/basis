@@ -64,7 +64,7 @@ Basis-specific REST extensions (ignored by other BOCP hosts): `x-basis-dynamic-s
 | Provider bundles | `basis/domain/integration/providers/` |
 | Manifest schema | `basis/domain/integration/manifest_schema.py` |
 | Catalog | `basis/domain/integration/catalog.py` |
-| Build shipped bundles | `scripts/build_connector_manifests.py` |
+| Build shipped bundles | `scripts/connectors/build_connector_manifests.py` |
 
 ---
 
@@ -91,7 +91,7 @@ SQL integration tests (optional env): `tests/test_sql_connector_integration.py`.
 
 ## Known gaps (informative)
 
-- Regenerate OpenAPI snapshots after route changes: `uv run python scripts/generate-openapi-v1.py`.
+- Regenerate OpenAPI snapshots after route changes: `uv run python scripts/openapi/generate-openapi-v1.py`.
 
 ---
 

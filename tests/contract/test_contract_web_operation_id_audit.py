@@ -8,7 +8,7 @@ from pathlib import Path
 
 def test_web_operation_id_audit_generates() -> None:
     root = Path(__file__).resolve().parents[2]
-    script = root / "scripts" / "audit-web-operation-ids.py"
+    script = root / "scripts" / "openapi" / "audit-web-operation-ids.py"
     result = subprocess.run(
         [sys.executable, str(script)],
         cwd=root,

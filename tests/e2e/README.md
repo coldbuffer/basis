@@ -171,4 +171,4 @@ Routes follow [`web/src/routes/index.tsx`](../../web/src/routes/index.tsx) (`App
 
 Set `BASIS_E2E_GITHUB_TOKEN` (or `BASIS_TEST_GITHUB_TOKEN`) in the environment. Optional `BASIS_E2E_GITHUB_RUN_SYNC=1` for live inbound sync in `connector-mapping-suggest.e2e.spec.ts`.
 
-When adding specs, extend this table and keep naming `*.e2e.spec.ts` (CI: `scripts/audit-test-naming.py`).
+When adding specs, extend this table and keep naming `*.e2e.spec.ts` (CI: `scripts/audit/audit-test-naming.py`).

@@ -115,7 +115,7 @@ npm run build   # when touching build-sensitive code
 From repo root (API):
 
 ```bash
-uv run pytest -q   # layout + naming: [tests/README.md](./tests/README.md); `uv run python scripts/audit-test-naming.py`
+uv run pytest -q   # layout + naming: [tests/README.md](./tests/README.md); `uv run python scripts/audit/audit-test-naming.py`
 ```
 
 Run relevant checks after substantive edits; say if something was not run.
@@ -130,12 +130,12 @@ Run relevant checks after substantive edits; say if something was not run.
 - Layer imports: `uv run lint-imports --config importlinter.ini` — domain ↛ `interface`/`application`; `application` ↛ `interface` (incl. `interface.http`).
 - **HTTP modules** (`basis/interface/http/`): `mount_v1.py` delegates to `platform/mount_platform.py` and `workspace/mount_workspace.py`; platform handlers live under `platform/` (`auth/` + `auth_mount.py`, `settings`, `orgs`, …); workspace root aggregators (`graph.py`, `connectors.py`, …) mount handlers from `workspace/<domain>/`. Cross-cutting code is in `shared/` (deps, middleware, health, OpenAPI serve); root `deps.py` et al. are thin re-exports. `platform_auth.py` is a thin re-export; auth routes mount in `platform/auth_mount.py` (`platform/auth/*`). Do not reintroduce `kb_` or `workspace_` filename prefixes on aggregator filenames.
 - Application core: `basis/application/` (`WorkspaceCoreContext`, `tool_catalog.run`). **MCP tools** (~37 static core tools; minimal graph loop + ledger/rules/mappings/reasoning/jobs in [openapi-v1.md §6.1](./docs/architecture/openapi-v1.md)): handlers in `tool_catalog/catalog.py`; MCP descriptions in `tool_catalog/mcp_metadata.py`, `inputSchema` from BC `schemas.py` via `tool_catalog/run.py` (`description_for_tool` / `input_schema_for_tool`); wire-up + manifest connector tools in `interface/mcp/dispatch.py` and `interface/contract/mcp/`. HTTP OpenAPI is for HTTP clients only (no `x-basis-mcp-tool` on routes). **New static MCP tool:** implement `op_*` in the BC `operations.py`; register `handler` in `tool_catalog/catalog.py`; add `description` in `tool_catalog/mcp_metadata.py`; add Pydantic input (and optional response) in that BC `schemas.py` (`TOOL_INPUT_MODELS`); add HTTP route separately if needed — CI `audit-mcp-http-decouple.py` requires all four key sets to match.
-- OpenAPI: served live from `app.openapi()` via `basis.interface.contract.openapi.v1_export` (`/openapi/v1.json`, `/openapi/v1/workspaces.json`, `/openapi/v1/platform.json`). Handler docstrings → `description`. Snapshots in `openapi/*.json`: `scripts/generate-openapi-v1.py` (CI drift + `web` typegen).
+- OpenAPI: served live from `app.openapi()` via `basis.interface.contract.openapi.v1_export` (`/openapi/v1.json`, `/openapi/v1/workspaces.json`, `/openapi/v1/platform.json`). Handler docstrings → `description`. Snapshots in `openapi/*.json`: `scripts/openapi/generate-openapi-v1.py` (CI drift + `web` typegen).
 - Prefer existing patterns in route handlers and services; follow pytest style under `tests/integration`, `tests/use_cases`, and `tests/contract` (see [tests/README.md](./tests/README.md)).
 
 ## Docs for specific tasks
 
-The **`docs/`** directory is listed in **`.gitignore`** — local working copies only, **not** in the Git repo. Do not `git add` paths under `docs/`. After bulk renames, refresh local docs with `uv run python scripts/apply-docs-workspace-naming.py`. Normative HTTP contract for CI and clients: **`openapi/basis-v1*.json`**, live **`/openapi/v1.json`**, and in-repo READMEs under `basis/`, `web/`, etc.
+The **`docs/`** directory is listed in **`.gitignore`** — local working copies only, **not** in the Git repo. Do not `git add` paths under `docs/`. After bulk renames, refresh local docs with `uv run python scripts/docs/apply-docs-workspace-naming.py`. Normative HTTP contract for CI and clients: **`openapi/basis-v1*.json`**, live **`/openapi/v1.json`**, and in-repo READMEs under `basis/`, `web/`, etc.
 
 | Task | Read |
 |------|------|
@@ -146,7 +146,7 @@ The **`docs/`** directory is listed in **`.gitignore`** — local working copies
 | Feature list / progress | [docs/features.md](./docs/features.md) (F-* spec), [docs/progress.md](./docs/progress.md) (status: §0.1 done, §0.2 API baseline, §3.1 UX / §3.2 e2e gaps) |
 | Connector roadmap (dual-mode → OC → Airbyte) | [docs/connector/ROADMAP.md](./docs/connector/ROADMAP.md); detail under [docs/connector/README.md](./docs/connector/README.md) |
 | Web OpenAPI transport | `web/src/lib/openapi/` (`transport.ts` + generated `schema.d.ts`); app helpers in `web/src/lib/openapi/client.ts` |
-| Web ↔ operationId audit | [openapi/web-openapi-operation-audit.md](./openapi/web-openapi-operation-audit.md) — `scripts/audit-web-operation-ids.py` |
+| Web ↔ operationId audit | [openapi/web-openapi-operation-audit.md](./openapi/web-openapi-operation-audit.md) — `scripts/openapi/audit-web-operation-ids.py` |
 | HTTP in web | Typed: `lib/openapi/client.ts` (`openApi*` / `workspaceOpenApi*` / `publicOpenApi*`); stream/multipart: `lib/session/basis-session-fetch.ts`; paths: `lib/workspace/api-path.ts`, `lib/nav/nav-config.ts` (`workspacePath`), `lib/openapi/api-v1-path.ts`; E2E `tests/e2e/api-v1-path.ts` (`e2eWorkspaceApiPath`) |
 
 **Naming:** Normative HTTP = **live export** at `/openapi/v1.json` (same as `app.openapi()` + Basis annotations); committed snapshots in **`openapi/basis-v1.json`**. `basis/application/` = server operations (OpenAPI + MCP call this). **semantica** = in-process runtime. **Application HTTP client** = web `lib/openapi/` transport (OpenAPI-generated types; not a published SDK). Server exposes **only OpenAPI + MCP** to clients.
