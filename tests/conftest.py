@@ -6,7 +6,9 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.engine import make_url
 
 from basis.domain.knowledge.schedulers.version_ingest_tasks import wait_for_background_ingest
+from basis.domain.tenancy.admin.store import AdminStore
 from basis.infra.runtime.database import reset_sqlite_database_pool
+from tests.support.llm_extract_test_support import TEST_CHAT_LLM, graph_builder_stub_build
 from tests.support.test_config import apply_test_config
 from tests.support.postgres import (
     create_postgres_database,
@@ -26,6 +28,48 @@ def _isolate_sqlite_pool() -> None:
     yield
     wait_for_background_ingest()
     reset_sqlite_database_pool()
+
+
+@pytest.fixture(autouse=True)
+def _test_chat_llm_settings(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(AdminStore, "get_chat_llm_settings", lambda self: dict(TEST_CHAT_LLM))
+
+    def _for_entry(self: AdminStore, entry_id: str) -> dict[str, str | None]:
+        return {
+            **TEST_CHAT_LLM,
+            "id": entry_id,
+            "provider": "",
+        }
+
+    monkeypatch.setattr(AdminStore, "get_chat_llm_settings_for_entry", _for_entry)
+
+
+@pytest.fixture(autouse=True)
+def _stub_llm_graph_builder_build(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Avoid live LLM calls when jobs use ner/relation method ``llm``."""
+    try:
+        from semantica.kg import GraphBuilder
+    except ImportError:
+        return
+
+    _orig = GraphBuilder.build
+
+    def _stub_build(
+        self,
+        sources,
+        second_arg=None,
+        pipeline_id=None,
+        **options,
+    ):
+        return graph_builder_stub_build(
+            lambda s, sa=None, pid=None, **kw: _orig(self, s, sa, pipeline_id=pid, **kw),
+            sources,
+            second_arg,
+            pipeline_id,
+            **options,
+        )
+
+    monkeypatch.setattr(GraphBuilder, "build", _stub_build)
 
 
 @pytest.fixture

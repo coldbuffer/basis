@@ -149,6 +149,14 @@ def create_app(app_settings: Settings | None = None) -> FastAPI:
     # Compatibility alias for integrations that still inspect app.state.
     app.state.sqlite_db = app.state.database
     app.state.store = AdminStore(app.state.database)
+    if is_playwright_e2e_data_dir(app_settings.data_dir):
+        from basis.infra.tooling.test_support.playwright_llm_extract import (
+            ensure_playwright_e2e_chat_llm,
+            install_playwright_e2e_graph_builder_stub,
+        )
+
+        ensure_playwright_e2e_chat_llm(app.state.store)
+        install_playwright_e2e_graph_builder_stub()
     if app_settings.is_desktop:
         from basis.domain.tenancy.identity.desktop_principal import ensure_desktop_principal
 

@@ -616,6 +616,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/models/batch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create Models Batch
+         * @description Create Models (batch). Add multiple model IDs for one provider endpoint. Requires session JWT (`sessionAuth`).
+         */
+        post: operations["create_models_batch_api_v1_models_batch_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/models/endpoint": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Upsert Model Endpoint
+         * @description Upsert Model Endpoint. Platform LLM/embed API credentials (model id chosen per feature). Requires session JWT (`sessionAuth`).
+         */
+        put: operations["upsert_model_endpoint_api_v1_models_endpoint_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/models/{model_id}": {
         parameters: {
             query?: never;
@@ -3582,6 +3622,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{workspace_id}/processing/llm-models": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Processing Llm Models
+         * @description List Processing Llm Models. Remote Chat models for a configured provider. Requires workspace membership (session) or workspace API token with read/write scope. All paths are scoped to `{workspace_id}`.
+         */
+        get: operations["list_processing_llm_models_api_v1_workspaces__workspace_id__processing_llm_models_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspace_id}/processing/llm-providers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Processing Llm Providers
+         * @description List Processing Llm Providers. Configured Chat endpoints for document extract. Requires workspace membership (session) or workspace API token with read/write scope. All paths are scoped to `{workspace_id}`.
+         */
+        get: operations["list_processing_llm_providers_api_v1_workspaces__workspace_id__processing_llm_providers_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{workspace_id}/provenance": {
         parameters: {
             query?: never;
@@ -4632,6 +4712,31 @@ export interface components {
              */
             enabled: boolean;
         };
+        /** CreateModelsBatchRequest */
+        CreateModelsBatchRequest: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "llm" | "embed";
+            /**
+             * Provider
+             * @default
+             */
+            provider: string;
+            /**
+             * Api Base
+             * @default
+             */
+            api_base: string;
+            /** Models */
+            models: string[];
+            /**
+             * Api Key
+             * @default
+             */
+            api_key: string;
+        };
         /** CreateReasoningRuleRequest */
         CreateReasoningRuleRequest: {
             /** Name */
@@ -5499,12 +5604,12 @@ export interface components {
             extract: boolean;
             /**
              * Ner Method
-             * @default pattern
+             * @default llm
              */
             ner_method: string;
             /**
              * Relation Method
-             * @default pattern
+             * @default llm
              */
             relation_method: string;
             /**
@@ -5514,6 +5619,10 @@ export interface components {
             extract_relations: boolean;
             /** Ner Model */
             ner_model?: string | null;
+            /** Llm Model */
+            llm_model?: string | null;
+            /** Llm Endpoint Id */
+            llm_endpoint_id?: string | null;
             /** Idempotency Key */
             idempotency_key?: string | null;
         };
@@ -5690,6 +5799,29 @@ export interface components {
             action_policy?: {
                 [key: string]: unknown;
             };
+        };
+        /** UpsertModelEndpointRequest */
+        UpsertModelEndpointRequest: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "llm" | "embed";
+            /**
+             * Provider
+             * @default
+             */
+            provider: string;
+            /**
+             * Api Base
+             * @default
+             */
+            api_base: string;
+            /**
+             * Api Key
+             * @default
+             */
+            api_key: string;
         };
         /** UpsertOAuthConfigRequest */
         UpsertOAuthConfigRequest: {
@@ -6797,6 +6929,80 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["CreateModelRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_models_batch_api_v1_models_batch_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateModelsBatchRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upsert_model_endpoint_api_v1_models_endpoint_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpsertModelEndpointRequest"];
             };
         };
         responses: {
@@ -12871,6 +13077,78 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_processing_llm_models_api_v1_workspaces__workspace_id__processing_llm_models_get: {
+        parameters: {
+            query?: {
+                provider_id?: string | null;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                workspace_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_processing_llm_providers_api_v1_workspaces__workspace_id__processing_llm_providers_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                workspace_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Validation Error */
