@@ -4856,6 +4856,34 @@
             "type": "object",
             "title": "Modified Properties"
           },
+          "added_individuals": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Added Individuals"
+          },
+          "removed_individuals": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Removed Individuals"
+          },
+          "added_edges": {
+            "items": {
+              "$ref": "#/components/schemas/OntologyEdgeChange"
+            },
+            "type": "array",
+            "title": "Added Edges"
+          },
+          "removed_edges": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Removed Edges"
+          },
           "added_restrictions": {
             "items": {
               "additionalProperties": true,
@@ -5247,10 +5275,42 @@
             "minimum": 0.0,
             "title": "Governor Confidence Min",
             "default": 0.75
+          },
+          "governance_ontology_uri": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Governance Ontology Uri",
+            "description": "Ontology URI for Hub SHACL during conflict scans (empty clears)."
           }
         },
         "type": "object",
         "title": "GovernanceConfigRequest"
+      },
+      "GovernanceShaclRequest": {
+        "properties": {
+          "ontology_uri": {
+            "type": "string",
+            "title": "Ontology Uri",
+            "description": "Ontology URI these shapes apply to (also sets scan URI)."
+          },
+          "shacl_turtle": {
+            "type": "string",
+            "title": "Shacl Turtle",
+            "description": "Persisted SHACL Turtle for governance scans (empty clears saved shapes).",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "ontology_uri"
+        ],
+        "title": "GovernanceShaclRequest"
       },
       "GovernorRunRequest": {
         "properties": {
@@ -5281,6 +5341,30 @@
             ],
             "title": "Dedup Threshold",
             "description": "Graph semantic dedup similarity threshold (default 0.8)."
+          },
+          "include_shacl": {
+            "type": "boolean",
+            "title": "Include Shacl",
+            "description": "Run SHACL violation scan (mapped ledger facts).",
+            "default": true
+          },
+          "include_low_confidence": {
+            "type": "boolean",
+            "title": "Include Low Confidence",
+            "description": "Enqueue active statements below confidence_min.",
+            "default": true
+          },
+          "include_entity_label_clusters": {
+            "type": "boolean",
+            "title": "Include Entity Label Clusters",
+            "description": "Enqueue ledger entities sharing the same canonical label.",
+            "default": true
+          },
+          "include_graph_dedup": {
+            "type": "boolean",
+            "title": "Include Graph Dedup",
+            "description": "Enqueue graph semantic duplicate pairs (requires graph runtime).",
+            "default": true
           }
         },
         "type": "object",
@@ -5731,6 +5815,40 @@
         "type": "object",
         "title": "OAuthCreds"
       },
+      "OntologyEdgeChange": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "target": {
+            "type": "string",
+            "title": "Target"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source",
+          "target",
+          "type"
+        ],
+        "title": "OntologyEdgeChange"
+      },
       "OrgOidcUpsert": {
         "properties": {
           "issuer": {
@@ -6171,6 +6289,30 @@
             ],
             "title": "Inferred Edge Type",
             "description": "Optional edge type label when apply_to_graph is true."
+          },
+          "chunk_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chunk Id",
+            "description": "Optional ledger chunk id to cite on inferred edges when apply_to_graph is true."
+          },
+          "quote": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quote",
+            "description": "Optional quote override for chunk_id evidence."
           }
         },
         "type": "object",
@@ -6271,6 +6413,18 @@
               }
             ],
             "title": "Projection"
+          },
+          "evidence": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence"
           }
         },
         "additionalProperties": true,
@@ -6308,6 +6462,30 @@
             "maxLength": 8000,
             "minLength": 1,
             "title": "Content"
+          },
+          "chunk_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chunk Id",
+            "description": "Optional ledger chunk to cite as evidence for this proposal."
+          },
+          "quote": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quote",
+            "description": "Optional quote override when chunk_id is set."
           }
         },
         "type": "object",
@@ -6342,18 +6520,6 @@
               }
             ],
             "title": "Rationale"
-          },
-          "keeper_statement_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Keeper Statement Id",
-            "description": "For `statement_conflict` approve: keep this statement and invalidate siblings (F-RUL-04)."
           },
           "primary_id": {
             "anyOf": [

@@ -13,7 +13,6 @@ export default {
     severity_info: "信息",
     kind_labels: {
       "governance.proposal_proposed": "本体提案",
-      "governance.statement_conflict": "陈述冲突",
       "processing.failed": "处理失败",
       "governance.tripped": "治理规则",
       sync_failed: "采集同步失败"
@@ -21,7 +20,7 @@ export default {
     kind_llm_fallback: "LLM（{code}）",
     view_proposal: "查看提案",
     view_sources: "打开资料源",
-    view_review: "打开审核队列",
+    view_review: "打开智能审查",
     view_decisions: "打开决策记录",
     view_settings: "打开工作区设置",
     view_processing_job: "打开处理任务",

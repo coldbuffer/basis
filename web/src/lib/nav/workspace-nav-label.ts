@@ -14,14 +14,8 @@ export function workspaceNavMenuLabel(t: LocaleMessages, labelKey: SidebarMenuKe
       return t.processing.menu.processing;
     case 'entities':
       return t.entities.menu.entities;
-    case 'connectorCatalog':
-      return t.connectors.menu.connector_catalog;
-    case 'connectorStreamMappings':
-      return t.connectors.menu.connector_stream_mappings;
-    case 'connectorActionPolicy':
-      return t.connectors.menu.connector_action_policy;
-    case 'connectorRunLogs':
-      return t.connectors.menu.connector_run_logs;
+    case 'connectionsSync':
+      return t.connectors.menu.connections_sync;
     case 'ontology':
       return t.ontology.menu.ontology;
     case 'analyze':
@@ -32,10 +26,10 @@ export function workspaceNavMenuLabel(t: LocaleMessages, labelKey: SidebarMenuKe
       return t.mappings.menu.mappings;
     case 'review':
       return t.review.menu.review;
-    case 'entityResolution':
-      return t.entity_resolution.menu.entity_resolution;
-    case 'decisions':
-      return t.decisions.menu.decisions;
+    case 'dataQuality':
+      return t.data_quality.menu.data_quality;
+    case 'activityLog':
+      return t.activity_log.menu.activity_log;
     case 'lineage':
       return t.lineage.menu.lineage;
     case 'graphDiff':

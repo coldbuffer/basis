@@ -10,7 +10,6 @@ from basis.domain.knowledge.governance_config import (
     GovernanceConfig,
 )
 
-
 def fetch_governance_config_row(conn: Any, workspace_id: str) -> Any:
     return conn.execute(
         "SELECT * FROM governance_configs WHERE workspace_id = ?", (workspace_id,)
@@ -38,6 +37,24 @@ def insert_default_governance_config(
     )
 
 
+def _optional_text_column(row: Any, column: str) -> str | None:
+    try:
+        keys = row.keys() if hasattr(row, "keys") else ()
+        if column not in keys:
+            return None
+        raw = row[column]
+    except (KeyError, IndexError, TypeError):
+        return None
+    if raw is None:
+        return None
+    text = str(raw).strip()
+    return text or None
+
+
+def _optional_ontology_uri(row: Any) -> str | None:
+    return _optional_text_column(row, "governance_ontology_uri")
+
+
 def governance_config_from_row(row: Any) -> GovernanceConfig:
     return GovernanceConfig(
         workspace_id=row["workspace_id"],
@@ -46,6 +63,11 @@ def governance_config_from_row(row: Any) -> GovernanceConfig:
         governor_interval_minutes=int(row["governor_interval_minutes"]),
         governor_confidence_min=float(row["governor_confidence_min"]),
         governor_last_run_at=row["governor_last_run_at"],
+        governance_ontology_uri=_optional_ontology_uri(row),
+        governance_shacl_turtle=_optional_text_column(row, "governance_shacl_turtle"),
+        entity_type_surface_phrases_json=_optional_text_column(
+            row, "entity_type_surface_phrases_json"
+        ),
     )
 
 
@@ -61,12 +83,17 @@ def upsert_governance_config(
         INSERT INTO governance_configs (
             workspace_id, schema_version, governor_enabled,
             governor_interval_minutes, governor_confidence_min,
-            governor_last_run_at, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            governor_last_run_at, governance_ontology_uri,
+            governance_shacl_turtle, entity_type_surface_phrases_json,
+            created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(workspace_id) DO UPDATE SET
             governor_enabled = excluded.governor_enabled,
             governor_interval_minutes = excluded.governor_interval_minutes,
             governor_confidence_min = excluded.governor_confidence_min,
+            governance_ontology_uri = excluded.governance_ontology_uri,
+            governance_shacl_turtle = excluded.governance_shacl_turtle,
+            entity_type_surface_phrases_json = excluded.entity_type_surface_phrases_json,
             updated_at = excluded.updated_at
         """,
         (
@@ -76,6 +103,9 @@ def upsert_governance_config(
             config.governor_interval_minutes,
             config.governor_confidence_min,
             config.governor_last_run_at,
+            config.governance_ontology_uri,
+            config.governance_shacl_turtle,
+            config.entity_type_surface_phrases_json,
             created_at,
             updated_at,
         ),

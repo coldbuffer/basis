@@ -7,8 +7,8 @@ import {
   parseWsJson,
   throwIfWsNotOk,
 } from '@/lib/workspace/ws-api-error';
-import { workspaceFetch } from '@/lib/workspace/ws-http';
-import { ontologyPath, useOntologyWorkspaceId } from "./ontology-workspace-context";
+import { workspaceOpenApiResponse } from '@/lib/openapi/client.js';
+import { ontologyApiSuffix, useOntologyWorkspaceId } from "./ontology-workspace-context";
 import { OntologyLoader } from "./ontology-loader";
 import { OntologySearch } from "./ontology-search";
 import { SKOSVocabularyManager } from "./skos-vocabulary-manager";
@@ -299,12 +299,11 @@ export function OntologyManager({
     setLoading(true);
     setActionMsg(null);
     try {
-      const params = new URLSearchParams();
-      if (searchQ) params.set("q", searchQ);
       const { data, partialWarning } = await wsGetJson<OntologyEntry[]>(
-        ontologyPath(workspaceId, "registry", params.toString()),
-        undefined,
+        workspaceId,
+        ontologyApiSuffix("registry"),
         {
+          query: searchQ ? { q: searchQ } : undefined,
           fallbackMessage: m.api.load_registry_failed,
           partialWarning: m.api.partial_registry,
           locale: locale as Locale,
@@ -324,12 +323,11 @@ export function OntologyManager({
     let ignore = false;
     async function fetchInitial() {
       try {
-        const params = new URLSearchParams();
-        if (searchQ) params.set("q", searchQ);
         const { data, partialWarning } = await wsGetJson<OntologyEntry[]>(
-          ontologyPath(workspaceId, "registry", params.toString()),
-          undefined,
+          workspaceId,
+          ontologyApiSuffix("registry"),
           {
+            query: searchQ ? { q: searchQ } : undefined,
             fallbackMessage: m.api.load_registry_failed,
             partialWarning: m.api.partial_registry,
             locale: locale as Locale,
@@ -353,9 +351,11 @@ export function OntologyManager({
 
   const handleToggle = useCallback(async (uri: string) => {
     try {
-      const res = await workspaceFetch(ontologyPath(workspaceId, `${encodeURIComponent(uri)}/toggle`), {
-        method: "PATCH",
-      });
+      const res = await workspaceOpenApiResponse(
+        'PATCH',
+        workspaceId,
+        ontologyApiSuffix(`${encodeURIComponent(uri)}/toggle`),
+      );
       const data = await parseWsJson<{ enabled: boolean }>(res, m.api.toggle_failed);
       setEntries((prev) =>
         prev.map((e) => (e.uri === uri ? { ...e, enabled: data.enabled } : e))
@@ -367,9 +367,11 @@ export function OntologyManager({
 
   const handleRefresh = useCallback(async (uri: string) => {
     try {
-      const res = await workspaceFetch(ontologyPath(workspaceId, `${encodeURIComponent(uri)}/refresh`), {
-        method: "POST",
-      });
+      const res = await workspaceOpenApiResponse(
+        'POST',
+        workspaceId,
+        ontologyApiSuffix(`${encodeURIComponent(uri)}/refresh`),
+      );
       const partial = await wsMutationResult(
         res,
         m.api.refresh_failed,
@@ -386,9 +388,11 @@ export function OntologyManager({
 
   const handleRemove = useCallback(async (uri: string) => {
     try {
-      const res = await workspaceFetch(ontologyPath(workspaceId, encodeURIComponent(uri)), {
-        method: "DELETE",
-      });
+      const res = await workspaceOpenApiResponse(
+        'DELETE',
+        workspaceId,
+        ontologyApiSuffix(encodeURIComponent(uri)),
+      );
       await throwIfWsNotOk(res, m.api.remove_failed);
       setEntries((prev) => prev.filter((e) => e.uri !== uri));
       if (selectedEntry?.uri === uri) setSelectedEntry(null);

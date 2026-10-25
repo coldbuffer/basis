@@ -1,6 +1,6 @@
 import { PublicIcon } from "@/components/app/shared/primitives/public-icon.js";
-import { useCallback, useEffect, useState } from "react";
-import { workspaceFetch } from '@/lib/workspace/ws-http';
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import {
   ReactFlow,
   Background,
@@ -19,8 +19,24 @@ import {
   wsApiErrorMessage,
   parseWsJson,
 } from '@/lib/workspace/ws-api-error';
-import { loadOntologyEntityOwner, loadOntologyGraph, loadOntologyRegistry } from '../lib/api.js';
-import { ontologyPath, useOntologyWorkspaceId } from "./ontology-workspace-context";
+import {
+  loadOntologyEntityOwner,
+  loadOntologyGraph,
+  loadOntologyRegistry,
+  saveOntologyDraft,
+  submitOntologyProposal,
+} from '../lib/api.js';
+import {
+  allocateOntologyEntityUri,
+  createEmptyOntologyEditorDraft,
+  edgeChangeKey,
+  ontologyEntityNamespace,
+  type OntologyEditorDraftDiff,
+  type OntologyEdgeChange,
+} from '../lib/ontology-editor-draft.js';
+import { OntologyEditorDraftPanel } from './ontology-editor-draft-panel.js';
+import { OntologyEditorPropertyDialog } from './ontology-editor-property-dialog.js';
+import { useOntologyWorkspaceId } from "./ontology-workspace-context";
 import type { OntologyGraphEdge, OntologyGraphNode } from '../lib/api.js';
 import {
   isEditableEntityType,
@@ -116,20 +132,6 @@ const canvasMessageClassName =
 
 const contextItemClassName =
   `flex w-full cursor-pointer items-center gap-2.5 px-4 py-2 text-left text-sm text-foreground ${exWsListRowHoverPrimary}`;
-
-interface DraftDiff {
-  added_classes: string[];
-  removed_classes: string[];
-  modified_classes: Record<string, Record<string, any>>;
-  added_properties: string[];
-  removed_properties: string[];
-  modified_properties: Record<string, Record<string, any>>;
-  added_restrictions: Record<string, any>[];
-  removed_restrictions: Record<string, any>[];
-  added_axioms: Record<string, any>[];
-  removed_axioms: Record<string, any>[];
-  annotation_changes: Record<string, Record<string, any>>;
-}
 
 function requestedEntityUri(): string {
   return readOntologyUrlState().entityUri || "";
@@ -253,6 +255,25 @@ function buildEditorElements(
   return { nodes, edges };
 }
 
+function classNodeIds(nodes: OntologyNode[]): string[] {
+  return nodes.filter((node) => node.data.entityType === "class").map((node) => node.id);
+}
+
+function isNamedIndividualNode(node: OntologyNode): boolean {
+  return node.data.type === "owl:NamedIndividual";
+}
+
+function uniqueEntityUri(namespaceStem: string, localName: string, taken: Set<string>): string {
+  let candidate = allocateOntologyEntityUri(namespaceStem, localName);
+  let suffix = 2;
+  while (taken.has(candidate)) {
+    candidate = allocateOntologyEntityUri(namespaceStem, `${localName}_${suffix}`);
+    suffix += 1;
+  }
+  taken.add(candidate);
+  return candidate;
+}
+
 export function OntologyEditor() {
   const { t, locale } = useI18n();
   const e = t.ontology.hub.editor;
@@ -267,21 +288,25 @@ export function OntologyEditor() {
   const [isLoadingGraph, setIsLoadingGraph] = useState(false);
   const [graphError, setGraphError] = useState("");
   const [unownedEntity, setUnownedEntity] = useState("");
-  const [draftDiff, setDraftDiff] = useState<DraftDiff>({
-    added_classes: [],
-    removed_classes: [],
-    modified_classes: {},
-    added_properties: [],
-    removed_properties: [],
-    modified_properties: {},
-    added_restrictions: [],
-    removed_restrictions: [],
-    added_axioms: [],
-    removed_axioms: [],
-    annotation_changes: {},
-  });
+  const [draftDiff, setDraftDiff] = useState<OntologyEditorDraftDiff>(() =>
+    createEmptyOntologyEditorDraft(),
+  );
   const [isSaving, setIsSaving] = useState(false);
   const [showContext, setShowContext] = useState<{ x: number; y: number; type: string; element: OntologyNode | OntologyEdge } | null>(null);
+  const [propertyDialogOpen, setPropertyDialogOpen] = useState(false);
+  const [propertyDomainUri, setPropertyDomainUri] = useState("");
+  const [propertyRangeUri, setPropertyRangeUri] = useState("");
+
+  const classOptions = useMemo(
+    () =>
+      nodes
+        .filter((node) => node.data.entityType === "class")
+        .map((node) => ({
+          id: node.id,
+          label: String(node.data.label ?? node.id),
+        })),
+    [nodes],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -350,6 +375,10 @@ export function OntologyEditor() {
   }, [workspaceId, locale, ontologyUri, setEdges, setNodes]);
 
   useEffect(() => {
+    setDraftDiff(createEmptyOntologyEditorDraft());
+  }, [ontologyUri]);
+
+  useEffect(() => {
     if (!flowInstance || nodes.length === 0) return;
     const frame = window.requestAnimationFrame(() => {
       void flowInstance.fitView({ padding: 0.22, duration: 320, maxZoom: 1.25 });
@@ -357,15 +386,53 @@ export function OntologyEditor() {
     return () => window.cancelAnimationFrame(frame);
   }, [flowInstance, hasDetailPanel, nodes.length, ontologyUri]);
 
+  const takenEntityUris = useCallback(() => {
+    const taken = new Set<string>(nodes.map((node) => node.id));
+    draftDiff.added_classes.forEach((uri) => taken.add(uri));
+    draftDiff.added_properties.forEach((uri) => taken.add(uri));
+    draftDiff.added_individuals.forEach((uri) => taken.add(uri));
+    return taken;
+  }, [nodes, draftDiff.added_classes, draftDiff.added_individuals, draftDiff.added_properties]);
+
   const onConnect = useCallback(
-    (params: Connection) => setEdges((eds) => addEdge({ ...params, markerEnd: { type: MarkerType.ArrowClosed } }, eds)),
-    [setEdges]
+    (params: Connection) => {
+      if (!params.source || !params.target) return;
+      const sourceNode = nodes.find((node) => node.id === params.source);
+      const targetNode = nodes.find((node) => node.id === params.target);
+      const subclassLabel = ontologyOwlTypeLabel(locale as Locale, "rdfs:subClassOf");
+      setEdges((eds) =>
+        addEdge(
+          {
+            ...params,
+            label: subclassLabel,
+            markerEnd: { type: MarkerType.ArrowClosed },
+            style: { stroke: "var(--border)", strokeWidth: 1.5 },
+          },
+          eds,
+        ),
+      );
+      if (sourceNode?.data.entityType === "class" && targetNode?.data.entityType === "class") {
+        setDraftDiff((prev) => ({
+          ...prev,
+          added_axioms: [
+            ...prev.added_axioms,
+            { type: "subClassOf", subject: params.source!, object: params.target! },
+          ],
+        }));
+      }
+    },
+    [locale, nodes, setEdges],
   );
 
   const addClass = useCallback(() => {
-    const newId = `class_${Date.now()}`;
+    if (!ontologyUri) {
+      alert(e.select_ontology_first);
+      return;
+    }
+    const namespaceStem = ontologyEntityNamespace(ontologyUri);
+    const classUri = uniqueEntityUri(namespaceStem, e.new_class_label, takenEntityUris());
     const newNode: OntologyNode = {
-      id: newId,
+      id: classUri,
       type: "classNode",
       position: { x: Math.random() * 400, y: Math.random() * 300 },
       data: {
@@ -378,35 +445,88 @@ export function OntologyEditor() {
     setNodes((nds) => [...nds, newNode]);
     setDraftDiff((prev) => ({
       ...prev,
-      added_classes: [...prev.added_classes, newId],
+      added_classes: [...prev.added_classes, classUri],
     }));
-  }, [e.new_class_label, setNodes]);
+  }, [e.new_class_label, e.select_ontology_first, locale, ontologyUri, setNodes, takenEntityUris]);
+
+  const commitNewProperty = useCallback(
+    (domainUri: string, rangeUri: string) => {
+      if (!ontologyUri || !domainUri || !rangeUri || domainUri === rangeUri) return;
+      const namespaceStem = ontologyEntityNamespace(ontologyUri);
+      const propUri = uniqueEntityUri(namespaceStem, e.default_property_label, takenEntityUris());
+      const domainEdgeId = `${propUri}|rdfs:domain|${domainUri}`;
+      const rangeEdgeId = `${propUri}|rdfs:range|${rangeUri}`;
+      const domainLabel = ontologyOwlTypeLabel(locale as Locale, "domain");
+      const rangeLabel = ontologyOwlTypeLabel(locale as Locale, "range");
+      const newNode: OntologyNode = {
+        id: propUri,
+        type: "classNode",
+        position: { x: Math.random() * 400, y: Math.random() * 300 },
+        data: {
+          label: e.default_property_label,
+          type: "owl:ObjectProperty",
+          typeDisplay: ontologyOwlTypeLabel(locale as Locale, "owl:ObjectProperty"),
+          entityType: "property",
+        },
+      };
+      const domainEdge: OntologyEdge = {
+        id: domainEdgeId,
+        source: propUri,
+        target: domainUri,
+        label: domainLabel,
+        type: "default",
+        markerEnd: { type: MarkerType.ArrowClosed },
+        style: { stroke: "var(--border)", strokeWidth: 1.5 },
+      };
+      const rangeEdge: OntologyEdge = {
+        id: rangeEdgeId,
+        source: propUri,
+        target: rangeUri,
+        label: rangeLabel,
+        type: "default",
+        markerEnd: { type: MarkerType.ArrowClosed },
+        style: { stroke: "var(--border)", strokeWidth: 1.5 },
+      };
+      const edgeChanges: OntologyEdgeChange[] = [
+        { id: domainEdgeId, source: propUri, target: domainUri, type: "rdfs:domain" },
+        { id: rangeEdgeId, source: propUri, target: rangeUri, type: "rdfs:range" },
+      ];
+      setNodes((nds) => [...nds, newNode]);
+      setEdges((eds) => [...eds, domainEdge, rangeEdge]);
+      setDraftDiff((prev) => ({
+        ...prev,
+        added_properties: [...prev.added_properties, propUri],
+        added_edges: [...prev.added_edges, ...edgeChanges],
+      }));
+      setPropertyDialogOpen(false);
+    },
+    [e.default_property_label, locale, ontologyUri, setEdges, setNodes, takenEntityUris],
+  );
 
   const addProperty = useCallback(() => {
-    if (nodes.length < 2) {
-      alert(e.need_two_classes);
+    if (!ontologyUri) {
+      alert(e.select_ontology_first);
       return;
     }
-    const newId = `prop_${Date.now()}`;
-    const newEdge: OntologyEdge = {
-      id: newId,
-      source: nodes[0].id,
-      target: nodes[1].id,
-      label: e.default_property_label,
-      type: "smoothstep",
-      animated: true,
-    };
-    setEdges((eds) => [...eds, newEdge]);
-    setDraftDiff((prev) => ({
-      ...prev,
-      added_properties: [...prev.added_properties, newId],
-    }));
-  }, [e.default_property_label, e.need_two_classes, nodes, setEdges]);
+    const classes = classNodeIds(nodes);
+    if (classes.length < 2) {
+      alert(e.select_two_classes);
+      return;
+    }
+    setPropertyDomainUri(classes[0]);
+    setPropertyRangeUri(classes[1]);
+    setPropertyDialogOpen(true);
+  }, [e.select_ontology_first, e.select_two_classes, nodes, ontologyUri]);
 
   const addIndividual = useCallback(() => {
-    const newId = `ind_${Date.now()}`;
+    if (!ontologyUri) {
+      alert(e.select_ontology_first);
+      return;
+    }
+    const namespaceStem = ontologyEntityNamespace(ontologyUri);
+    const indUri = uniqueEntityUri(namespaceStem, e.new_individual_label, takenEntityUris());
     const newNode: OntologyNode = {
-      id: newId,
+      id: indUri,
       type: "classNode",
       position: { x: Math.random() * 400, y: Math.random() * 300 },
       data: {
@@ -417,19 +537,30 @@ export function OntologyEditor() {
       },
     };
     setNodes((nds) => [...nds, newNode]);
-  }, [e.new_individual_label, setNodes]);
-
-  const addRestriction = useCallback(() => {
     setDraftDiff((prev) => ({
       ...prev,
-      added_restrictions: [...prev.added_restrictions, { type: "someValuesFrom", value: "" }],
+      added_individuals: [...prev.added_individuals, indUri],
     }));
-  }, []);
+  }, [e.new_individual_label, e.select_ontology_first, locale, ontologyUri, setNodes, takenEntityUris]);
+
+  const addRestriction = useCallback(() => {
+    const defaultClass =
+      selectedElement && !("source" in selectedElement) && selectedElement.data.entityType === "class"
+        ? selectedElement.id
+        : "";
+    setDraftDiff((prev) => ({
+      ...prev,
+      added_restrictions: [
+        ...prev.added_restrictions,
+        { type: "someValuesFrom", class_uri: defaultClass, onProperty: "", filler_class: "" },
+      ],
+    }));
+  }, [selectedElement]);
 
   const addAxiom = useCallback(() => {
     setDraftDiff((prev) => ({
       ...prev,
-      added_axioms: [...prev.added_axioms, { type: "subClassOf", value: "" }],
+      added_axioms: [...prev.added_axioms, { type: "subClassOf", subject: "", object: "" }],
     }));
   }, []);
 
@@ -449,21 +580,22 @@ export function OntologyEditor() {
     }
     setIsSaving(true);
     try {
-      const response = await workspaceFetch(ontologyPath(workspaceId, "draft"), {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ontology_uri: ontologyUri,
-          diff: draftDiff,
-          author: "user",
-          summary: e.draft_summary,
-        }),
+      const saved = await saveOntologyDraft(workspaceId, {
+        ontology_uri: ontologyUri,
+        diff: draftDiff,
+        author: "user",
+        summary: e.draft_summary,
       });
-      const data = await parseWsJson<{ draft_id: string }>(response, e.draft_save_failed);
-      alert(fmt(e.draft_saved, { id: data.draft_id }));
+      const proposed = await submitOntologyProposal(workspaceId, {
+        draft_id: saved.draft_id,
+        ontology_uri: ontologyUri,
+        summary: e.proposal_summary,
+      });
+      toast.success(fmt(e.proposal_submitted, { id: proposed.proposal_id }));
+      setDraftDiff(createEmptyOntologyEditorDraft());
     } catch (error) {
-      console.error(e.draft_save_failed, error);
-      alert(wsApiErrorMessage(error, locale as Locale));
+      console.error(e.proposal_submit_failed, error);
+      toast.error(wsApiErrorMessage(error, locale as Locale));
     } finally {
       setIsSaving(false);
     }
@@ -485,16 +617,71 @@ export function OntologyEditor() {
     const target = showContext?.element ?? selectedElement;
     if (target) {
       if ("source" in target) {
-        setEdges((eds) => eds.filter((e) => e.id !== target.id));
-        setDraftDiff((prev) => ({
-          ...prev,
-          removed_properties: [...prev.removed_properties, target.id],
-        }));
+        const edgeId = target.id;
+        setEdges((eds) => eds.filter((edge) => edge.id !== edgeId));
+        setDraftDiff((prev) => {
+          const addedKey = edgeId ?? edgeChangeKey({
+            source: target.source,
+            target: target.target,
+            type: String(target.label ?? "rdfs:subClassOf"),
+          });
+          const nextAddedEdges = prev.added_edges.filter((edge) => edgeChangeKey(edge) !== addedKey);
+          const wasDraftEdge = nextAddedEdges.length !== prev.added_edges.length;
+          return {
+            ...prev,
+            added_edges: nextAddedEdges,
+            removed_edges: wasDraftEdge || !edgeId
+              ? prev.removed_edges
+              : [...prev.removed_edges, edgeId],
+          };
+        });
+      } else if (isNamedIndividualNode(target)) {
+        const nodeId = target.id;
+        setNodes((nds) => nds.filter((n) => n.id !== nodeId));
+        setDraftDiff((prev) => {
+          const wasAdded = prev.added_individuals.includes(nodeId);
+          return {
+            ...prev,
+            added_individuals: wasAdded
+              ? prev.added_individuals.filter((uri) => uri !== nodeId)
+              : prev.added_individuals,
+            removed_individuals: wasAdded
+              ? prev.removed_individuals
+              : [...prev.removed_individuals, nodeId],
+          };
+        });
       } else if (isEditableEntityType(target.data.entityType)) {
-        setNodes((nds) => nds.filter((n) => n.id !== target.id));
-        setDraftDiff((prev) => target.data.entityType === "property"
-          ? { ...prev, removed_properties: [...prev.removed_properties, target.id] }
-          : { ...prev, removed_classes: [...prev.removed_classes, target.id] });
+        const nodeId = target.id;
+        setNodes((nds) => nds.filter((n) => n.id !== nodeId));
+        setEdges((eds) => eds.filter((edge) => edge.source !== nodeId && edge.target !== nodeId));
+        setDraftDiff((prev) => {
+          if (target.data.entityType === "property") {
+            const wasAdded = prev.added_properties.includes(nodeId);
+            return {
+              ...prev,
+              added_properties: wasAdded
+                ? prev.added_properties.filter((uri) => uri !== nodeId)
+                : prev.added_properties,
+              removed_properties: wasAdded
+                ? prev.removed_properties
+                : [...prev.removed_properties, nodeId],
+              added_edges: prev.added_edges.filter(
+                (edge) => edge.source !== nodeId && edge.target !== nodeId,
+              ),
+            };
+          }
+          const wasAdded = prev.added_classes.includes(nodeId);
+          return {
+            ...prev,
+            added_classes: wasAdded
+              ? prev.added_classes.filter((uri) => uri !== nodeId)
+              : prev.added_classes,
+            removed_classes: wasAdded ? prev.removed_classes : [...prev.removed_classes, nodeId],
+            added_edges: prev.added_edges.filter(
+              (edge) => edge.source !== nodeId && edge.target !== nodeId,
+            ),
+          };
+        });
       }
       setSelectedElement(null);
     }
@@ -531,6 +718,18 @@ export function OntologyEditor() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-background">
+      <OntologyEditorPropertyDialog
+        copy={e}
+        open={propertyDialogOpen}
+        onOpenChange={setPropertyDialogOpen}
+        classOptions={classOptions}
+        domainUri={propertyDomainUri}
+        rangeUri={propertyRangeUri}
+        onDomainChange={setPropertyDomainUri}
+        onRangeChange={setPropertyRangeUri}
+        onConfirm={() => commitNewProperty(propertyDomainUri, propertyRangeUri)}
+        cancelLabel={t.core.common.cancel}
+      />
       <style>{ontologyFlowThemeCss}</style>
       <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border bg-card px-4 py-3">
         <NativeSelect
@@ -556,7 +755,14 @@ export function OntologyEditor() {
           <PublicIcon name="plus-01" size={14} />
           {e.add_class}
         </Button>
-        <Button type="button" size="sm" variant="outline" className="h-8" onClick={addProperty} disabled={nodes.length < 2}>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          className="h-8"
+          onClick={addProperty}
+          disabled={classNodeIds(nodes).length < 2}
+        >
           <PublicIcon name="git-branch-01" size={14} />
           {e.add_property}
         </Button>
@@ -632,7 +838,9 @@ export function OntologyEditor() {
               className="fixed z-[1000] min-w-[180px] rounded-lg border border-border bg-popover py-1 shadow-lg"
               style={{ left: showContext.x, top: showContext.y }}
             >
-              {"source" in showContext.element || isEditableEntityType(showContext.element.data.entityType) ? (
+              {"source" in showContext.element ||
+              isEditableEntityType(showContext.element.data.entityType) ||
+              isNamedIndividualNode(showContext.element) ? (
                 <>
                   {!("source" in showContext.element) && (
                     <Button
@@ -664,8 +872,13 @@ export function OntologyEditor() {
           )}
         </div>
 
-        {selectedElement && (
+        {(selectedElement ||
+          draftDiff.added_axioms.length > 0 ||
+          draftDiff.added_restrictions.length > 0 ||
+          draftDiff.added_edges.length > 0) && (
           <aside className="box-border w-80 min-w-80 shrink-0 overflow-auto border-l border-border bg-card p-5">
+        {selectedElement ? (
+          <>
             <h3 className="mb-4 text-base font-semibold text-foreground">
               {"source" in selectedElement
                 ? e.panel_relationship
@@ -728,6 +941,9 @@ export function OntologyEditor() {
                 </div>
               </>
             )}
+          </>
+        ) : null}
+            <OntologyEditorDraftPanel copy={e} draftDiff={draftDiff} onChange={setDraftDiff} />
           </aside>
         )}
       </div>

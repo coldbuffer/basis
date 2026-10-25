@@ -1,0 +1,45 @@
+export default {
+  menu: {
+    activity_log: 'Change log',
+  },
+  page: {
+    subtitle:
+      'Timeline of governance and graph changes in this workspace, including decision records (complements Smart review).',
+    loading: 'Loading change log…',
+    search_placeholder: 'Search action, summary, actor…',
+    kind_placeholder: 'Type',
+    kind_all: 'All types',
+    kind_audit: 'Audit events',
+    kind_ledger_merge: 'Ledger merges',
+    kind_graph_decision: 'Decision records',
+    kind_graph_decision_row: 'Decision record',
+    graph_decisions_list_hint:
+      'All governance decisions in the workspace; select one to view its causal chain.',
+    graph_decisions_list_empty:
+      'No decision records yet. Approving review items or governance actions that record decisions will populate this list.',
+    decision_detail_title: 'Decision record',
+    decision_detail_close: 'Close',
+    browse_decisions_title: 'Decision records',
+    browse_decisions_hint: 'Browse workspace decision records; select one to view causal chain.',
+    browse_decisions_button: 'Decision records',
+    row_click_hint: 'Click row for decision details',
+    review_item_unresolved: 'Review item {shortId}',
+    actor_system: 'System',
+    action_prefix_placeholder: 'Scope',
+    action_prefix_workspace: 'Workspace ops',
+    action_prefix_graph: 'Graph ops',
+    refresh: 'Refresh',
+    col_time: 'Time',
+    col_kind: 'Type',
+    col_action: 'Action',
+    col_summary: 'Summary',
+    col_actor: 'Actor',
+    col_actions: 'Revert',
+    empty_title: 'No entries',
+    empty_description: 'Try different filters, or perform governance/graph work in this workspace.',
+    count_one: '{count} entry',
+    count_many: '{count} entries',
+    fetch_limit_hint:
+      'Showing up to 200 recent audit/merge rows; older rows may require narrower filters or admin audit access.',
+  },
+} as const;

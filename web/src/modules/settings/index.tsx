@@ -50,7 +50,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs.j
 import { useI18n } from '@/i18n/context.js';
 import { fmt } from '@/i18n/format.js';
 import { GraphOverviewStats } from './components/graph-overview-stats.js';
-import { GovernanceConfigPanel } from './components/governance-config-panel.js';
+import { GovernanceSettingsRedirectCard } from './components/governance-settings-redirect-card.js';
 import { GraphProjectionPanel } from './components/graph-projection-panel.js';
 import { useWorkspaceCatalog } from '@/lib/workspace/context.js';
 import { useWorkspaceCapabilities } from '@/lib/workspace/capabilities.js';
@@ -296,7 +296,6 @@ export function WorkspaceSettingsPage() {
   const canManageMembers = ['owner', 'admin'].includes(workspace.my_role);
   const canEditGeneral = ['owner', 'admin'].includes(workspace.my_role);
   const canEditSearch = ['owner', 'admin'].includes(workspace.my_role);
-  const canEditGovernance = ['owner', 'admin'].includes(workspace.my_role);
   const canRebuildGraph = caps?.graph_write === true;
   const graphEnabled = caps?.graph === true;
 
@@ -362,7 +361,7 @@ export function WorkspaceSettingsPage() {
                 canRebuild={canRebuildGraph}
                 graphEnabled={graphEnabled}
               />
-              <GovernanceConfigPanel workspaceId={id} canEdit={canEditGovernance} />
+              <GovernanceSettingsRedirectCard workspaceId={id} />
             </>
           ) : null}
         </TabsContent>

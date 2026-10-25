@@ -19,7 +19,8 @@ from basis.interface.http.shared.deps import (
 )
 from basis.infra.runtime.limits import RuntimeLimits
 from basis.domain.knowledge.services.graph_audit import audit_graph
-from basis.domain.knowledge.services.conflict_review import scan_statement_conflicts
+from basis.domain.knowledge.services.conflict_review import run_shacl_conflict_scan
+from basis.interface.http.workspace.review.conflict_scan_http import build_conflict_scan_context
 from basis.domain.knowledge.services.import_review import stage_import_blob
 from basis.domain.knowledge.store import KnowledgeStore
 from basis.interface.http.shared.operation_http import http_response_from_payload
@@ -29,17 +30,18 @@ from basis.interface.http.workspace.review.review_models import CreateEntityMerg
 
 router = APIRouter(tags=["workspaces"])
 
-@router.post("/{workspace_id}/review/scan-statement-conflicts")
-async def scan_statement_conflicts_route(
+@router.post("/{workspace_id}/review/scan-shacl-violations")
+async def scan_shacl_violations_route(
     workspace_id: str,
     request: Request,
     user: User = Depends(get_current_user),
     store: AdminStore = Depends(get_store),
     knowledge: KnowledgeStore = Depends(get_knowledge_store),
 ) -> dict[str, Any]:
-    """Re-scan ledger statements and enqueue `statement_conflict` review items (F-RUL-04)."""
+    """Materialize mappings and enqueue SHACL violation review items (F-RUL-04)."""
     get_workspace_for_editor(request, user, workspace_id, store)
-    return scan_statement_conflicts(knowledge, workspace_id)
+    scan_ctx = build_conflict_scan_context(request, workspace_id, knowledge)
+    return run_shacl_conflict_scan(knowledge, workspace_id, scan_ctx=scan_ctx)
 
 
 @router.get(
@@ -51,6 +53,7 @@ async def list_review_items(
     status: str | None = Query("open"),
     kind: str | None = Query(None),
     limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
     user: User = Depends(get_current_user),
     store: AdminStore = Depends(get_store),
     knowledge: KnowledgeStore = Depends(get_knowledge_store),
@@ -59,7 +62,7 @@ async def list_review_items(
 List Review Items. Human review queue for merges, imports, and conflicts. Requires workspace membership (session) or workspace API token with read/write scope. All paths are scoped to `{workspace_id}`.
     """
     ctx = build_workspace_core_context(request, workspace_id=workspace_id, user=user, store=store)
-    args: dict[str, Any] = {"limit": limit}
+    args: dict[str, Any] = {"limit": limit, "offset": offset}
     if status is not None:
         args["status"] = status
     if kind is not None:

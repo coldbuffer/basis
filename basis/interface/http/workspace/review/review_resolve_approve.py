@@ -56,7 +56,6 @@ Approve Review Item. Human review queue for merges, imports, and conflicts. Requ
     args = {
         "item_id": item_id,
         "rationale": body.rationale,
-        "keeper_statement_id": body.keeper_statement_id,
         "primary_id": body.primary_id,
     }
     try:

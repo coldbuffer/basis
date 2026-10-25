@@ -380,7 +380,7 @@ body {
   }
 
   [data-slot='native-select'] {
-    @apply min-w-[8.25rem] shadow-none;
+    @apply min-w-[8.25rem];
   }
 
   [data-slot='badge'].badge-status-success {
@@ -402,6 +402,18 @@ body {
   [data-slot='input-group']:has([data-slot][aria-invalid='true']) {
     @apply ring-0;
   }
+}
+
+/*
+ * Field chrome: drop shadcn `shadow-xs` on controls (utilities beat @layer base).
+ * ToolbarSearch and similar use `input-group`, not `input`.
+ */
+[data-slot='input'],
+[data-slot='textarea'],
+[data-slot='select-trigger'],
+[data-slot='native-select'],
+[data-slot='input-group'] {
+  box-shadow: none !important;
 }
 
 /*

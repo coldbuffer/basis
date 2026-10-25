@@ -45,7 +45,13 @@ def test_governor_run_returns_graph_dedup_section(tmp_path: Path) -> None:
     run = client.post(
         f"/api/v1/workspaces/{workspace_id}/governance/governor/run",
         headers=headers,
-        json={"dedup_threshold": 0.5},
+        json={
+            "dedup_threshold": 0.5,
+            "include_shacl": False,
+            "include_low_confidence": False,
+            "include_entity_label_clusters": False,
+            "include_graph_dedup": True,
+        },
     )
     assert run.status_code == 200
     body = run.json()
@@ -54,7 +60,7 @@ def test_governor_run_returns_graph_dedup_section(tmp_path: Path) -> None:
     graph_section = body["graph_dedup_clusters"]
     assert "created" in graph_section
     if flagged > 0:
-        assert graph_section["created"] >= 1
+        assert graph_section.get("created", 0) >= 1
         items = client.get(
             f"/api/v1/workspaces/{workspace_id}/review/items",
             headers=headers,

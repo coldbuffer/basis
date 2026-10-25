@@ -16,10 +16,6 @@ class CreateEntityMergeReviewRequest(BaseModel):
 
 class ResolveReviewRequest(BaseModel):
     rationale: str | None = None
-    keeper_statement_id: str | None = Field(
-        default=None,
-        description="For `statement_conflict` approve: keep this statement and invalidate siblings (F-RUL-04).",
-    )
     primary_id: str | None = Field(
         default=None,
         description="For `entity_cluster` approve: ledger entity id to keep as primary (F-GOV-04).",

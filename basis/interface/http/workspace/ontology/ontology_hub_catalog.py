@@ -9,8 +9,11 @@ from fastapi import APIRouter, Depends, Query, Request
 from pydantic_core import PydanticUndefined
 
 from basis.domain.tenancy.admin.store import AdminStore, User
+from basis.domain.knowledge.services.workspace_shacl import saved_shacl_turtle_for_ontology
+from basis.domain.knowledge.store import KnowledgeStore
 from basis.interface.http.shared.deps import (
     get_current_user,
+    get_knowledge_store,
     get_workspace_for_role,
     get_store,
     save_graph,
@@ -332,15 +335,22 @@ Generate Shacl. Ontology hub (SKOS, alignments) via workspace graph session. Req
         uri: str = Query(PydanticUndefined),
         user: User = Depends(get_current_user),
         store: AdminStore = Depends(get_store),
+        knowledge: KnowledgeStore = Depends(get_knowledge_store),
     ) -> Any:
         """
 List Shacl Shapes. Ontology hub (SKOS, alignments) via workspace graph session. Requires workspace membership (session) or workspace API token with read/write scope. All paths are scoped to `{workspace_id}`.
         """
         get_workspace_for_role(request, user, workspace_id, store, min_role("GET"))
         session = ontology_session(request, workspace_id)
+        saved = saved_shacl_turtle_for_ontology(knowledge, workspace_id, uri)
         with OntologyHubState(request, workspace_id):
             registry = request.app.state.ontology_registries[workspace_id]
-            return await list_shacl_shapes_read(session, registry, uri=uri)
+            return await list_shacl_shapes_read(
+                session,
+                registry,
+                uri=uri,
+                shacl_turtle_override=saved,
+            )
 
     router.add_api_route("/{workspace_id}/ontology/shacl/shapes", _ont_12_list_shacl_shapes, methods=["GET"], name="_ont_12_list_shacl_shapes")
 

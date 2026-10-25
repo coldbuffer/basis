@@ -29,10 +29,22 @@ async def generate_shacl(
     )
 
 
-async def list_shacl_shapes(session: Any, registry: dict[str, Any], *, uri: str) -> Any:
+async def list_shacl_shapes(
+    session: Any,
+    registry: dict[str, Any],
+    *,
+    uri: str,
+    shacl_turtle_override: str | None = None,
+) -> Any:
     if not uri or not str(uri).strip():
         raise AdminError(422, "validation_error", "Query parameter uri is required.")
-    return await asyncio.to_thread(list_shacl_shapes_sync, session, registry, uri=uri)
+    return await asyncio.to_thread(
+        list_shacl_shapes_sync,
+        session,
+        registry,
+        uri=uri,
+        shacl_turtle_override=shacl_turtle_override,
+    )
 
 
 async def validate_shacl(

@@ -75,6 +75,13 @@ class VersionCompareRequest(BaseModel):
     version2: str
 
 
+class OntologyEdgeChange(BaseModel):
+    source: str
+    target: str
+    type: str
+    id: str | None = None
+
+
 class DraftDiff(BaseModel):
     added_classes: list[str] = Field(default_factory=list)
     removed_classes: list[str] = Field(default_factory=list)
@@ -82,6 +89,10 @@ class DraftDiff(BaseModel):
     added_properties: list[str] = Field(default_factory=list)
     removed_properties: list[str] = Field(default_factory=list)
     modified_properties: dict[str, dict[str, Any]] = Field(default_factory=dict)
+    added_individuals: list[str] = Field(default_factory=list)
+    removed_individuals: list[str] = Field(default_factory=list)
+    added_edges: list[OntologyEdgeChange] = Field(default_factory=list)
+    removed_edges: list[str] = Field(default_factory=list)
     added_restrictions: list[dict[str, Any]] = Field(default_factory=list)
     removed_restrictions: list[dict[str, Any]] = Field(default_factory=list)
     added_axioms: list[dict[str, Any]] = Field(default_factory=list)

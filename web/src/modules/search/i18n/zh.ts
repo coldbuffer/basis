@@ -26,7 +26,6 @@ export default {
     temporal_at_label: "截至时间（ISO，图谱）",
     temporal_hint: "文档：按摄入时间过滤片段。图谱：当前投影；at 用于时点深链，回放请在图谱页底部时间轴操作。",
     clear_temporal: "清除时间过滤",
-    open_graph_diff_link: "对比图谱变化",
     subtitle: "文档片段按入库时间过滤；图谱时点请用图谱工作区时间轴（temporal/snapshot）。",
   },
   menu: {

@@ -26,7 +26,6 @@ export default {
     temporal_at_label: "As of (ISO, graph)",
     temporal_hint: "Documents: chunks ingested on or before the instant. Graph: current projection with optional at for point-in-time—use the graph page scrubber for playback.",
     clear_temporal: "Clear time filter",
-    open_graph_diff_link: "Compare graph over time",
     subtitle: "Chunk filters use document ingest time. For point-in-time graph views, use the graph timeline (temporal/snapshot).",
   },
   menu: {

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Navigate, useLocation, useParams } from 'react-router-dom';
+import { Navigate, useParams } from 'react-router-dom';
 import { Spinner } from '@/components/ui/spinner.js';
 import { isSetupWorkspaceId, WORKSPACE_SETUP_ID } from '@/lib/workspace/active-id.js';
 import { workspacePath } from '@/lib/nav/nav-config.js';
@@ -38,34 +38,4 @@ export function WorkspaceDefaultRedirect() {
   if (!id) return <Navigate to="/workspaces" replace />;
   if (isSetupWorkspaceId(id)) return <Navigate to={workspacePath(WORKSPACE_SETUP_ID, 'graph')} replace />;
   return <Navigate to={`/workspaces/${id}/graph`} replace />;
-}
-
-export function LegacyKnowledgeRedirect() {
-  const { id } = useParams();
-  if (!id) return <Navigate to="/workspaces" replace />;
-  return <Navigate to={`/workspaces/${id}/sources`} replace />;
-}
-
-export function LegacyLibraryRedirect() {
-  const { id } = useParams();
-  if (!id) return <Navigate to="/workspaces" replace />;
-  return <Navigate to={`/workspaces/${id}/sources`} replace />;
-}
-
-/** Legacy Playground URL; F-CHAT-01–03 removed from console (see progress §6). */
-export function LegacyChatRedirect() {
-  const { id } = useParams();
-  const location = useLocation();
-  if (!id) return <Navigate to="/workspaces" replace />;
-  const params = new URLSearchParams(location.search);
-  if (params.get('tab') === 'connect') {
-    return <Navigate to={`${workspacePath(id, 'integration')}?tab=mcp`} replace />;
-  }
-  return <Navigate to={workspacePath(id, 'search')} replace />;
-}
-
-export function LegacyMcpRedirect() {
-  const { id } = useParams();
-  if (!id) return <Navigate to="/workspaces" replace />;
-  return <Navigate to={`${workspacePath(id, 'integration')}?tab=mcp`} replace />;
 }

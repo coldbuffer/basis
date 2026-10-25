@@ -46,6 +46,26 @@ List Surface Phrases. Evidence ledger: documents, chunks, statements, entities. 
     return {"phrases": phrases}
 
 
+@router.get("/{workspace_id}/ledger/entity-type-object-labels")
+async def list_entity_type_object_labels(
+    workspace_id: str,
+    request: Request,
+    limit: int = Query(100, ge=1, le=200),
+    user: User = Depends(get_current_user),
+    store: AdminStore = Depends(get_store),
+    knowledge: KnowledgeStore = Depends(get_knowledge_store),
+) -> dict[str, Any]:
+    """
+List object labels from type assertions (e.g. 是 / instance_of) for entity-class mappings.
+    """
+    get_workspace_for_viewer(request, user, workspace_id, store)
+    labels = knowledge.list_entity_type_object_labels(workspace_id, limit=limit)
+    return {
+        "labels": labels,
+        "type_surface_phrases": knowledge.entity_type_surface_phrases(workspace_id),
+    }
+
+
 @router.get(
     "/{workspace_id}/ledger/derived-facts",
 )

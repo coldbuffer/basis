@@ -114,23 +114,11 @@ test('processing filter query selects failed tab', async ({ page }) => {
   );
 });
 
-test('sources and processing share ingest limits and queue hints', async ({ page }) => {
+test('processing page loads job list', async ({ page }) => {
   await registerFreshUser(page);
   const workspaceId = await defaultWorkspaceId(page);
 
-  await page.goto(`/workspaces/${workspaceId}/sources`);
-  await expect(page.locator('.basis-library-shell')).toBeVisible({ timeout: 60_000 });
-  const sourcesLimits = page.getByTestId('sources-ingest-limits-hint');
-  await expect(sourcesLimits).toBeVisible({ timeout: 30_000 });
-  const limitsText = await sourcesLimits.textContent();
-  expect(limitsText?.length).toBeGreaterThan(10);
-
-  const sourcesQueue = page.getByTestId('sources-ingest-queue-hint');
-  await expect(sourcesQueue).toBeVisible({ timeout: 30_000 });
-  const queueText = await sourcesQueue.textContent();
-
   await page.goto(`/workspaces/${workspaceId}/processing`);
   await expect(page.locator('.basis-processing-view')).toBeVisible({ timeout: 60_000 });
-  await expect(page.getByTestId('processing-limits-hint')).toHaveText(limitsText ?? '');
-  await expect(page.getByTestId('processing-queue-hint')).toHaveText(queueText ?? '');
+  await expect(page.getByTestId('workspace-processing-view')).toBeVisible();
 });

@@ -55,6 +55,8 @@ def propose_remember(
     content: str,
     *,
     source: str = "agent",
+    chunk_id: str | None = None,
+    quote: str | None = None,
 ) -> dict[str, Any]:
     text = content.strip()
     if not text:
@@ -62,9 +64,22 @@ def propose_remember(
     if len(text) > 8000:
         raise AdminError(422, "validation_error", "remember 内容过长")
 
-    chunk_id = _agent_chunk(knowledge, workspace_id, actor_id)
+    from basis.domain.knowledge.evidence import quote_from_chunk, resolve_workspace_chunk
+
+    evidence_chunk_id: str
+    if chunk_id and str(chunk_id).strip():
+        row = resolve_workspace_chunk(knowledge, workspace_id, str(chunk_id))
+        evidence_chunk_id = str(row.get("id") or chunk_id).strip()
+        resolved_quote = quote_from_chunk(row, override=quote, fallback=text)
+    else:
+        evidence_chunk_id = _agent_chunk(knowledge, workspace_id, actor_id)
+        resolved_quote = (quote or text).strip()
+        if len(resolved_quote) > 512:
+            resolved_quote = resolved_quote[:509] + "..."
+
+    chunk_id = evidence_chunk_id
     subject_id = knowledge.get_or_create_entity_by_label(workspace_id, AGENT_REMEMBER_SUBJECT_LABEL)
-    quote = text if len(text) <= 512 else text[:509] + "..."
+    quote = resolved_quote
 
     statement_id = knowledge.add_open_statement(
         workspace_id,
@@ -88,10 +103,17 @@ def propose_remember(
                 "content": text,
                 "source": source,
                 "proposed_by": actor_id,
+                "chunk_id": chunk_id,
             },
         )
     except AdminError as exc:
         if exc.code == "review_exists":
             knowledge.invalidate_statement(workspace_id, statement_id)
         raise
-    return {"statement_id": statement_id, "review_item_id": item["id"], "status": "pending"}
+    return {
+        "statement_id": statement_id,
+        "review_item_id": item["id"],
+        "status": "pending",
+        "chunk_id": chunk_id,
+        "quote": quote,
+    }

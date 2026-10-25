@@ -1,4 +1,4 @@
-import { Link, Navigate, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { Suspense } from 'react';
 import { ConsolePageLayout } from '@/components/app/shared/console/index.js';
 import { GovernanceWorkspaceShell } from '@/components/app/shared/workspace/frame/governance-ws-shell.js';
@@ -9,7 +9,10 @@ import { useWorkspaceCapabilities } from '@/lib/workspace/capabilities.js';
 import { useI18n } from '@/i18n/context.js';
 import { useWorkspaceCatalog } from '@/lib/workspace/context.js';
 import { workspacePath } from '@/lib/nav/nav-config.js';
-import { parseReviewUrlState } from '@/modules/review/lib/review-url-state.js';
+import {
+  activityLogBrowseDecisionsPath,
+  parseReviewUrlState,
+} from '@/modules/review/lib/review-url-state.js';
 
 export function ReviewPage() {
   const { id } = useParams();
@@ -22,16 +25,6 @@ export function ReviewPage() {
 
   if (!id) {
     return null;
-  }
-
-  const legacyTab = searchParams.get('tab');
-  if (legacyTab === 'resolve') {
-    return <Navigate to={workspacePath(id, 'entity-resolution')} replace />;
-  }
-  if (legacyTab === 'decisions') {
-    const decision = searchParams.get('decision');
-    const q = decision ? `?decision=${encodeURIComponent(decision)}` : '';
-    return <Navigate to={`${workspacePath(id, 'decisions')}${q}`} replace />;
   }
 
   const reviewBody =
@@ -63,11 +56,11 @@ export function ReviewPage() {
         <>
           {t.review.page.subtitle}{' '}
           <Link
-            to={workspacePath(id, 'decisions')}
+            to={activityLogBrowseDecisionsPath(id)}
             className="text-primary underline-offset-2 hover:underline"
-            data-testid="review-open-decisions"
+            data-testid="review-open-activity-log"
           >
-            {t.alerts.page.view_decisions}
+            {t.review.page.link_activity_log}
           </Link>
         </>
       }

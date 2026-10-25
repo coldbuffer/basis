@@ -64,6 +64,21 @@ def test_scan_low_confidence_enqueues_review(tmp_path: Path) -> None:
     assert items[0]["payload"]["confidence"] == 0.4
 
 
+def test_governance_ontology_uri_persists(tmp_path: Path) -> None:
+    workspace_id, store = _workspace_store(tmp_path)
+    uri = "http://example.org/onto/demo"
+    updated = store.update_governance_config(
+        workspace_id,
+        governor_enabled=False,
+        governor_interval_minutes=1440,
+        governor_confidence_min=0.75,
+        governance_ontology_uri=uri,
+    )
+    assert updated.governance_ontology_uri == uri
+    loaded = store.get_governance_config(workspace_id)
+    assert loaded.governance_ontology_uri == uri
+
+
 def test_run_governor_pass_returns_both_sections(tmp_path: Path) -> None:
     workspace_id, store = _workspace_store(tmp_path)
     chunk_id = _chunk(store, workspace_id)
@@ -84,7 +99,7 @@ def test_run_governor_pass_returns_both_sections(tmp_path: Path) -> None:
     body = run_governor_pass(store, workspace_id, confidence_min=0.75)
     assert body["confidence_min"] == 0.75
     assert body["low_confidence"]["created"] == 1
-    assert "conflicts" in body
+    assert "shacl_scan" in body
 
 
 def test_governor_run_http_and_approve_low_confidence(tmp_path: Path) -> None:
@@ -120,6 +135,32 @@ def test_governor_run_http_and_approve_low_confidence(tmp_path: Path) -> None:
         json={"confidence_min": 0.75},
     )
     assert run.status_code == 200
+
+    empty_scope = client.post(
+        f"/api/v1/workspaces/{workspace_id}/governance/governor/run",
+        headers=headers,
+        json={
+            "include_shacl": False,
+            "include_low_confidence": False,
+            "include_entity_label_clusters": False,
+            "include_graph_dedup": False,
+        },
+    )
+    assert empty_scope.status_code == 422
+    assert empty_scope.json()["detail"]["code"] == "governor_scan_empty"
+
+    shacl_only = client.post(
+        f"/api/v1/workspaces/{workspace_id}/governance/governor/run",
+        headers=headers,
+        json={
+            "include_shacl": True,
+            "include_low_confidence": False,
+            "include_entity_label_clusters": False,
+            "include_graph_dedup": False,
+        },
+    )
+    assert shacl_only.status_code == 200
+    assert shacl_only.json()["low_confidence"]["created"] == 0
     assert run.json()["low_confidence"]["created"] == 1
 
     items = client.get(

@@ -33,31 +33,6 @@ def emit_governance_proposal_proposed_alert(
     )
 
 
-def emit_statement_conflict_alert(
-    knowledge: KnowledgeStore,
-    workspace_id: str,
-    *,
-    review_item_id: str,
-    surface_phrase: str,
-    statement_ids: list[str],
-) -> None:
-    surface = (surface_phrase or "predicate").strip()[:120]
-    knowledge.create_workspace_alert(
-        workspace_id,
-        kind="governance.statement_conflict",
-        message=f"Statement conflict on «{surface}» needs review",
-        severity="info",
-        detail=_with_episode(
-            {
-                "item_id": review_item_id,
-                "surface_phrase": surface,
-                "statement_ids": statement_ids[:20],
-            },
-            f"review:{review_item_id}",
-        ),
-    )
-
-
 def emit_processing_failed_alert(
     knowledge: KnowledgeStore,
     workspace_id: str,

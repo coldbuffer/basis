@@ -1,30 +1,22 @@
 // Sole owner of the Ontology Hub deep-link query parameters: the names below must not be
 // spelled out anywhere else, so that the protocol can change in one place.
-const LEGACY_TAB_PARAM = "ontologyTab";
 const TAB_PARAM = "tab";
 const ENTITY_PARAM = "ontologyEntity";
 const PROPOSAL_PARAM = "ontologyProposal";
 const EDITOR_TAB = "editor";
 
 export interface OntologyUrlState {
-  /** Canonical hub tab (`tab` query param; legacy `ontologyTab` is read once for compat). */
   tab?: string;
   entityUri?: string;
   proposalId?: string;
 }
 
-function normalizeTabId(raw: string | null): string | undefined {
-  if (!raw) return undefined;
-  if (raw === "model") return "registry";
-  return raw;
-}
-
 /** `undefined` means the parameter is absent; an empty string means it is present but blank. */
 export function parseOntologyUrlState(search: string): OntologyUrlState {
   const params = new URLSearchParams(search);
-  const rawTab = params.get(TAB_PARAM) ?? params.get(LEGACY_TAB_PARAM);
+  const rawTab = params.get(TAB_PARAM);
   return {
-    tab: normalizeTabId(rawTab),
+    tab: rawTab ?? undefined,
     entityUri: params.get(ENTITY_PARAM) ?? undefined,
     proposalId: params.get(PROPOSAL_PARAM) ?? undefined,
   };
@@ -32,12 +24,10 @@ export function parseOntologyUrlState(search: string): OntologyUrlState {
 
 export function applyTab(search: string, tab: string): string {
   const params = new URLSearchParams(search);
-  params.delete(LEGACY_TAB_PARAM);
-  const normalized = normalizeTabId(tab) ?? tab;
-  if (normalized === "registry") {
+  if (tab === "registry") {
     params.delete(TAB_PARAM);
   } else {
-    params.set(TAB_PARAM, normalized);
+    params.set(TAB_PARAM, tab);
   }
   return `?${params.toString()}`;
 }
@@ -45,7 +35,6 @@ export function applyTab(search: string, tab: string): string {
 // A selected entity is only addressable from the editor, so the tab moves with it.
 export function applyEntitySelection(search: string, entityUri: string): string {
   const params = new URLSearchParams(search);
-  params.delete(LEGACY_TAB_PARAM);
   params.set(TAB_PARAM, EDITOR_TAB);
   params.set(ENTITY_PARAM, entityUri);
   return `?${params.toString()}`;
@@ -81,7 +70,6 @@ export function readOntologyUrlState(search?: string): OntologyUrlState {
 export function applyProposalSelection(search: string, proposalId: string): string {
   const params = new URLSearchParams(search);
   params.set(TAB_PARAM, "versions");
-  params.delete(LEGACY_TAB_PARAM);
   params.set(PROPOSAL_PARAM, proposalId);
   return `?${params.toString()}`;
 }

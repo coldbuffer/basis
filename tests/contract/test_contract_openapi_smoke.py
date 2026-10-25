@@ -75,6 +75,6 @@ def test_v1_integration_endpoints_respond(tmp_path) -> None:
     assert mcp.status_code == 200
     tools = mcp.json().get("tools") or []
     assert set(TOOL_NAMES).issubset(set(tools))
-    assert "graph_search" in tools
+    assert "query_graph" in tools
     assert "search_chunks" in tools
     assert "connector_postgres__table_records__list" in tools

@@ -94,6 +94,8 @@ def _try_record_governance_decision(
     detail: dict[str, Any],
     actor_id: str | None,
     outcome: str = "blocked",
+    category: str = "governance",
+    reasoning: str | None = None,
     runtime_loader: Callable[[], GraphRuntime] | None = None,
     persist_graph: Callable[[str], None] | None = None,
 ) -> str | None:
@@ -105,14 +107,33 @@ def _try_record_governance_decision(
         graph = session.graph
         if not hasattr(graph, "record_decision"):
             return None
+        review_item_id = detail.get("review_item_id") or detail.get("item_id")
+        metadata = {**detail}
+        if review_item_id:
+            metadata["review_item_id"] = review_item_id
+        if "alert_kind" not in metadata and category == "governance":
+            metadata.setdefault("alert_kind", "governance.tripped")
+        reasoning_text = (
+            reasoning if reasoning is not None else json.dumps(detail, default=str)
+        )[:4000]
+        entities: list[dict[str, Any]] = []
+        primary_id = detail.get("primary_id")
+        duplicate_ids = detail.get("duplicate_ids")
+        if isinstance(primary_id, str) and primary_id.strip():
+            entities.append({"id": primary_id.strip(), "role": "primary"})
+        if isinstance(duplicate_ids, list):
+            for dup in duplicate_ids:
+                if isinstance(dup, str) and dup.strip():
+                    entities.append({"id": dup.strip(), "role": "duplicate"})
         decision_id = graph.record_decision(
-            category="governance",
+            category=category,
             scenario=(message or "Governance gate blocked")[:500],
-            reasoning=json.dumps(detail, default=str)[:4000],
+            reasoning=reasoning_text,
             outcome=outcome,
             confidence=1.0,
+            entities=entities,
             decision_maker=actor_id,
-            metadata={"alert_kind": "governance.tripped", **detail},
+            metadata=metadata,
         )
         persist_graph(workspace_id)
         return str(decision_id)
@@ -128,6 +149,8 @@ def record_governance_decision_for_workspace(
     detail: dict[str, Any] | None = None,
     actor_id: str | None = None,
     outcome: str = "approved",
+    category: str = "governance",
+    reasoning: str | None = None,
     runtime_loader: Callable[[], GraphRuntime] | None = None,
     persist_graph: Callable[[str], None] | None = None,
 ) -> str | None:
@@ -138,6 +161,8 @@ def record_governance_decision_for_workspace(
         detail=dict(detail or {}),
         actor_id=actor_id,
         outcome=outcome,
+        category=category,
+        reasoning=reasoning,
         runtime_loader=runtime_loader,
         persist_graph=persist_graph,
     )

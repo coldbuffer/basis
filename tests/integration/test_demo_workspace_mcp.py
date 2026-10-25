@@ -69,8 +69,8 @@ def test_demo_workspace_mcp_search_vs_derived_reasoning(tmp_path) -> None:
         client,
         workspace_id,
         headers,
-        "find_entities",
-        {"query": "唐悦"},
+        "query_graph",
+        {"mode": "entities", "query": "唐悦"},
         rpc_id=2,
     )
     ledger = entities.get("ledger_entities") or []
@@ -148,14 +148,10 @@ def test_demo_workspace_mcp_search_vs_derived_reasoning(tmp_path) -> None:
     ).get("statement") or {}
     assert statement.get("statement_id") == stmt_id
 
-    caps = _mcp_tool_json(
-        client,
-        workspace_id,
-        headers,
-        "get_capabilities",
-        {},
-        rpc_id=9,
-    )
+    caps = client.get(
+        f"/api/v1/workspaces/{workspace_id}/capabilities",
+        headers=headers,
+    ).json()
     assert "run_reasoning" in (caps.get("mcp_tools") or [])
     assert caps.get("upload_max_bytes"), "capabilities should include runtime limits"
     assert caps.get("chunk_search_max_limit")

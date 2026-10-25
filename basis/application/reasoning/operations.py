@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from basis.application.evidence import optional_evidence_attestation
 from basis.application.kernel import WorkspaceCoreContext
 from basis.application.kernel import require_workspace_editor
 from basis.domain.errors import AdminError
@@ -41,6 +42,10 @@ def op_get_rule(ctx: WorkspaceCoreContext, args: dict[str, Any]) -> dict[str, An
 
 
 def op_run_reasoning(ctx: WorkspaceCoreContext, args: dict[str, Any]) -> dict[str, Any]:
+    attestation, evidence_err = optional_evidence_attestation(ctx, args)
+    if evidence_err:
+        return evidence_err
+
     facts = args.get("facts")
     rules = args.get("rules")
     if not isinstance(rules, list) or not rules:
@@ -66,6 +71,31 @@ def op_run_reasoning(ctx: WorkspaceCoreContext, args: dict[str, Any]) -> dict[st
     apply_to_graph = bool(args.get("apply_to_graph", False))
     mode = str(args.get("mode") or "forward")
     inferred_edge_type = args.get("inferred_edge_type")
+    if (
+        not apply_to_graph
+        and facts_source == "request"
+        and facts_s
+        and rules_s
+        and mode == "forward"
+        and inferred_edge_type is None
+    ):
+        from semantica.reasoning import Reasoner
+
+        reasoner = Reasoner()
+        for rule in rules_s:
+            reasoner.add_rule(rule)
+        inferred = reasoner.infer_facts(facts_s)
+        inferred_list = inferred if isinstance(inferred, list) else list(inferred)
+        fast: dict[str, Any] = {
+            "inferred_facts": inferred_list,
+            "derived_facts": inferred_list,
+            "facts_source": facts_source,
+            "ground_facts": facts_s,
+            "proof_chains": proof_chains_for_run(facts_s, rules_s, inferred_list),
+        }
+        if attestation:
+            fast["evidence"] = attestation
+        return fast
 
     if apply_to_graph:
         require_workspace_editor(ctx)
@@ -74,6 +104,7 @@ def op_run_reasoning(ctx: WorkspaceCoreContext, args: dict[str, Any]) -> dict[st
 
     runtime = ctx.graph_runtime()
     session = require_graph_session(runtime)
+    graph_evidence = attestation if apply_to_graph and attestation else None
     summary = run_reasoning(
         session,
         facts=facts_s,
@@ -81,7 +112,10 @@ def op_run_reasoning(ctx: WorkspaceCoreContext, args: dict[str, Any]) -> dict[st
         mode=mode,
         apply_to_graph=apply_to_graph,
         inferred_edge_type=inferred_edge_type,
+        graph_evidence=graph_evidence,
     )
+    if attestation and not apply_to_graph:
+        summary["evidence"] = attestation
     summary["proof_chains"] = proof_chains_for_run(
         facts_s,
         rules_s,
@@ -102,20 +136,23 @@ def op_run_reasoning(ctx: WorkspaceCoreContext, args: dict[str, Any]) -> dict[st
             summary["projection"] = ctx.rebuild_projection()
         elif ctx.persist_graph is not None:
             ctx.persist_graph(ctx.workspace.id)
+        audit_extra: dict[str, Any] = {
+            "added_edges": summary.get("added_edges"),
+            "rules_fired": summary.get("rules_fired"),
+            "derived_facts_created": created,
+            **(
+                {"projection_revision": summary["projection"].get("projection_revision")}
+                if isinstance(summary.get("projection"), dict)
+                else {}
+            ),
+        }
+        if attestation:
+            audit_extra["chunk_id"] = attestation["chunk_id"]
         audit_graph(
             ctx.store,
             ctx.user,
             ctx.workspace.id,
             "workspace.graph.reasoning_apply",
-            extra={
-                "added_edges": summary.get("added_edges"),
-                "rules_fired": summary.get("rules_fired"),
-                "derived_facts_created": created,
-                **(
-                    {"projection_revision": summary["projection"].get("projection_revision")}
-                    if isinstance(summary.get("projection"), dict)
-                    else {}
-                ),
-            },
+            extra=audit_extra,
         )
     return summary

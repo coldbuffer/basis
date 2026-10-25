@@ -16,13 +16,20 @@ export function formatGraphAuditAction(action: string, locale: Locale): string {
     ...m.admin_audit.actions,
     ...m.graph.audit.actions,
   } as Record<string, string>;
-  return actions[action] ?? action;
+  const label = actions[action];
+  if (label) return label;
+  if (!action.trim()) return '';
+  const parts = action.split('.').filter(Boolean);
+  const tail = parts.slice(-2).join(' ') || action;
+  return tail.replace(/_/g, ' ');
 }
 
+const NO_GRAPH_AUDIT_DETAIL_LINE = '';
+
+/** Returns a detail line, or `''` when this formatter has nothing to add (not the UI empty cell). */
 export function formatGraphAuditDetail(event: GraphAuditEvent, locale: Locale): string {
   const messages = messagesForLocale(locale);
   const copy = messages.graph.audit;
-  const emptyCell = messages.core.common.emptyCell;
   const d = event.detail ?? {};
   if (event.action === 'workspace.graph.projection_rebuild') {
     const parts: string[] = [];
@@ -41,7 +48,7 @@ export function formatGraphAuditDetail(event: GraphAuditEvent, locale: Locale): 
         }),
       );
     }
-    return parts.join(' · ') || emptyCell;
+    return parts.length > 0 ? parts.join(' · ') : NO_GRAPH_AUDIT_DETAIL_LINE;
   }
   if (event.action === 'workspace.graph.export' && d.format) {
     return String(d.format);
@@ -62,11 +69,7 @@ export function formatGraphAuditDetail(event: GraphAuditEvent, locale: Locale): 
       .filter(Boolean)
       .join(' · ');
   }
-  const reviewItemId = reviewItemIdFromGraphAuditDetail(d);
-  if (reviewItemId) {
-    return reviewItemId;
-  }
-  return emptyCell;
+  return NO_GRAPH_AUDIT_DETAIL_LINE;
 }
 
 export function proposalIdFromGraphAuditDetail(

@@ -39,11 +39,11 @@ const secondaryLinkClass =
   'mt-1.5 inline-block text-xs text-muted-foreground underline-offset-2 hover:text-primary hover:underline';
 
 function SearchResultList({ children }: { children: ReactNode }) {
-  return <ul className="flex flex-col">{children}</ul>;
+  return <ul className="divide-y divide-border/60">{children}</ul>;
 }
 
 function SearchResultItem({ children }: { children: ReactNode }) {
-  return <li className="border-b border-border/50 py-4 last:border-b-0">{children}</li>;
+  return <li className="px-4 py-3.5 first:pt-4 last:pb-4">{children}</li>;
 }
 
 export function SearchChunkList({

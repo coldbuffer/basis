@@ -15,6 +15,7 @@ from basis.application.reasoning import operations as reasoning_ops
 from basis.application.review import operations as review_ops
 from basis.application.kernel import WorkspaceCoreContext
 from basis.application.workspace import operations as workspace_ops
+from basis.application.semantica_compat import operations as semantica_ops
 
 OperationHandler = Callable[[WorkspaceCoreContext, dict[str, Any]], dict[str, Any]]
 
@@ -25,8 +26,6 @@ class OperationSpec(TypedDict):
 
 
 OPERATIONS: dict[str, OperationSpec] = {
-    "describe_workspace": {"handler": workspace_ops.op_describe_workspace},
-    "get_capabilities": {"handler": workspace_ops.op_get_capabilities},
     "list_processing_jobs": {"handler": workspace_ops.op_list_processing_jobs},
     "search_chunks": {"handler": knowledge_ops.op_search_chunks},
     "get_chunk": {"handler": knowledge_ops.op_get_chunk},
@@ -36,22 +35,26 @@ OPERATIONS: dict[str, OperationSpec] = {
     "list_mappings": {"handler": knowledge_ops.op_list_mappings},
     "get_statement": {"handler": knowledge_ops.op_get_statement},
     "propose_remember": {"handler": knowledge_ops.op_propose_remember},
-    "find_entities": {"handler": graph_ops.op_find_entities},
-    "neighbors": {"handler": graph_ops.op_neighbors},
     "paths": {"handler": graph_ops.op_paths},
-    "graph_search": {"handler": graph_ops.op_graph_search},
-    "list_reasoning_ground_facts": {"handler": reasoning_ops.op_list_reasoning_ground_facts},
+    "extract_entities": {"handler": semantica_ops.op_extract_entities},
+    "extract_relations": {"handler": semantica_ops.op_extract_relations},
+    "record_decision": {"handler": semantica_ops.op_record_decision},
+    "query_decisions": {"handler": semantica_ops.op_query_decisions},
+    "find_precedents": {"handler": semantica_ops.op_find_precedents},
+    "get_causal_chain": {"handler": semantica_ops.op_get_causal_chain},
+    "add_entity": {"handler": semantica_ops.op_add_entity},
+    "add_relationship": {"handler": semantica_ops.op_add_relationship},
+    "get_graph_analytics": {"handler": semantica_ops.op_get_graph_analytics},
+    "export_graph": {"handler": semantica_ops.op_export_graph},
+    "get_graph_summary": {"handler": semantica_ops.op_get_graph_summary},
+    "query_graph": {"handler": semantica_ops.op_query_graph},
+    "update_node": {"handler": semantica_ops.op_update_node},
+    "delete_node": {"handler": semantica_ops.op_delete_node},
     "list_rules": {"handler": reasoning_ops.op_list_rules},
     "get_rule": {"handler": reasoning_ops.op_get_rule},
     "run_reasoning": {"handler": reasoning_ops.op_run_reasoning},
     "list_review_items": {"handler": review_ops.op_list_review_items},
     "get_review_item": {"handler": review_ops.op_get_review_item},
-    "approve_statement_remember_review": {
-        "handler": review_ops.op_approve_statement_remember_review
-    },
-    "reject_statement_remember_review": {
-        "handler": review_ops.op_reject_statement_remember_review
-    },
     "approve_review_item": {"handler": review_ops.op_approve_review_item},
     "reject_review_item": {"handler": review_ops.op_reject_review_item},
     "list_connector_catalog": {"handler": connector_ops.op_list_connector_catalog},

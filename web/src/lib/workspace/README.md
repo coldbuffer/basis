@@ -16,7 +16,7 @@ Typed per-workspace REST helpers: `basisSessionClient().workspace(workspaceId)` 
 
 | File | Role |
 | --- | --- |
-| `ws-http.tsx` | `WorkspaceHostProvider`, `workspaceFetch`, path builders |
+| `ws-http.tsx` | `WorkspaceHostProvider`, `workspaceFetch` (session Bearer, same as OpenAPI), path builders |
 | `api-path.ts` | `workspaceApiRoot`, `workspaceApiPath` |
 | `ws-host.ts` | `buildWorkspaceHttpConfig` |
 | `ws-client.ts` / `ws-context.tsx` | Ingest WS client + route shell |

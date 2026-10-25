@@ -41,9 +41,11 @@ import { useApiErrorMessage } from '@/lib/errors/use-api-error-message.js';
 import { useWorkspaceCatalog } from '@/lib/workspace/context.js';
 import { EntityRefLine } from '@/components/app/shared/workspace/entity-ref-line.js';
 import { useWorkspaceNodeLabels } from '@/lib/workspace/node-labels.js';
-import { workspacePath } from '@/lib/nav/nav-config.js';
+import { workspacePath, workspaceReviewPath } from '@/lib/nav/nav-config.js';
 import { cn } from '@/lib/utils.js';
 import type { LocaleMessages } from '@/i18n/en.js';
+import { OntologyUriPicker } from '@/modules/mappings/components/ontology-uri-picker.js';
+import { SurfacePhraseCombobox } from '@/modules/mappings/components/surface-phrase-combobox.js';
 
 type MappingRow = {
   id: string;
@@ -67,14 +69,36 @@ type TypedFactRow = {
 
 type MappingsPageCopy = LocaleMessages['mappings']['page'];
 
-const createMappingSchema = z.object({
-  signature: z.string().trim().min(1),
-  targetUri: z.string(),
-  targetKind: z.enum(['property', 'class', 'none']),
-  direction: z.enum(['forward', 'reverse', 'n/a']),
-});
+function createMappingSchema(signatureRequiredMessage: string, targetUriRequiredMessage: string) {
+  return z
+    .object({
+      signature: z.string(),
+      targetUri: z.string(),
+      targetKind: z.enum(['property', 'class', 'none']),
+      direction: z.enum(['forward', 'reverse', 'n/a']),
+    })
+    .superRefine((data, ctx) => {
+      if (data.targetKind === 'none') {
+        return;
+      }
+      if (!data.signature.trim()) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['signature'],
+          message: signatureRequiredMessage,
+        });
+      }
+      if (!data.targetUri.trim()) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['targetUri'],
+          message: targetUriRequiredMessage,
+        });
+      }
+    });
+}
 
-type CreateMappingValues = z.infer<typeof createMappingSchema>;
+type CreateMappingValues = z.infer<ReturnType<typeof createMappingSchema>>;
 
 const defaultCreateMappingValues: CreateMappingValues = {
   signature: '',
@@ -97,6 +121,7 @@ export function MappingsPage() {
   const [error, setError] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [phrases, setPhrases] = useState<string[]>([]);
+  const [entityObjectLabels, setEntityObjectLabels] = useState<string[]>([]);
   const [typedFacts, setTypedFacts] = useState<TypedFactRow[]>([]);
 
   const entityIdsForLabels = typedFacts.flatMap((fact) =>
@@ -106,8 +131,14 @@ export function MappingsPage() {
 
   const apiError = useApiErrorMessage();
 
+  const mappingSchema = useMemo(
+    () =>
+      createMappingSchema(m.validation_signature_required, m.validation_target_uri_required),
+    [m.validation_signature_required, m.validation_target_uri_required],
+  );
+
   const createForm = useForm<CreateMappingValues>({
-    resolver: zodResolver(createMappingSchema),
+    resolver: zodResolver(mappingSchema),
     defaultValues: defaultCreateMappingValues,
   });
 
@@ -115,18 +146,25 @@ export function MappingsPage() {
     if (!createOpen) createForm.reset(defaultCreateMappingValues);
   }, [createOpen, createForm]);
 
+  const watchedTargetKind = createForm.watch('targetKind');
+  const signaturePickerOptions =
+    watchedTargetKind === 'class' ? entityObjectLabels : phrases;
+  const isEntityMapping = watchedTargetKind === 'class';
+
   const load = useCallback(async () => {
     if (!id) return;
     setLoading(true);
     setError(null);
     try {
-      const [mappingData, phraseData, factData] = await Promise.all([
+      const [mappingData, phraseData, entityLabelData, factData] = await Promise.all([
         workspaceOpenApiGET<{ mappings: MappingRow[] }>(id, 'mappings'),
         workspaceOpenApiGET<{ phrases: string[] }>(id, 'ledger/surface-phrases'),
+        workspaceOpenApiGET<{ labels: string[] }>(id, 'ledger/entity-type-object-labels'),
         workspaceOpenApiGET<{ facts: TypedFactRow[] }>(id, 'ledger/typed-facts'),
       ]);
       setRows(mappingData.mappings);
       setPhrases(phraseData.phrases);
+      setEntityObjectLabels(entityLabelData.labels);
       setTypedFacts(factData.facts);
     } catch (err) {
       setError(apiError(err));
@@ -158,7 +196,7 @@ export function MappingsPage() {
         action: {
           label: m.toast_review_action,
           onClick: () => {
-            navigate(workspacePath(id, 'review'));
+            navigate(workspaceReviewPath(id));
           },
         },
       });
@@ -173,7 +211,7 @@ export function MappingsPage() {
     () => [
       {
         key: 'signature',
-        header: m.col_signature,
+        header: m.col_mapping_key,
         render: (row) => <span className="font-mono text-xs">{row.signature}</span>,
       },
       {
@@ -224,7 +262,7 @@ export function MappingsPage() {
         render: (row) =>
           row.status === 'proposed' && id ? (
             <Button type="button" variant="outline" size="sm" className="h-7 px-2 text-xs" asChild>
-              <Link to={workspacePath(id, 'review')}>{m.review}</Link>
+              <Link to={workspaceReviewPath(id)}>{m.review}</Link>
             </Button>
           ) : (
             <span className="text-xs text-muted-foreground">{emptyCell}</span>
@@ -348,7 +386,10 @@ export function MappingsPage() {
       </div>
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent
+          className="overflow-visible sm:max-w-lg"
+          onOpenAutoFocus={(event) => event.preventDefault()}
+        >
           <Form {...createForm}>
             <form
               className="grid gap-4 sm:grid-cols-2"
@@ -358,44 +399,64 @@ export function MappingsPage() {
                 <DialogTitle>{m.create_dialog_title}</DialogTitle>
                 <DialogDescription>{m.create_dialog_desc}</DialogDescription>
               </DialogHeader>
-              <FormField
-                control={createForm.control}
-                name="signature"
-                render={({ field }) => (
-                  <FormItem className="sm:col-span-2">
-                    <FormLabel>{m.label_signature}</FormLabel>
-                    <FormControl>
-                      <Input list="workspace-surface-phrases-dialog" placeholder={m.signature_placeholder} {...field} />
-                    </FormControl>
-                    <datalist id="workspace-surface-phrases-dialog">
-                      {phrases.map((phrase) => (
-                        <option key={phrase} value={phrase} />
-                      ))}
-                    </datalist>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={createForm.control}
-                name="targetUri"
-                render={({ field }) => (
-                  <FormItem className="sm:col-span-2">
-                    <FormLabel>{m.label_target_uri}</FormLabel>
-                    <FormControl>
-                      <Input placeholder={m.target_uri_placeholder} {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {watchedTargetKind !== 'none' ? (
+                <FormField
+                  control={createForm.control}
+                  name="signature"
+                  render={({ field }) => (
+                    <FormItem className="sm:col-span-2">
+                      <FormLabel>
+                        {isEntityMapping ? m.label_entity_object : m.label_signature}
+                      </FormLabel>
+                      {!isEntityMapping ? (
+                        <p className="text-[11px] text-muted-foreground">{m.signature_field_hint}</p>
+                      ) : null}
+                      <FormControl>
+                        <SurfacePhraseCombobox
+                          phrases={signaturePickerOptions}
+                          value={field.value}
+                          onValueChange={field.onChange}
+                          disabled={createForm.formState.isSubmitting}
+                          placeholder={
+                            isEntityMapping
+                              ? m.entity_object_combobox_placeholder
+                              : m.signature_combobox_placeholder
+                          }
+                          emptySearchLabel={
+                            isEntityMapping
+                              ? m.entity_object_combobox_empty
+                              : m.signature_combobox_empty
+                          }
+                          emptyPhrasesLabel={
+                            isEntityMapping
+                              ? m.entity_object_combobox_no_labels
+                              : m.signature_combobox_no_phrases
+                          }
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              ) : null}
               <FormField
                 control={createForm.control}
                 name="targetKind"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{m.label_target_kind}</FormLabel>
-                    <Select value={field.value} onValueChange={field.onChange}>
+                    <Select
+                      value={field.value}
+                      onValueChange={(value: CreateMappingValues['targetKind']) => {
+                        field.onChange(value);
+                        createForm.setValue('signature', '');
+                        if (value === 'class' || value === 'none') {
+                          createForm.setValue('direction', 'n/a');
+                        } else if (createForm.getValues('direction') === 'n/a') {
+                          createForm.setValue('direction', 'forward');
+                        }
+                      }}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue />
@@ -413,26 +474,72 @@ export function MappingsPage() {
               />
               <FormField
                 control={createForm.control}
-                name="direction"
+                name="targetUri"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{m.label_direction}</FormLabel>
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="forward">{m.direction_forward}</SelectItem>
-                        <SelectItem value="reverse">{m.direction_reverse}</SelectItem>
-                        <SelectItem value="n/a">{m.direction_na}</SelectItem>
-                      </SelectContent>
-                    </Select>
+                  <FormItem className="sm:col-span-2">
+                    <FormLabel>
+                      {watchedTargetKind === 'class'
+                        ? m.label_target_uri_class
+                        : watchedTargetKind === 'property'
+                          ? m.label_target_uri_property
+                          : m.label_target_uri}
+                    </FormLabel>
+                    <FormControl>
+                      {id && (watchedTargetKind === 'property' || watchedTargetKind === 'class') ? (
+                        <OntologyUriPicker
+                          workspaceId={id}
+                          entityType={watchedTargetKind === 'class' ? 'class' : 'property'}
+                          value={field.value}
+                          onValueChange={field.onChange}
+                          disabled={createForm.formState.isSubmitting}
+                          placeholder={
+                            watchedTargetKind === 'class'
+                              ? m.ontology_uri_picker_placeholder_class
+                              : m.ontology_uri_picker_placeholder_property
+                          }
+                          hint={m.ontology_uri_picker_hint}
+                          emptySearchLabel={m.ontology_uri_picker_empty}
+                        />
+                      ) : (
+                        <Input
+                          placeholder={
+                            watchedTargetKind === 'class'
+                              ? m.target_uri_placeholder_class
+                              : m.target_uri_placeholder
+                          }
+                          disabled={watchedTargetKind === 'none'}
+                          {...field}
+                        />
+                      )}
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+              {watchedTargetKind === 'property' ? (
+                <FormField
+                  control={createForm.control}
+                  name="direction"
+                  render={({ field }) => (
+                    <FormItem className="sm:col-span-2">
+                      <FormLabel>{m.label_direction}</FormLabel>
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="forward">{m.direction_forward}</SelectItem>
+                          <SelectItem value="reverse">{m.direction_reverse}</SelectItem>
+                          <SelectItem value="n/a">{m.direction_na}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              ) : null}
               <DialogFooter className="sm:col-span-2">
                 <Button type="button" variant="outline" onClick={() => setCreateOpen(false)}>
                   {t.core.common.cancel}

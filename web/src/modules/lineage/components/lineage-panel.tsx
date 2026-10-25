@@ -5,11 +5,7 @@ import { ReactFlow, Background, Controls } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { errorFromApiResponse } from '@/lib/errors/api-error.js';
 import { useApiErrorMessage } from '@/lib/errors/use-api-error-message.js';
-import {
-  buildWorkspaceApiPath,
-  workspaceFetch,
-  workspaceFetchJson,
-} from '@/lib/workspace/ws-http.js';
+import { workspaceOpenApiGET, workspaceOpenApiResponse } from '@/lib/openapi/client.js';
 import { Button } from '@/components/ui/button.js';
 import { Input } from '@/components/ui/input.js';
 import { useI18n } from '@/i18n/context.js';
@@ -69,12 +65,11 @@ export function LineagePanel({
 
   const downloadReport = async (format: 'json' | 'markdown') => {
     if (!activeId) return;
-    const response = await workspaceFetch(
-      buildWorkspaceApiPath(
-        `provenance/report?node_id=${encodeURIComponent(activeId)}&format=${format}`,
-        workspaceId,
-      ),
-    );
+    const response = await workspaceOpenApiResponse('GET', workspaceId, 'provenance/report', {
+      params: {
+        query: { node_id: activeId, format },
+      },
+    });
     if (!response.ok) {
       const body = await response.json().catch(() => ({}));
       throw errorFromApiResponse(response.status, body, t.lineage.page.provenance_download_failed);
@@ -110,12 +105,9 @@ export function LineagePanel({
       setError('');
       setLoading(true);
       try {
-        const data = await workspaceFetchJson<ProvenancePayload>(
-          buildWorkspaceApiPath(`provenance?node_id=${encodeURIComponent(activeId)}`, workspaceId),
-          undefined,
-          t.lineage.page.fetch_failed,
-          locale,
-        );
+        const data = await workspaceOpenApiGET<ProvenancePayload>(workspaceId, 'provenance', {
+          params: { query: { node_id: activeId } },
+        });
         if (data.message) setError(data.message);
 
         const counters: Record<string, number> = {

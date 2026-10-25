@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/dialog.js';
 import { Spinner } from '@/components/ui/spinner.js';
 import { useI18n } from '@/i18n/context.js';
-import { workspacePath } from '@/lib/nav/nav-config.js';
+import { workspaceReviewPath } from '@/lib/nav/nav-config.js';
 const ImportExportScreen = lazy(() =>
   import('./import-export-screen.js').then((module) => ({
     default: module.ImportExportScreen,
@@ -46,7 +46,7 @@ export function ImportExportDialog({
 
   function goToReviewQueue() {
     onOpenChange(false);
-    navigate(workspacePath(workspaceId, 'review'));
+    navigate(workspaceReviewPath(workspaceId));
   }
 
   return (
@@ -62,7 +62,7 @@ export function ImportExportDialog({
               <span className="block">
                 <Link
                   className="text-primary underline-offset-4 hover:underline"
-                  to={workspacePath(workspaceId, 'review')}
+                  to={workspaceReviewPath(workspaceId)}
                   onClick={() => onOpenChange(false)}
                 >
                   {ie.open_review_queue}

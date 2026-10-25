@@ -8,7 +8,10 @@ import { formatUserFacingApiError } from "@/lib/errors/api-error-message.js";
 import { useI18n } from "@/i18n/context.js";
 import { fmt, formatLocaleFixedDecimals } from "@/i18n/format.js";
 import type { Locale } from "@/i18n/locale.js";
-import { buildWorkspaceApiPath, workspaceFetch } from '@/lib/workspace/ws-http';
+import {
+  workspaceOpenApiGET,
+  workspaceOpenApiResponse,
+} from '@/lib/openapi/client.js';
 import { logEvent } from '@/modules/graph/lib/registry-store.js';
 import { cn } from "@/lib/utils.js";
 import {
@@ -130,8 +133,9 @@ export function ImportExportScreen({
     try {
       const fd = new FormData();
       fd.append("file", file);
-      const importPath = buildWorkspaceApiPath("review/items/graph-import", workspaceId);
-      const res = await workspaceFetch(importPath, { method: "POST", body: fd });
+      const res = await workspaceOpenApiResponse('POST', workspaceId, 'review/items/graph-import', {
+        body: fd,
+      });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         throw errorFromApiResponse(res.status, data, ie.import_failed);
@@ -172,11 +176,8 @@ export function ImportExportScreen({
     if (nodeIds === null) return;
     setIsExporting(true);
     try {
-      const exportPath = buildWorkspaceApiPath("export", workspaceId);
-      const res = await workspaceFetch(exportPath, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(buildExportPayload(exportFormat, nodeIds)),
+      const res = await workspaceOpenApiResponse('POST', workspaceId, 'export', {
+        body: buildExportPayload(exportFormat, nodeIds),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -214,25 +215,19 @@ export function ImportExportScreen({
         workspaceId,
         nodeIds,
         postExport: (body) =>
-          workspaceFetch(buildWorkspaceApiPath("export", workspaceId), {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(body),
+          workspaceOpenApiResponse('POST', workspaceId, 'export', { body }),
+        getAudit: async () =>
+          workspaceOpenApiGET<{ events: unknown[] }>(workspaceId, 'audit/graph-mutations', {
+            params: {
+              query: { limit: 100, action_prefix: 'workspace.graph.' },
+            },
           }),
-        getAudit: async () => {
-          const auditPath = `${buildWorkspaceApiPath("audit/graph-mutations", workspaceId)}?limit=100&action_prefix=${encodeURIComponent("workspace.graph.")}`;
-          const res = await workspaceFetch(auditPath);
-          const data = await res.json().catch(() => ({}));
-          if (!res.ok) {
-            throw errorFromApiResponse(res.status, data, ie.audit_pack_failed);
-          }
-          return data as { events: unknown[] };
-        },
         getProjection: async () => {
-          const res = await workspaceFetch(buildWorkspaceApiPath("graph/projection", workspaceId));
-          const data = await res.json().catch(() => ({}));
-          if (!res.ok) return undefined;
-          return data;
+          try {
+            return await workspaceOpenApiGET(workspaceId, 'graph/projection');
+          } catch {
+            return undefined;
+          }
         },
       });
       triggerJsonFileDownload("basis_graph_audit_pack.json", pack);

@@ -1,4 +1,4 @@
-"""Minimal MCP JSON-RPC over HTTP (initialize, tools/list, tools/call, ping)."""
+"""Minimal MCP JSON-RPC over HTTP (initialize, tools, resources, ping)."""
 
 from __future__ import annotations
 
@@ -6,6 +6,7 @@ from typing import Any
 
 from basis.application.kernel import WorkspaceCoreContext
 from basis.interface.mcp.dispatch import execute, get_tool_definitions
+from basis.interface.mcp.resources import list_resources, read_resource
 from basis.interface.mcp.tools import CAPABILITIES, PROTOCOL_VERSION, SERVER_INFO
 
 WorkspaceToolContext = WorkspaceCoreContext
@@ -51,6 +52,21 @@ def handle_jsonrpc(ctx: WorkspaceToolContext, req: dict[str, Any]) -> dict[str, 
             return ok(call_tool(ctx, name, arguments))
         except Exception as exc:
             return err(-32603, str(exc))
+
+    if method == "resources/list":
+        return ok({"resources": list_resources()})
+
+    if method == "resources/read":
+        uri = str(params.get("uri") or "")
+        if not uri:
+            return err(-32602, "uri is required")
+        try:
+            return ok(read_resource(ctx, uri))
+        except Exception as exc:
+            return err(-32603, str(exc))
+
+    if method == "prompts/list":
+        return ok({"prompts": []})
 
     if req_id is None:
         return None

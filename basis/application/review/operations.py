@@ -27,13 +27,23 @@ def op_list_review_items(ctx: WorkspaceCoreContext, args: dict[str, Any]) -> dic
     status = str(args.get("status") or "open").strip() or None
     kind = str(args.get("kind") or "").strip() or None
     limit = min(max(1, int(args.get("limit", 50))), 200)
+    offset = max(0, int(args.get("offset", 0)))
+    ws = ctx.workspace.id
+    total = ctx.knowledge.count_review_items(ws, status=status, kind=kind)
     items = ctx.knowledge.list_review_items(
-        ctx.workspace.id,
+        ws,
         status=status,
         kind=kind,
         limit=limit,
+        offset=offset,
     )
-    return {"items": items}
+    return {
+        "items": items,
+        "offset": offset,
+        "limit": limit,
+        "total": total,
+        "has_more": offset + len(items) < total,
+    }
 
 
 def op_get_review_item(ctx: WorkspaceCoreContext, args: dict[str, Any]) -> dict[str, Any]:
@@ -103,7 +113,6 @@ def op_approve_review_item(ctx: WorkspaceCoreContext, args: dict[str, Any]) -> d
         return {"error": "item_id is required"}
     require_workspace_editor(ctx)
     rationale = str(args.get("rationale") or "").strip() or None
-    keeper = str(args.get("keeper_statement_id") or "").strip() or None
     primary_id = str(args.get("primary_id") or "").strip() or None
     try:
         deps = review_approve_deps(ctx)
@@ -115,7 +124,6 @@ def op_approve_review_item(ctx: WorkspaceCoreContext, args: dict[str, Any]) -> d
                 workspace_id=ctx.workspace.id,
                 item_id=item_id,
                 rationale=rationale,
-                keeper_statement_id=keeper,
                 primary_id_override=primary_id,
                 deps=deps,
             )

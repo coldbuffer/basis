@@ -28,6 +28,8 @@ _STRUCTURE_EDGE_TYPES = frozenset({
     "rdfs:subClassOf",
     "rdfs:domain",
     "rdfs:range",
+    "owl:onProperty",
+    "owl:someValuesFrom",
     "owl:disjointWith",
     "owl:equivalentClass",
     "owl:equivalentProperty",

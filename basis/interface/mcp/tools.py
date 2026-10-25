@@ -9,7 +9,10 @@ from basis.application.tool_catalog import TOOL_NAMES
 from basis.interface.mcp.dispatch import execute as call_tool, get_tool_definitions
 
 SERVER_INFO = {"name": "basis-workspace-mcp", "version": "0.1.0"}
-CAPABILITIES = {"tools": {"listChanged": False}}
+CAPABILITIES = {
+    "tools": {"listChanged": False},
+    "resources": {"listChanged": False, "subscribe": False},
+}
 PROTOCOL_VERSION = "2024-11-05"
 
 __all__ = [

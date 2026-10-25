@@ -4,13 +4,13 @@ export default {
     tabs: {
       catalog: "连接目录",
       mappings: "连接器表映射",
-      policy: "动作策略与写回门禁",
+      policy: "准入与写回",
       runs: "运行日志",
     },
     catalog: {
       section_tabs: {
         connectors: "连接器",
-        authorization: "授权",
+        authorization: "凭据与登录",
       },
       search_placeholder: "搜索连接器（如 postgres、airtable、github、hubspot）…",
       data_sync_supported: "支持数据同步",
@@ -208,7 +208,7 @@ export default {
       created_toast: "流映射已创建",
       loading_connections: "正在加载连接…",
       direction_bidirectional_option: "双向同步",
-      writeback_mode_review: "审核队列（推荐）",
+      writeback_mode_review: "智能审查（推荐）",
       writeback_mode_auto: "自动写回",
       writeback_mode_disabled: "仅入向（不写回）",
       configured_connection_label: "已配置连接",
@@ -307,10 +307,11 @@ export default {
     subtitle: "Basis 开放连接器协议 (BOCP)：接入关系型数据库与 SaaS 系统，与证据账本双向同步。",
   },
   menu: {
+    connections_sync: "连接与同步",
     connectors: "连接器",
     connector_catalog: "连接器",
     connector_stream_mappings: "表同步",
-    connector_action_policy: "动作策略",
+    connector_action_policy: "准入与写回",
     connector_run_logs: "运行日志",
   },
 } as const;

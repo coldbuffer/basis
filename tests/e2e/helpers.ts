@@ -343,17 +343,17 @@ export async function seedSyncFailedViaApi(
   return { sourceId: body.source_id };
 }
 
-/** Seed statement_conflict review item + alert (Playwright data-e2e API only). */
+/** Seed SHACL violation review item via mapped statements (Playwright data-e2e API only). */
 export async function seedStatementConflictViaApi(
   page: Page,
   workspaceId: string,
 ): Promise<{ reviewItemId: string; surfacePhrase: string }> {
   const token = await bearerToken(page);
-  const response = await page.request.post(e2eWorkspaceApiPath(workspaceId, '_e2e/statement-conflict'), {
+  const response = await page.request.post(e2eWorkspaceApiPath(workspaceId, '_e2e/shacl-violation'), {
     headers: { Authorization: `Bearer ${token}` },
   });
   if (response.status() === 404) {
-    throw new Error('e2e_statement_conflict_unavailable');
+    throw new Error('e2e_shacl_violation_unavailable');
   }
   expect(response.ok()).toBeTruthy();
   const body = (await response.json()) as {

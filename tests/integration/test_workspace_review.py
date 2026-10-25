@@ -39,7 +39,10 @@ def test_entity_merge_review_propose_list_reject(tmp_path) -> None:
 
     listed = client.get(f"/api/v1/workspaces/{workspace_id}/review/items", headers=headers)
     assert listed.status_code == 200
-    assert any(row["id"] == item["id"] for row in listed.json()["items"])
+    listed_body = listed.json()
+    assert listed_body["total"] >= 1
+    assert listed_body["has_more"] is False
+    assert any(row["id"] == item["id"] for row in listed_body["items"])
 
     rejected = client.post(
         f"/api/v1/workspaces/{workspace_id}/review/items/{item['id']}/reject",
@@ -119,3 +122,41 @@ def test_review_approve_failure_emits_governance_alert(tmp_path) -> None:
         and (a.get("detail") or {})["decision_id"]
         for a in tripped
     )
+
+
+def test_review_items_list_pagination(tmp_path) -> None:
+    if not graph_runtime_available():
+        pytest.skip("explorer extra not installed")
+
+    client = TestClient(create_app(Settings(data_dir=tmp_path)))
+    admin = client.post(
+        "/api/v1/auth/register",
+        json={"email": "page@example.com", "password": "password1", "display_name": "Page"},
+    ).json()
+    headers = {"Authorization": f"Bearer {admin['token']}"}
+    workspace_id = client.get("/api/v1/workspaces", headers=headers).json()["workspaces"][0]["id"]
+
+    for i in range(3):
+        resp = client.post(
+            f"/api/v1/workspaces/{workspace_id}/review/items/entity-merge",
+            headers=headers,
+            json={"primary_id": f"node-p-{i}", "duplicate_ids": [f"node-d-{i}"]},
+        )
+        assert resp.status_code == 200
+
+    page0 = client.get(
+        f"/api/v1/workspaces/{workspace_id}/review/items",
+        headers=headers,
+        params={"limit": 2, "offset": 0},
+    ).json()
+    assert page0["total"] == 3
+    assert len(page0["items"]) == 2
+    assert page0["has_more"] is True
+
+    page1 = client.get(
+        f"/api/v1/workspaces/{workspace_id}/review/items",
+        headers=headers,
+        params={"limit": 2, "offset": 2},
+    ).json()
+    assert len(page1["items"]) == 1
+    assert page1["has_more"] is False

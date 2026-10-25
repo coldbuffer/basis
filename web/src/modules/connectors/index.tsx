@@ -161,24 +161,11 @@ function parseConnectorPanel(raw: string | undefined): ConnectorPanel | null {
   return null;
 }
 
-/** Legacy `/connectors/catalog` → `/connectors` (keeps query). */
-export function ConnectorCatalogLegacyRedirect() {
-  const { id: workspaceId } = useParams();
-  const [searchParams] = useSearchParams();
-  if (!workspaceId) return null;
-  const home = workspaceConnectorHomePath(workspaceId);
-  const q = searchParams.toString();
-  return <Navigate to={q ? `${home}?${q}` : home} replace />;
-}
-
 type CatalogSection = 'connectors' | 'authorization';
 
 function parseCatalogSection(raw: string | null): CatalogSection {
-  if (raw === 'authorization' || raw === 'connections') {
+  if (raw === 'authorization') {
     return 'authorization';
-  }
-  if (raw === 'connectors' || raw === 'enabled') {
-    return 'connectors';
   }
   return 'connectors';
 }
@@ -223,10 +210,6 @@ export function ConnectorsPage() {
   const { t, locale } = useI18n();
   const c = t.connectors.page;
   const { getWorkspace } = useWorkspaceCatalog();
-
-  if (panelParam === 'catalog') {
-    return workspaceId ? <ConnectorCatalogLegacyRedirect /> : null;
-  }
 
   const panel = parseConnectorPanel(panelParam);
   if (panelParam && !panel) {
@@ -452,21 +435,6 @@ export function ConnectorsPage() {
       toast.error(formatUserFacingApiError(err, locale as Locale));
     }
   }, [workspaceId, locale]);
-
-  useEffect(() => {
-    if (!workspaceId) return;
-    const tab = searchParams.get('tab');
-    if (!tab) return;
-    const next = new URLSearchParams(searchParams);
-    next.delete('tab');
-    const suffix = next.toString();
-    const panelFromTab = parseConnectorPanel(tab);
-    const base =
-      panelFromTab != null
-        ? workspaceConnectorPanelPath(workspaceId, panelFromTab)
-        : workspaceConnectorHomePath(workspaceId);
-    navigate(suffix ? `${base}?${suffix}` : base, { replace: true });
-  }, [workspaceId, searchParams, navigate]);
 
   useEffect(() => {
     if (!workspaceId) {
@@ -1665,41 +1633,58 @@ export function ConnectorsPage() {
 
   if (!workspaceId) return null;
 
-  const panelCrumbLabel =
-    !panel
-      ? t.connectors.menu.connector_catalog
-      : panel === 'mappings'
-        ? t.connectors.menu.connector_stream_mappings
-        : panel === 'policy'
-          ? t.connectors.menu.connector_action_policy
-          : t.connectors.menu.connector_run_logs;
+  const workspaceTab: CatalogSection | ConnectorPanel = panel ?? catalogSection;
+
+  function onWorkspaceTabChange(value: string) {
+    if (!workspaceId) return;
+    if (value === 'connectors' || value === 'authorization') {
+      const next = new URLSearchParams(searchParams);
+      next.set('section', value);
+      const q = next.toString();
+      navigate(`${workspaceConnectorHomePath(workspaceId)}?${q}`);
+      return;
+    }
+    const nextPanel = parseConnectorPanel(value);
+    if (nextPanel) {
+      navigate(workspaceConnectorPanelPath(workspaceId, nextPanel));
+    }
+  }
 
   return (
     <ConsolePageLayout
       crumbs={[
         { label: t.core.workspace_nav.platform.workspaces, to: '/workspaces' },
         { label: getWorkspace(workspaceId)?.name ?? workspaceId, to: workspacePath(workspaceId!, 'graph') },
-        { label: t.core.workspace_nav.workspace_zones.connectors, to: workspaceConnectorHomePath(workspaceId!) },
-        { label: panelCrumbLabel },
+        { label: t.core.workspace_nav.workspace_zones.knowledge, to: workspaceConnectorHomePath(workspaceId!) },
+        { label: t.connectors.menu.connections_sync },
       ]}
       subtitle={t.connectors.page.subtitle}
     >
-      {!panel ? (
+      <Tabs
+        value={workspaceTab}
+        onValueChange={onWorkspaceTabChange}
+        className="mb-4 min-w-0"
+      >
+        <TabsList className="h-auto flex-wrap" data-testid="connectors-workspace-tabs">
+          <TabsTrigger value="connectors" data-testid="connectors-workspace-tab-connectors">
+            {c.catalog.section_tabs.connectors}
+          </TabsTrigger>
+          <TabsTrigger value="authorization" data-testid="connectors-workspace-tab-authorization">
+            {c.catalog.section_tabs.authorization}
+          </TabsTrigger>
+          <TabsTrigger value="policy" data-testid="connectors-workspace-tab-policy">
+            {t.connectors.menu.connector_action_policy}
+          </TabsTrigger>
+          <TabsTrigger value="mappings" data-testid="connectors-workspace-tab-mappings">
+            {t.connectors.menu.connector_stream_mappings}
+          </TabsTrigger>
+          <TabsTrigger value="runs" data-testid="connectors-workspace-tab-runs">
+            {t.connectors.menu.connector_run_logs}
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+      {!panel && catalogSection === 'connectors' ? (
         <div className="space-y-4" data-testid="connectors-panel-catalog">
-          <Tabs
-            value={catalogSection}
-            onValueChange={(value) => setCatalogSection(parseCatalogSection(value))}
-          >
-            <TabsList data-testid="connectors-catalog-section-tabs">
-              <TabsTrigger value="connectors" data-testid="connectors-catalog-tab-connectors">
-                {c.catalog.section_tabs.connectors}
-              </TabsTrigger>
-              <TabsTrigger value="authorization" data-testid="connectors-catalog-tab-authorization">
-                {c.catalog.section_tabs.authorization}
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="connectors" className="mt-4 space-y-4">
               <DataPanel data-testid="connectors-catalog-section-enabled">
                 <DataPanelHeader
                   title={c.catalog.workspace_apps_title}
@@ -1744,9 +1729,11 @@ export function ConnectorsPage() {
                   )}
                 </DataPanelBody>
               </DataPanel>
-            </TabsContent>
+        </div>
+      ) : null}
 
-            <TabsContent value="authorization" className="mt-4 space-y-4">
+      {!panel && catalogSection === 'authorization' ? (
+        <div className="space-y-4" data-testid="connectors-panel-authorization">
               <p
                 className="rounded-lg border border-border bg-muted/10 px-4 py-3 text-sm text-muted-foreground"
                 data-testid="connectors-scope-intro"
@@ -1782,8 +1769,6 @@ export function ConnectorsPage() {
                   )}
                 </DataPanelBody>
               </DataPanel>
-            </TabsContent>
-          </Tabs>
         </div>
       ) : null}
 

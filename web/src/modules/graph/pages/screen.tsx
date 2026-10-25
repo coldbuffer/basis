@@ -2,19 +2,14 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { useQueryClient } from "@tanstack/react-query";
 
 import type Graph from "graphology";
+import { openGraphUpdatesWebSocket } from '@/lib/workspace/ws-http';
 import {
-  buildWorkspaceGraphApiPath,
-  buildWorkspaceApiPath,
-  workspaceFetch,
-  openGraphUpdatesWebSocket,
-} from '@/lib/workspace/ws-http';
-import { errorFromApiResponse } from "@/lib/errors/api-error.js";
+  workspaceOpenApiGET,
+  workspaceOpenApiPOST,
+  workspaceOpenApiResponse,
+} from '@/lib/openapi/client.js';
 import { cn } from "@/lib/utils.js";
-import {
-  wsApiErrorMessage,
-  parseWsJson,
-  throwIfWsNotOk,
-} from '@/lib/workspace/ws-api-error';
+import { wsApiErrorMessage } from '@/lib/workspace/ws-api-error';
 import { batchMergeEdges, batchMergeNodes, graph } from '@/lib/workspace/graphStore';
 import { logEvent } from '@/modules/graph/lib/registry-store.js';
 import type { EdgeAttributes, NodeAttributes } from '@/lib/workspace/graphStore';
@@ -1400,9 +1395,8 @@ export function GraphScreen({
     let cancelled = false;
     const loadBounds = async () => {
       try {
-        const response = await workspaceFetch(buildWorkspaceApiPath("temporal/bounds", workspaceId));
-        if (!response.ok || cancelled) return;
-        const data: TemporalBounds = await response.json();
+        const data = await workspaceOpenApiGET<TemporalBounds>(workspaceId, 'temporal/bounds');
+        if (cancelled) return;
         if (!cancelled) {
           setTemporalBounds(data);
         }
@@ -1521,17 +1515,17 @@ export function GraphScreen({
     const applySnapshot = async () => {
       try {
         const at = debouncedTime.toISOString();
-        const response = await workspaceFetch(
-          buildWorkspaceApiPath(`temporal/snapshot?at=${encodeURIComponent(at)}`, workspaceId),
-        );
-        if (!response.ok) {
+        let data: TemporalSnapshotResponse;
+        try {
+          data = await workspaceOpenApiGET<TemporalSnapshotResponse>(workspaceId, 'temporal/snapshot', {
+            params: { query: { at } },
+          });
+        } catch {
           // A failed request must be retryable if the scrubber returns.
           if (!cancelled) temporalSnapshotGuards.finish(atMs, seq);
           return;
         }
         if (cancelled) return;
-
-        const data: TemporalSnapshotResponse = await response.json();
         if (cancelled) return;
         applyData(data);
       } catch (fetchError) {
@@ -1781,19 +1775,17 @@ export function GraphScreen({
     if (!graphWriteEnabled || !inspectableNodeId) return;
     setIsRunningPredictions(true);
     try {
-      const response = await workspaceFetch(buildWorkspaceApiPath("enrich/links", workspaceId), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          node_id: inspectableNodeId,
-          top_n: 6,
-          candidate_type: predictionType || undefined,
-          min_score: 0,
-        }),
-      });
-      const data = await parseWsJson<{ predictions?: LinkPrediction[] }>(
-        response,
-        graphCopy(copyLocale, "apiLinkPredictionFailed"),
+      const data = await workspaceOpenApiPOST<{ predictions?: LinkPrediction[] }>(
+        workspaceId,
+        'enrich/links',
+        {
+          body: {
+            node_id: inspectableNodeId,
+            top_n: 6,
+            candidate_type: predictionType || undefined,
+            min_score: 0,
+          },
+        },
       );
       setPredictions(data.predictions || []);
     } catch (predictionError) {
@@ -1807,18 +1799,15 @@ export function GraphScreen({
   const handleTracePath = useCallback(async () => {
     if (!inspectableNodeId || !pathTargetId.trim()) return;
     try {
-      const pathParams = new URLSearchParams({
-        source: inspectableNodeId,
-        target: pathTargetId.trim(),
-        algorithm: "dijkstra",
+      const data = await workspaceOpenApiGET<PathResponse>(workspaceId, 'graph/path', {
+        params: {
+          query: {
+            source: inspectableNodeId,
+            target: pathTargetId.trim(),
+            algorithm: 'dijkstra',
+          },
+        },
       });
-      const response = await workspaceFetch(
-        buildWorkspaceGraphApiPath(`path?${pathParams.toString()}`, workspaceId),
-      );
-      const data = await parseWsJson<PathResponse>(
-        response,
-        graphCopy(copyLocale, "apiPathLookupFailed"),
-      );
       setPathResult(data);
       if (data.path?.length) {
         const lastStep = data.path[data.path.length - 1];
@@ -1835,13 +1824,9 @@ export function GraphScreen({
   const handleDownloadProvenance = useCallback(async (format: "json" | "markdown") => {
     if (!inspectableNodeId) return;
     const suffix = format === "markdown" ? "markdown" : "json";
-    const response = await workspaceFetch(
-      buildWorkspaceApiPath(
-        `provenance/report?node_id=${encodeURIComponent(inspectableNodeId)}&format=${suffix}`,
-        workspaceId,
-      ),
-    );
-    await throwIfWsNotOk(response, graphCopy(copyLocale, "apiProvenanceReportFailed"));
+    const response = await workspaceOpenApiResponse('GET', workspaceId, 'provenance/report', {
+      params: { query: { node_id: inspectableNodeId, format: suffix } },
+    });
     const blob = await response.blob();
     const url = window.URL.createObjectURL(blob);
     const anchor = document.createElement("a");
@@ -2146,19 +2131,16 @@ export function GraphScreen({
     const loadServerStructuralDistances = async () => {
       try {
         const nodeIds = collectDistanceMatrixNodeIds(graph, distanceAnchorNodeId);
-        const response = await workspaceFetch(buildWorkspaceGraphApiPath("distance-matrix", workspaceId), {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ node_ids: nodeIds, metric: "hops" }),
-        });
+        const data = await workspaceOpenApiPOST<DistanceMatrixApiResponse>(
+          workspaceId,
+          'graph/distance-matrix',
+          {
+            body: { node_ids: nodeIds, metric: 'hops' },
+          },
+        );
         if (cancelled) {
           return;
         }
-        if (!response.ok) {
-          const data = await response.json().catch(() => ({}));
-          throw errorFromApiResponse(response.status, data, graphCopy(copyLocale, "loadErrorTitle"));
-        }
-        const data = (await response.json()) as DistanceMatrixApiResponse;
         const distances = structuralDistancesFromMatrixResponse(
           data,
           distanceAnchorNodeId,
@@ -2229,27 +2211,18 @@ export function GraphScreen({
 
     const loadSemanticNeighborhood = async () => {
       try {
-        const semanticParams = new URLSearchParams({
-          node_id: distanceAnchorNodeId,
-          top_k: "50",
-        });
-        const response = await workspaceFetch(
-          buildWorkspaceGraphApiPath(`semantic-neighborhood?${semanticParams.toString()}`, workspaceId),
+        const data = await workspaceOpenApiGET<SemanticNeighborhoodResponse>(
+          workspaceId,
+          'graph/semantic-neighborhood',
+          {
+            params: {
+              query: { node_id: distanceAnchorNodeId, top_k: '50' },
+            },
+          },
         );
         if (cancelled) {
           return;
         }
-        if (!response.ok) {
-          const data = await response.json().catch(() => ({}));
-          const fallback = response.status === 503
-            ? graphCopy(copyLocale, "semanticUnavailable")
-            : response.status === 404
-              ? graphCopy(copyLocale, "semanticNodeNotFound")
-              : graphCopy(copyLocale, "loadErrorTitle");
-          throw errorFromApiResponse(response.status, data, fallback);
-        }
-
-        const data: SemanticNeighborhoodResponse = await response.json();
         const scores = data.neighbors.reduce<Record<string, number>>((nextScores, neighbor) => {
           if (Number.isFinite(neighbor.similarity)) {
             nextScores[neighbor.id] = neighbor.similarity;

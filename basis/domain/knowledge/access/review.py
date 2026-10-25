@@ -65,6 +65,22 @@ class ReviewAccess:
                 ) from exc
         return self.get_review_item(workspace_id, item_id)
 
+    def count_review_items(
+        self,
+        workspace_id: str,
+        *,
+        status: str | None = "open",
+        kind: str | None = None,
+    ) -> int:
+        with self._store._lock:
+            self._store._assert_workspace_exists(workspace_id)
+            return review_persist.count_review_item_rows(
+                self._store._conn,
+                workspace_id,
+                status=status,
+                kind=kind,
+            )
+
     def list_review_items(
         self,
         workspace_id: str,
@@ -72,8 +88,10 @@ class ReviewAccess:
         status: str | None = "open",
         kind: str | None = None,
         limit: int = 50,
+        offset: int = 0,
     ) -> list[dict[str, Any]]:
         limit = min(max(1, limit), 200)
+        offset = max(0, offset)
         with self._store._lock:
             self._store._assert_workspace_exists(workspace_id)
             rows = review_persist.list_review_item_rows(
@@ -82,6 +100,7 @@ class ReviewAccess:
                 status=status,
                 kind=kind,
                 limit=limit,
+                offset=offset,
             )
         return [review_persist.review_row_to_dict(row) for row in rows]
 

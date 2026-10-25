@@ -161,6 +161,124 @@ def test_proposed_mapping_opens_review_queue(tmp_path) -> None:
     assert queue_after.json()["items"] == []
 
 
+def test_mapping_materializes_class_typed_facts_after_confirm(tmp_path) -> None:
+    from basis.domain.knowledge.blob_store import BlobStore
+    from basis.domain.knowledge.store import KnowledgeStore
+    from basis.domain.ontology.mappings.access import RDF_TYPE_URI
+    from basis.domain.tenancy.admin.store import AdminStore
+
+    admin = AdminStore(tmp_path / "basis.db")
+    user, _ = admin.register("cls@example.com", "password1", "Cls")
+    workspace_id = admin.create_workspace(user, "Cls KB", None, "restricted").id
+    admin.close()
+    store = KnowledgeStore(tmp_path / "basis.db", BlobStore(tmp_path))
+
+    chunk_id = _chunk_for_mapping(store, workspace_id)
+    alice = store.create_entity(workspace_id, canonical_label="Alice")
+    store.add_open_statement(
+        workspace_id,
+        subject_id=alice,
+        surface_phrase="是",
+        object_entity_id=None,
+        object_value="人",
+        status="confirmed",
+        proposed_by="test",
+        chunk_id=chunk_id,
+        quote="是人",
+    )
+
+    mapping = store.create_mapping(
+        workspace_id,
+        actor_id=user.id,
+        signature="人",
+        target_uri="http://example.org/Person",
+        target_kind="class",
+        direction="n/a",
+        status="proposed",
+    )
+    store.update_mapping_status(workspace_id, mapping["id"], user.id, status="confirmed")
+    result = store.materialize_mapping_facts(workspace_id, mapping["id"])
+    assert result["created"] == 1
+
+    facts = store.list_typed_facts(workspace_id, limit=10)
+    row = next(f for f in facts if f["mapping_id"] == mapping["id"])
+    assert row["subject_id"] == alice
+    assert row["predicate_uri"] == RDF_TYPE_URI
+    assert row["object_value"] == "http://example.org/Person"
+    assert row["object_entity_id"] is None
+
+
+def test_entity_class_mappings_differ_by_object_label(tmp_path) -> None:
+    from basis.domain.knowledge.blob_store import BlobStore
+    from basis.domain.knowledge.store import KnowledgeStore
+    from basis.domain.ontology.mappings.access import RDF_TYPE_URI
+    from basis.domain.tenancy.admin.store import AdminStore
+
+    admin = AdminStore(tmp_path / "basis.db")
+    user, _ = admin.register("tom@example.com", "password1", "Tom")
+    workspace_id = admin.create_workspace(user, "Tom KB", None, "restricted").id
+    admin.close()
+    store = KnowledgeStore(tmp_path / "basis.db", BlobStore(tmp_path))
+    chunk_id = _chunk_for_mapping(store, workspace_id)
+    alice = store.create_entity(workspace_id, canonical_label="Alice")
+    tom = store.create_entity(workspace_id, canonical_label="Tom")
+    for subject_id, label in ((alice, "人"), (tom, "狗")):
+        store.add_open_statement(
+            workspace_id,
+            subject_id=subject_id,
+            surface_phrase="是",
+            object_entity_id=None,
+            object_value=label,
+            status="confirmed",
+            proposed_by="test",
+            chunk_id=chunk_id,
+            quote=label,
+        )
+
+    person = store.create_mapping(
+        workspace_id,
+        actor_id=user.id,
+        signature="人",
+        target_uri="http://example.org/Person",
+        target_kind="class",
+        direction="n/a",
+        status="confirmed",
+    )
+    dog = store.create_mapping(
+        workspace_id,
+        actor_id=user.id,
+        signature="狗",
+        target_uri="http://example.org/Dog",
+        target_kind="class",
+        direction="n/a",
+        status="confirmed",
+    )
+    assert store.materialize_mapping_facts(workspace_id, person["id"])["created"] == 1
+    assert store.materialize_mapping_facts(workspace_id, dog["id"])["created"] == 1
+
+    facts = store.list_typed_facts(workspace_id, limit=20)
+    alice_fact = next(f for f in facts if f["subject_id"] == alice)
+    tom_fact = next(f for f in facts if f["subject_id"] == tom)
+    assert alice_fact["predicate_uri"] == RDF_TYPE_URI
+    assert tom_fact["predicate_uri"] == RDF_TYPE_URI
+    assert alice_fact["object_value"] == "http://example.org/Person"
+    assert tom_fact["object_value"] == "http://example.org/Dog"
+
+
+def _chunk_for_mapping(store, workspace_id: str) -> str:
+    _, version_id, _, _ = store.store_upload_bytes(
+        workspace_id,
+        title="m.txt",
+        mime_type="text/plain",
+        data=b"x",
+        created_by=None,
+        external_key="map-doc",
+    )
+    chunk_id = store.create_chunk(workspace_id, version_id, ordinal=0, text="evidence")
+    store.set_version_status(workspace_id, version_id, "ready")
+    return chunk_id
+
+
 def test_viewer_cannot_confirm_mapping_directly(tmp_path) -> None:
     client = TestClient(create_app(Settings(data_dir=tmp_path)))
     owner = client.post(

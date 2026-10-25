@@ -19,7 +19,7 @@ test('workspace account menu alerts opens alerts page', async ({ page }) => {
   await expect(page).toHaveURL(new RegExp(`/workspaces/${workspaceId}/alerts`), { timeout: 30_000 });
 });
 
-test('review queue scan statement conflicts button', async ({ page }) => {
+test('review queue governance scan button', async ({ page }) => {
   test.setTimeout(120_000);
 
   await registerFreshUser(page);
@@ -33,10 +33,12 @@ test('review queue scan statement conflicts button', async ({ page }) => {
     test.skip(true, 'review workspace requires graph_runtime');
   }
 
-  const scanBtn = page.getByTestId('review-scan-statement-conflicts');
+  const scanBtn = page.getByTestId('review-run-governor');
   await expect(scanBtn).toBeVisible({ timeout: 60_000 });
   await scanBtn.click();
-  await expect(scanBtn).toBeEnabled({ timeout: 30_000 });
+  await expect(page.getByRole('dialog')).toBeVisible({ timeout: 15_000 });
+  await page.getByRole('button', { name: /^(Start check|开始检查)$/ }).click();
+  await expect(scanBtn).toBeEnabled({ timeout: 120_000 });
 });
 
 test('review queue surfaces link to ontology versions tab', async ({ page }) => {
@@ -132,27 +134,25 @@ test('processing failed alert links to processing job', async ({ page }) => {
   });
 });
 
-test('statement conflict alert links to review queue item', async ({ page }) => {
+test('e2e SHACL conflict seed opens review queue item', async ({ page }) => {
   test.setTimeout(120_000);
 
   await registerFreshUser(page);
   const workspaceId = await defaultWorkspaceId(page);
 
   let reviewItemId: string;
-  let surfacePhrase: string;
   try {
-    ({ reviewItemId, surfacePhrase } = await seedStatementConflictViaApi(page, workspaceId));
+    ({ reviewItemId } = await seedStatementConflictViaApi(page, workspaceId));
   } catch (err) {
-    if (String(err).includes('e2e_statement_conflict_unavailable')) {
-      test.skip(true, 'statement conflict e2e helper only on data-e2e API');
+    if (String(err).includes('e2e_shacl_violation_unavailable')) {
+      test.skip(true, 'SHACL violation e2e helper only on data-e2e API');
     }
     throw err;
   }
 
-  await page.goto(`/workspaces/${workspaceId}/alerts`);
-  const alertRow = page.locator('li').filter({ hasText: surfacePhrase });
-  await expect(alertRow).toBeVisible({ timeout: 30_000 });
-  await alertRow.getByRole('link', { name: /Open review queue|打开审核队列/i }).click();
+  await page.goto(
+    `/workspaces/${workspaceId}/review?reviewItem=${encodeURIComponent(reviewItemId)}`,
+  );
   await expect(page).toHaveURL(new RegExp(`reviewItem=${encodeURIComponent(reviewItemId)}`));
 
   const unavailable = page.getByRole('heading', {
@@ -165,7 +165,7 @@ test('statement conflict alert links to review queue item', async ({ page }) => 
   const card = page.locator(`#review-item-${reviewItemId}`);
   await expect(card).toBeVisible({ timeout: 60_000 });
   await expect(card).toHaveClass(/ring-primary/);
-  await expect(card.getByText(surfacePhrase)).toBeVisible();
+  await expect(card.getByText(/SHACL|shacl/i)).toBeVisible();
 });
 
 test('viewing alerts clears unread badge but keeps episodes', async ({ page }) => {
@@ -274,8 +274,8 @@ test('governance tripped alert episode navigates detail to decisions', async ({ 
   await expect(page.locator('ul li').first()).toBeVisible({ timeout: 30_000 });
   await expect(page.getByText(new RegExp(decisionId!))).toBeVisible({ timeout: 15_000 });
   await page.getByRole('link', { name: /Open decisions|打开决策记录/i }).click();
-  await expect(page).toHaveURL(/\/decisions/);
-  await expect(page).toHaveURL(new RegExp(`decision=${encodeURIComponent(decisionId!)}`));
+  await expect(page).toHaveURL(/\/log/);
+  await expect(page).toHaveURL(new RegExp(`graph_decision=${encodeURIComponent(decisionId!)}`));
 });
 
 test('governance tripped alert links to decisions tab', async ({ page }) => {
@@ -299,8 +299,8 @@ test('governance tripped alert links to decisions tab', async ({ page }) => {
 
   await page.goto(`/workspaces/${workspaceId}/alerts`);
   await page.getByRole('link', { name: /Open decisions|打开决策记录/i }).click();
-  await expect(page).toHaveURL(/\/decisions/);
-  await expect(page).toHaveURL(new RegExp(`decision=${encodeURIComponent(decisionId!)}`));
+  await expect(page).toHaveURL(/\/log/);
+  await expect(page).toHaveURL(new RegExp(`graph_decision=${encodeURIComponent(decisionId!)}`));
 });
 
 test('approve remember records governance decision deep link', async ({ page }) => {
@@ -329,10 +329,9 @@ test('approve remember records governance decision deep link', async ({ page }) 
   await expect(page.getByTestId('review-item-decision-narrative').first()).toBeVisible({
     timeout: 30_000,
   });
-  await expect(page.getByTestId('review-decision-narrative')).toBeVisible({ timeout: 30_000 });
   await decisionLink.click();
-  await expect(page).toHaveURL(/\/decisions/);
-  await expect(page).toHaveURL(/decision=/);
+  await expect(page).toHaveURL(/\/log/);
+  await expect(page).toHaveURL(/graph_decision=/);
 });
 
 test('resolved review deep link shows banner and decision links', async ({ page }) => {

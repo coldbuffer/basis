@@ -12,7 +12,7 @@ from basis.domain.graph.projection.projection_lifecycle import (
 from basis.domain.knowledge.blob_store import BlobStore
 from basis.domain.knowledge.ports.platform import WorkspaceAuditActor, WorkspaceAuditStore
 from basis.domain.knowledge.services.graph_audit import audit_graph
-from basis.domain.knowledge.services.conflict_review import STATEMENT_CONFLICT_KIND, scan_statement_conflicts
+from basis.domain.knowledge.services.conflict_review import SHACL_VIOLATION_KIND, run_shacl_conflict_scan
 from basis.domain.knowledge.services.governor import LOW_CONFIDENCE_KIND, resolve_low_confidence_reject
 from basis.domain.knowledge.services.governor_cluster import ENTITY_CLUSTER_KIND
 from basis.domain.knowledge.services.import_review import discard_staged_import
@@ -21,6 +21,7 @@ from basis.domain.ontology.mappings.service import (
     apply_mapping_status_change,
 )
 from basis.domain.knowledge.services.remember_service import STATEMENT_REVIEW_KIND
+
 from basis.domain.knowledge.store import KnowledgeStore
 
 
@@ -49,7 +50,7 @@ def approve_statement_remember_review(
     merge_result = {
         "statement_id": statement_id,
         "status": "confirmed",
-        "conflicts": scan_statement_conflicts(knowledge, workspace_id),
+        "shacl_scan": run_shacl_conflict_scan(knowledge, workspace_id),
     }
     resolved = knowledge.resolve_review_item(
         workspace_id,
@@ -165,8 +166,8 @@ def reject_review_item(
         reject_action = "workspace.mapping.rejected"
     elif kind == STATEMENT_REVIEW_KIND:
         reject_action = "workspace.statement.remember_rejected"
-    elif kind == STATEMENT_CONFLICT_KIND:
-        reject_action = "workspace.statement.conflict_dismissed"
+    elif kind == SHACL_VIOLATION_KIND:
+        reject_action = "workspace.shacl.violation_dismissed"
     elif kind == ENTITY_CLUSTER_KIND:
         reject_action = "workspace.entity.cluster_dismissed"
     elif kind == LOW_CONFIDENCE_KIND:

@@ -2,6 +2,7 @@ import { type FormEvent, useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import {
   DataPanel,
+  DataPanelBody,
   DataPanelToolbar,
   EmptyState,
   ToolbarSearch,
@@ -33,11 +34,10 @@ import { workspaceApiClient } from '@/modules/search/lib/api-client.js';
 import { formatUserFacingApiError } from '@/lib/errors/api-error-message.js';
 import { useWorkspaceCatalog } from '@/lib/workspace/context.js';
 import { useWorkspaceCapabilities } from '@/lib/workspace/capabilities.js';
-import { useWorkspaceTemporalBounds } from '@/modules/search/lib/use-temporal-bounds.js';
 import type { LedgerEntityHit } from '@/modules/entities/components/ledger-entity-browser.js';
 import { useWorkspaceNodeLabels } from '@/lib/workspace/node-labels.js';
 import { graphPath } from '@/modules/graph/lib/graph-url-state.js';
-import { workspaceGraphDiffPath, workspacePath } from '@/lib/nav/nav-config.js';
+import { workspacePath } from '@/lib/nav/nav-config.js';
 import {
   searchPath,
   parseSearchUrlState,
@@ -56,11 +56,10 @@ export function SearchPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { getWorkspace } = useWorkspaceCatalog();
   const { caps, loading: capsLoading } = useWorkspaceCapabilities();
-  const { bounds: temporalBounds } = useWorkspaceTemporalBounds(id ?? undefined);
   const workspaceMeta = id ? getWorkspace(id) : undefined;
 
   const [scope, setScope] = useState<SearchScope>(() =>
-    resolveSearchScope(searchParams.get('scope'), searchParams.get('tab')),
+    resolveSearchScope(searchParams.get('scope')),
   );
   const [query, setQuery] = useState(() => searchParams.get('q') ?? '');
   const [asOf, setAsOf] = useState(() => searchParams.get('as_of') ?? '');
@@ -284,48 +283,125 @@ export function SearchPage() {
     { count: formatLocaleNumber(locale, resultCount) },
   );
 
+  const showTemporal = scope === 'chunks' || scope === 'graph';
+  const temporalValue = scope === 'chunks' ? asOf : at;
+  const temporalInputId =
+    scope === 'chunks' ? 'workspace-search-as-of' : 'workspace-search-at';
+
+  function clearTemporalFilter() {
+    if (scope === 'chunks') {
+      setAsOf('');
+      syncSearchUrl({ q: query.trim(), scope, asOf: '', at });
+    } else {
+      setAt('');
+      syncSearchUrl({ q: query.trim(), scope, asOf, at: '' });
+    }
+  }
+
+  const resultsBody =
+    !id ? (
+      <EmptyState title={s.no_results} />
+    ) : !hasSearched && !query.trim() && scope !== 'entities' ? (
+      <EmptyState title={s.landing_title} description={s.landing_body} />
+    ) : scope === 'chunks' ? (
+      <SearchChunkList workspaceId={id} hits={chunkResults} copy={s} emptyCell={emptyCell} />
+    ) : scope === 'graph' ? (
+      <SearchGraphList
+        workspaceId={id}
+        hits={graphResults}
+        labels={graphLabels}
+        copy={s}
+        locale={locale as Locale}
+        graphAt={at}
+      />
+    ) : (
+      <SearchEntityList workspaceId={id} hits={entityResults} copy={s} />
+    );
+
   return (
-    <ConsolePageLayout
-      crumbs={[
-        { label: t.core.workspace_nav.platform.workspaces, to: '/workspaces' },
-        { label: name, to: id ? workspacePath(id, 'graph') : '/workspaces' },
-        { label: t.search.menu.search },
-      ]}
-      subtitle={
-        <>
-          {t.search.page.subtitle}{' '}
-          {id ? (
-            <Link
-              to={workspacePath(id, 'settings') + '?tab=search'}
-              className="text-primary underline-offset-2 hover:underline"
-            >
-              {s.search_settings_link}
-            </Link>
-          ) : null}
-        </>
-      }
+    <div
+      className="basis-search-shell flex min-h-0 w-full flex-1 flex-col"
+      data-workspace-id={id ?? undefined}
+      data-testid="workspace-search-view"
     >
-      <DataPanel>
-        <form onSubmit={onSubmit}>
-          <DataPanelToolbar
-            className="gap-3"
-            search={
-              <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center">
-                <ToolbarSearch
-                  className="min-w-0 flex-1"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder={placeholderForScope(scope)}
-                />
-                <div className="flex shrink-0 items-center gap-2">
+      <ConsolePageLayout
+        crumbs={[
+          { label: t.core.workspace_nav.platform.workspaces, to: '/workspaces' },
+          { label: name, to: id ? workspacePath(id, 'graph') : '/workspaces' },
+          { label: t.search.menu.search },
+        ]}
+        subtitle={
+          <div className="space-y-1">
+            <p>
+              {t.search.page.subtitle}{' '}
+              {id ? (
+                <Link
+                  to={workspacePath(id, 'settings') + '?tab=search'}
+                  className="text-primary underline-offset-2 hover:underline"
+                >
+                  {s.search_settings_link}
+                </Link>
+              ) : null}
+            </p>
+          </div>
+        }
+        className="gap-6 [&>:last-child]:min-h-0 [&>:last-child]:flex-none"
+      >
+        <DataPanel data-testid="workspace-search-panel">
+          <form onSubmit={onSubmit} className="flex flex-col gap-2">
+            <DataPanelToolbar
+              className="flex-nowrap"
+              search={
+                <div
+                  className="flex min-w-0 flex-1 flex-nowrap items-center gap-2"
+                  data-testid={showTemporal ? 'workspace-search-temporal' : undefined}
+                >
+                  <ToolbarSearch
+                    className="min-w-0 w-full max-w-md flex-1 sm:w-72 sm:flex-none"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder={placeholderForScope(scope)}
+                    disabled={loading && !hasSearched}
+                  />
+                  {showTemporal ? (
+                    <>
+                      <Label htmlFor={temporalInputId} className="sr-only">
+                        {scope === 'chunks' ? s.temporal_as_of_label : s.temporal_at_label}
+                      </Label>
+                      <Input
+                        id={temporalInputId}
+                        data-testid={temporalInputId}
+                        value={temporalValue}
+                        onChange={(e) =>
+                          scope === 'chunks' ? setAsOf(e.target.value) : setAt(e.target.value)
+                        }
+                        placeholder="2030-01-01T00:00:00Z"
+                        title={s.temporal_hint}
+                        className="h-9 w-[10.5rem] shrink-0 font-mono text-xs sm:w-[13rem]"
+                        autoComplete="off"
+                      />
+                      {temporalValue.trim() ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="hidden shrink-0 px-2 sm:inline-flex"
+                          onClick={clearTemporalFilter}
+                        >
+                          {s.clear_temporal}
+                        </Button>
+                      ) : null}
+                    </>
+                  ) : null}
+                </div>
+              }
+              actions={
+                <div className="flex flex-wrap items-center gap-2">
                   <Label htmlFor="workspace-search-scope" className="sr-only">
                     {s.scope_label}
                   </Label>
-                  <Select
-                    value={scope}
-                    onValueChange={(v) => changeScope(v as SearchScope)}
-                  >
-                    <SelectTrigger id="workspace-search-scope" className="h-9 w-[9.5rem]">
+                  <Select value={scope} onValueChange={(v) => changeScope(v as SearchScope)}>
+                    <SelectTrigger id="workspace-search-scope" className="w-[9.5rem]" size="sm">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -336,37 +412,17 @@ export function SearchPage() {
                       <SelectItem value="entities">{s.scope_entities}</SelectItem>
                     </SelectContent>
                   </Select>
+                  <Button type="submit" size="sm" className="min-w-[5.5rem]" disabled={loading}>
+                    {loading ? <Spinner className="size-4" /> : null}
+                    {loading ? s.searching : s.search}
+                  </Button>
                 </div>
-              </div>
-            }
-            actions={
-              <Button type="submit" size="sm" className="h-9 min-w-[5.5rem]" disabled={loading}>
-                {loading ? <Spinner className="size-4" /> : null}
-                {loading ? s.searching : s.search}
-              </Button>
-            }
-          />
-          {scope === 'chunks' || scope === 'graph' ? (
-            <div className="mt-3 flex flex-col gap-2 border-t border-border/60 px-1 pt-3 sm:flex-row sm:items-end">
-              <div className="min-w-0 flex-1 space-y-1.5">
-                <Label htmlFor={scope === 'chunks' ? 'workspace-search-as-of' : 'workspace-search-at'}>
-                  {scope === 'chunks' ? s.temporal_as_of_label : s.temporal_at_label}
-                </Label>
-                <Input
-                  id={scope === 'chunks' ? 'workspace-search-as-of' : 'workspace-search-at'}
-                  data-testid={scope === 'chunks' ? 'workspace-search-as-of' : 'workspace-search-at'}
-                  value={scope === 'chunks' ? asOf : at}
-                  onChange={(e) =>
-                    scope === 'chunks' ? setAsOf(e.target.value) : setAt(e.target.value)
-                  }
-                  placeholder="2030-01-01T00:00:00Z"
-                  className="font-mono text-xs"
-                  autoComplete="off"
-                />
-                <p className="text-[11px] text-muted-foreground">{s.temporal_hint}</p>
-              </div>
-              <div className="flex shrink-0 flex-wrap gap-2">
-                {scope === 'graph' && graphEnabled && id ? (
+              }
+            />
+
+            {showTemporal && id && graphEnabled ? (
+              <div className="flex flex-wrap items-center gap-1.5">
+                {scope === 'graph' ? (
                   <>
                     <Button type="button" variant="outline" size="sm" asChild>
                       <Link
@@ -386,93 +442,43 @@ export function SearchPage() {
                         </Link>
                       </Button>
                     ) : null}
-                    <Button type="button" variant="outline" size="sm" asChild>
-                      <Link to={workspaceGraphDiffPath(id)} data-testid="workspace-search-open-graph-diff">
-                        {s.open_graph_diff_link}
-                      </Link>
-                    </Button>
                   </>
-                ) : null}
-                {scope === 'chunks' && graphEnabled && id ? (
-                  <>
-                    {asOf.trim() ? (
-                      <Button type="button" variant="outline" size="sm" asChild>
-                        <Link
-                          to={graphPath(id, { at: asOf.trim(), timeline: true })}
-                          data-testid="workspace-search-chunks-open-timeline"
-                        >
-                          {s.open_graph_timeline_link}
-                        </Link>
-                      </Button>
-                    ) : null}
-                    <Button type="button" variant="outline" size="sm" asChild>
-                      <Link
-                        to={
-                          asOf.trim() && temporalBounds?.min
-                            ? workspaceGraphDiffPath(id, temporalBounds.min, asOf.trim())
-                            : workspaceGraphDiffPath(id)
-                        }
-                        data-testid="workspace-search-chunks-open-graph-diff"
-                      >
-                        {s.open_graph_diff_link}
-                      </Link>
-                    </Button>
-                  </>
-                ) : null}
-                {(scope === 'chunks' ? asOf : at).trim() ? (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      if (scope === 'chunks') setAsOf('');
-                      else setAt('');
-                      syncSearchUrl({
-                        q: query.trim(),
-                        scope,
-                        asOf: scope === 'chunks' ? '' : asOf,
-                        at: scope === 'graph' ? '' : at,
-                      });
-                    }}
-                  >
-                    {s.clear_temporal}
+                ) : asOf.trim() ? (
+                  <Button type="button" variant="outline" size="sm" asChild>
+                    <Link
+                      to={graphPath(id, { at: asOf.trim(), timeline: true })}
+                      data-testid="workspace-search-chunks-open-timeline"
+                    >
+                      {s.open_graph_timeline_link}
+                    </Link>
                   </Button>
                 ) : null}
               </div>
-            </div>
-          ) : null}
-        </form>
+            ) : null}
+          </form>
 
-        {error ? (
-          <div className="mt-2 px-1">
-            <p className="text-sm text-destructive">{error}</p>
-          </div>
-        ) : null}
-
-        <div className="mt-6 min-w-0 w-full">
-          {!loading && hasSearched ? (
-            <p className="mb-3 text-xs text-muted-foreground tabular-nums">{countLabel}</p>
-          ) : null}
-          {!hasSearched && !query.trim() && scope !== 'entities' ? (
-            <EmptyState title={s.landing_title} description={s.landing_body} />
-          ) : !id ? (
-            <EmptyState title={s.no_results} />
-          ) : scope === 'chunks' ? (
-            <SearchChunkList workspaceId={id} hits={chunkResults} copy={s} emptyCell={emptyCell} />
-          ) : scope === 'graph' ? (
-            <SearchGraphList
-              workspaceId={id}
-              hits={graphResults}
-              labels={graphLabels}
-              copy={s}
-              locale={locale as Locale}
-              graphAt={at}
-            />
-          ) : (
-            <SearchEntityList workspaceId={id} hits={entityResults} copy={s} />
-          )}
-        </div>
-      </DataPanel>
-    </ConsolePageLayout>
+          <DataPanelBody padded={false} className="mt-2">
+            {error ? (
+              <p className="border-b border-border px-4 py-3 text-sm text-destructive">{error}</p>
+            ) : null}
+            {loading && hasSearched && !error ? (
+              <div className="flex justify-center py-16">
+                <Spinner className="size-6" />
+              </div>
+            ) : (
+              <>
+                {hasSearched && !error ? (
+                  <div className="flex items-center justify-between gap-2 border-b border-border/60 px-4 py-2.5">
+                    <span className="text-xs font-medium text-foreground">{s.results_title}</span>
+                    <span className="text-xs tabular-nums text-muted-foreground">{countLabel}</span>
+                  </div>
+                ) : null}
+                {resultsBody}
+              </>
+            )}
+          </DataPanelBody>
+        </DataPanel>
+      </ConsolePageLayout>
+    </div>
   );
 }

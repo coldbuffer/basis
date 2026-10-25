@@ -36,11 +36,6 @@ export const ConnectorOAuthCallbackPage = lazy(() =>
     default: m.ConnectorOAuthCallbackPage,
   })),
 );
-export const ConnectorCatalogLegacyRedirect = lazy(() =>
-  import('@/modules/connectors/index.js').then((m) => ({
-    default: m.ConnectorCatalogLegacyRedirect,
-  })),
-);
 export const ConnectorMappingNewPage = lazy(() =>
   import('@/modules/connectors/pages/mapping-new.js').then((m) => ({
     default: m.ConnectorMappingNewPage,
@@ -51,14 +46,9 @@ export const ConnectorMappingEditPage = lazy(() =>
     default: m.ConnectorMappingEditPage,
   })),
 );
-export const DataOnboardingRedirect = lazy(() =>
-  import('@/modules/data-onboarding/index.js').then((m) => ({
-    default: m.DataOnboardingRedirect,
-  })),
-);
-export const DecisionsPage = lazy(() =>
-  import('@/modules/decisions/index.js').then((m) => ({
-    default: m.DecisionsPage,
+export const ActivityLogPage = lazy(() =>
+  import('@/modules/activity-log/index.js').then((m) => ({
+    default: m.ActivityLogPage,
   })),
 );
 export const DocsPage = lazy(() =>
@@ -66,11 +56,6 @@ export const DocsPage = lazy(() =>
 );
 export const EntitiesPage = lazy(() =>
   import('@/modules/entities/index.js').then((m) => ({ default: m.EntitiesPage })),
-);
-export const EntityResolutionPage = lazy(() =>
-  import('@/modules/entity-resolution/index.js').then((m) => ({
-    default: m.EntityResolutionPage,
-  })),
 );
 export const GraphPage = lazy(() =>
   import('@/modules/graph/index.js').then((m) => ({ default: m.GraphPage })),
@@ -109,6 +94,9 @@ export const ProcessingPage = lazy(() =>
 );
 export const ReviewPage = lazy(() =>
   import('@/modules/review/index.js').then((m) => ({ default: m.ReviewPage })),
+);
+export const DataQualityPage = lazy(() =>
+  import('@/modules/data-quality/index.js').then((m) => ({ default: m.DataQualityPage })),
 );
 export const SearchPage = lazy(() =>
   import('@/modules/search/index.js').then((m) => ({ default: m.SearchPage })),

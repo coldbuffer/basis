@@ -107,6 +107,7 @@ export interface ShaclShapesResponse {
   shapes: ShaclShapeSummary[];
   shacl_turtle: string;
   generated_at: string;
+  source?: "saved" | "generated";
 }
 
 export interface ShaclValidationResponse {

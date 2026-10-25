@@ -33,7 +33,7 @@ import {
 } from '../lib/small-graph-layout.js';
 import type { GraphLoadProgress, GraphLoadSummary } from '../lib/types.js';
 import { throwIfWsNotOk } from '@/lib/workspace/ws-api-error';
-import { buildWorkspaceGraphApiPath, workspaceFetch } from '@/lib/workspace/ws-http';
+import { workspaceOpenApiResponse } from '@/lib/openapi/client.js';
 
 const SEMANTIC_COLOR_FIELDS = [
   "community",
@@ -381,13 +381,15 @@ async function fetchAllNodes(
   let truncated = false;
 
   while (true) {
-    const url = new URL(buildWorkspaceGraphApiPath("nodes", workspaceId), window.location.origin);
-    url.searchParams.set("limit", String(pageLimit));
+    const query: Record<string, string> = { limit: String(pageLimit) };
     if (cursor) {
-      url.searchParams.set("cursor", cursor);
+      query.cursor = cursor;
     }
 
-    const response = await workspaceFetch(url.toString(), { signal });
+    const response = await workspaceOpenApiResponse('GET', workspaceId!, 'graph/nodes', {
+      params: { query },
+      signal,
+    });
     await ensureGraphFetchOk(response, locale);
 
     const data: NodeListResponse = await response.json();
@@ -447,13 +449,15 @@ async function fetchAllEdges(
   let truncated = false;
 
   while (true) {
-    const url = new URL(buildWorkspaceGraphApiPath("edges", workspaceId), window.location.origin);
-    url.searchParams.set("limit", String(pageLimit));
+    const query: Record<string, string> = { limit: String(pageLimit) };
     if (cursor) {
-      url.searchParams.set("cursor", cursor);
+      query.cursor = cursor;
     }
 
-    const response = await workspaceFetch(url.toString(), { signal });
+    const response = await workspaceOpenApiResponse('GET', workspaceId!, 'graph/edges', {
+      params: { query },
+      signal,
+    });
     await ensureGraphFetchOk(response, locale);
 
     const data: EdgeListResponse = await response.json();

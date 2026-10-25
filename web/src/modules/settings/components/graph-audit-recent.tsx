@@ -8,7 +8,7 @@ import {
 } from '@/modules/graph/lib/graph-audit.js';
 import { formatUserFacingApiError } from '@/lib/errors/api-error-message.js';
 import { workspaceOpenApiGET } from '@/lib/openapi/client.js';
-import { workspacePath } from '@/lib/nav/nav-config.js';
+import { workspaceReviewPath } from '@/lib/nav/nav-config.js';
 import { useBasisSession } from '@/lib/session/basis-session.js';
 import { Spinner } from '@/components/ui/spinner.js';
 import { useI18n } from '@/i18n/context.js';
@@ -85,7 +85,7 @@ export function GraphAuditRecent({
                     {formatGraphAuditAction(event.action, locale)}
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    {formatGraphAuditDetail(event, locale)}
+                    {formatGraphAuditDetail(event, locale) || t.core.common.emptyCell}
                   </div>
                   <GraphAuditEventLinks workspaceId={workspaceId} detail={event.detail} />
                 </div>
@@ -97,7 +97,7 @@ export function GraphAuditRecent({
           </ul>
           <div className="flex flex-wrap gap-x-4 gap-y-1">
             <Link
-              to={workspacePath(workspaceId, 'review')}
+              to={workspaceReviewPath(workspaceId)}
               className="inline-block text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
               data-testid="graph-audit-open-review"
             >

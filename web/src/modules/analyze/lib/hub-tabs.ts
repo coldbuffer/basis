@@ -9,9 +9,8 @@ const ONTOLOGY_TAB_SEGMENT: Record<OntologyHubTab, string> = {
   registry: 'ontology',
   editor: 'ontology',
   health: 'ontology',
-  versions: 'ontology-versions',
-  shacl: 'shacl',
-  alignments: 'alignments',
+  versions: 'ontology',
+  alignments: 'ontology',
 };
 
 const ANALYZE_TAB_SEGMENT: Record<AnalyzeHubTab, string> = {
@@ -35,10 +34,8 @@ export function firstEnabledAnalyzeHubTab(caps: WorkspaceCapabilities | null): A
   return ANALYZE_HUB_TABS.find((tab) => analyzeHubTabEnabled(tab, caps)) ?? 'sparql';
 }
 
-/** Maps legacy `ontologyTab` / `tab=model` values to canonical hub tabs. */
 export function normalizeOntologyHubTabId(raw: string | null | undefined): OntologyHubTab | null {
   if (!raw) return null;
-  if (raw === 'model') return 'registry';
   if (ONTOLOGY_HUB_TABS.includes(raw as OntologyHubTab)) {
     return raw as OntologyHubTab;
   }
@@ -51,15 +48,10 @@ export function isOntologyInteriorTab(tab: OntologyHubTab): boolean {
 
 export function resolveOntologyHubTab(
   tabParam: string | null,
-  legacyOntologyTabParam: string | null,
   hasOntologyProposal: boolean,
   hasOntologyEntity: boolean,
   caps: WorkspaceCapabilities | null,
 ): OntologyHubTab {
-  const fromLegacy = normalizeOntologyHubTabId(legacyOntologyTabParam);
-  if (fromLegacy && ontologyHubTabEnabled(fromLegacy, caps)) {
-    return fromLegacy;
-  }
   const fromTab = normalizeOntologyHubTabId(tabParam);
   if (fromTab && ontologyHubTabEnabled(fromTab, caps)) {
     return fromTab;

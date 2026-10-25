@@ -14,6 +14,7 @@ def _apply_inferred_edges(
     mode: str,
     rules: list[str],
     inferred_edge_type: str | None,
+    graph_evidence: dict[str, Any] | None = None,
 ) -> int:
     added_edges = 0
     for fact in inferred_facts:
@@ -29,15 +30,15 @@ def _apply_inferred_edges(
         if session.get_node(target) is None:
             session.add_node(target, "entity", content=target)
         edge_type = inferred_edge_type or predicate
-        session.add_edge(
-            source,
-            target,
-            edge_type=edge_type,
-            inferred=True,
-            inferred_from=fact,
-            reasoning_mode=mode,
-            rules=list(rules),
-        )
+        edge_props: dict[str, Any] = {
+            "inferred": True,
+            "inferred_from": fact,
+            "reasoning_mode": mode,
+            "rules": list(rules),
+        }
+        if graph_evidence:
+            edge_props["basis_evidence"] = dict(graph_evidence)
+        session.add_edge(source, target, edge_type=edge_type, **edge_props)
         added_edges += 1
     return added_edges
 
@@ -68,6 +69,7 @@ def run_reasoning(
     mode: str = "forward",
     apply_to_graph: bool = False,
     inferred_edge_type: str | None = None,
+    graph_evidence: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     inferred_facts = _infer_facts(list(facts), list(rules))
     added_edges = 0
@@ -78,10 +80,14 @@ def run_reasoning(
             mode=mode,
             rules=list(rules),
             inferred_edge_type=inferred_edge_type,
+            graph_evidence=graph_evidence,
         )
-    return {
+    payload: dict[str, Any] = {
         "inferred_facts": inferred_facts,
         "rules_fired": len(inferred_facts),
         "added_edges": added_edges,
         "mutated": added_edges > 0,
     }
+    if graph_evidence:
+        payload["evidence"] = dict(graph_evidence)
+    return payload

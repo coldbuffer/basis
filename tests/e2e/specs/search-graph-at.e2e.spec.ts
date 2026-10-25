@@ -9,7 +9,7 @@ test('search graph tab runs query', async ({ page }) => {
   const workspaceId = await defaultWorkspaceId(page);
   await ingestDocumentViaApi(page, workspaceId, 'Graph search smoke node.');
 
-  await page.goto(`/workspaces/${workspaceId}/search?tab=graph&q=smoke`);
+  await page.goto(`/workspaces/${workspaceId}/search?scope=graph&q=smoke`);
 
   const unavailable = page.getByRole('heading', {
     name: /工作区不可用|Workspace unavailable/i,

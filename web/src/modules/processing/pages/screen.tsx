@@ -20,10 +20,6 @@ import {
 import { useI18n } from '@/i18n/context.js';
 import { fmt, formatLocaleNumber } from '@/i18n/format.js';
 import type { Locale } from '@/i18n/locale.js';
-import {
-  buildIngestLimitsHint,
-  buildIngestOpsQueueHint,
-} from '@/modules/processing/lib/ingest-ops-hints.js';
 import { formatUserFacingApiError } from '@/lib/errors/api-error-message.js';
 import { useWorkspaceWsClient } from '@/lib/workspace/ws-context.js';
 import { useWorkspaceCatalog } from '@/lib/workspace/context.js';
@@ -101,16 +97,6 @@ export function ProcessingScreen({
   const failedJobCount = useMemo(
     () => jobs.filter((job) => job.status === 'failed').length,
     [jobs],
-  );
-
-  const limitsHint = useMemo(
-    () => buildIngestLimitsHint(caps, locale as Locale, p),
-    [caps, locale, p],
-  );
-
-  const opsQueueHint = useMemo(
-    () => buildIngestOpsQueueHint(caps, jobs, locale as Locale, p),
-    [caps, jobs, locale, p],
   );
 
   const refresh = useCallback(
@@ -208,21 +194,7 @@ export function ProcessingScreen({
           { label: kbName, to: workspacePath(workspaceId, 'graph') },
           { label: t.processing.menu.processing },
         ]}
-        subtitle={
-          <div className="space-y-1">
-            <p>{t.processing.page.subtitle}</p>
-            {limitsHint ? (
-              <p className="text-xs text-muted-foreground" data-testid="processing-limits-hint">
-                {limitsHint}
-              </p>
-            ) : null}
-            {opsQueueHint ? (
-              <p className="text-xs text-muted-foreground" data-testid="processing-queue-hint">
-                {opsQueueHint}
-              </p>
-            ) : null}
-          </div>
-        }
+        subtitle={t.processing.page.subtitle}
         className="gap-6 [&>:last-child]:min-h-0 [&>:last-child]:flex-none"
       >
         <DataPanel>

@@ -179,13 +179,26 @@ def invalidate_statement_row(conn: Any, workspace_id: str, statement_id: str, in
 def list_active_statement_rows(conn: Any, workspace_id: str) -> list[Any]:
     return conn.execute(
         """
-        SELECT id AS statement_id, subject_id, surface_phrase,
-               object_entity_id, object_value, status
-        FROM statements
-        WHERE workspace_id = ?
-          AND invalidated_at IS NULL
-          AND status IN ('pending', 'confirmed')
-        ORDER BY recorded_at ASC
+        SELECT
+            s.id AS statement_id,
+            s.subject_id,
+            s.surface_phrase,
+            s.object_entity_id,
+            s.object_value,
+            s.status,
+            s.proposed_by,
+            (
+                SELECT e.quote
+                FROM statement_evidence e
+                WHERE e.statement_id = s.id AND e.workspace_id = s.workspace_id
+                ORDER BY e.created_at
+                LIMIT 1
+            ) AS quote
+        FROM statements s
+        WHERE s.workspace_id = ?
+          AND s.invalidated_at IS NULL
+          AND s.status IN ('pending', 'confirmed')
+        ORDER BY s.recorded_at ASC
         """,
         (workspace_id,),
     ).fetchall()

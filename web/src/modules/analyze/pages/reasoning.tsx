@@ -29,7 +29,7 @@ import {
 import { Input } from "@/components/ui/input.js";
 import { Label } from "@/components/ui/label.js";
 import { Checkbox } from "@/components/ui/checkbox.js";
-import { buildWorkspaceApiPath, workspaceFetch } from '@/lib/workspace/ws-http';
+import { workspaceOpenApiResponse } from '@/lib/openapi/client.js';
 import { errorFromApiResponse } from "@/lib/errors/api-error.js";
 import { useApiErrorMessage } from "@/lib/errors/use-api-error-message.js";
 import { useWorkspaceCapabilitiesOptional } from "@/lib/workspace/capabilities.js";
@@ -230,16 +230,13 @@ export function ReasoningScreen({
     setError("");
     const signature = inputSignature;
     try {
-      const path = buildWorkspaceApiPath("reasoning/run", workspaceId);
-      const response = await workspaceFetch(path, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const response = await workspaceOpenApiResponse('POST', workspaceId, 'reasoning/run', {
+        body: {
           facts: factLines,
           rules: runRules,
           mode: "forward",
           apply_to_graph: applyToGraph && canWriteGraph,
-        }),
+        },
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {

@@ -186,6 +186,53 @@ def test_reasoning_apply_persists_derived_facts(tmp_path) -> None:
     assert len(listed.json()["derived_facts"]) >= 1
 
 
+def test_reasoning_apply_with_chunk_evidence(tmp_path) -> None:
+    if not graph_runtime_available():
+        pytest.skip("explorer extra not installed")
+
+    client = TestClient(create_app(Settings(data_dir=tmp_path)))
+    admin = client.post(
+        "/api/v1/auth/register",
+        json={"email": "rev@example.com", "password": "password1", "display_name": "REV"},
+    ).json()
+    headers = {"Authorization": f"Bearer {admin['token']}"}
+    workspace_id = client.get("/api/v1/workspaces", headers=headers).json()["workspaces"][0]["id"]
+    client.post(
+        f"/api/v1/workspaces/{workspace_id}/documents",
+        headers=headers,
+        json={
+            "doc_id": "reason-evidence",
+            "text": "PersistA is parent of PersistB.",
+            "wait": True,
+            "extract": False,
+            "chunk": True,
+        },
+    )
+    search = client.get(
+        f"/api/v1/workspaces/{workspace_id}/search",
+        headers=headers,
+        params={"q": "PersistA", "limit": 1},
+    ).json()
+    chunk_id = search["chunks"][0].get("chunk_id") or search["chunks"][0].get("id")
+    assert chunk_id
+
+    run = client.post(
+        f"/api/v1/workspaces/{workspace_id}/reasoning/run",
+        headers=headers,
+        json={
+            "facts": ["parent(PersistA, PersistB)"],
+            "rules": ["IF parent(PersistA, PersistB) THEN ancestor(PersistA, PersistB)"],
+            "mode": "forward",
+            "apply_to_graph": True,
+            "chunk_id": chunk_id,
+        },
+    )
+    assert run.status_code == 200
+    body = run.json()
+    assert body.get("evidence", {}).get("chunk_id") == chunk_id
+    assert body.get("added_edges", 0) >= 1
+
+
 def test_list_ingest_jobs_alias(tmp_path) -> None:
     client = TestClient(create_app(Settings(data_dir=tmp_path)))
     admin = client.post(

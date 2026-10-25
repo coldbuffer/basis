@@ -7,6 +7,11 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any
 
+from basis.domain.ontology.hub.draft_apply import (
+    apply_removals,
+    as_draft_mapping,
+    materialize_restrictions,
+)
 from basis.domain.ontology.hub.proposal_store import _get_field, _set_field
 from basis.domain.errors import AdminError
 
@@ -34,6 +39,27 @@ def _diff_dump(diff: Any) -> dict[str, Any]:
     if isinstance(diff, dict):
         return diff
     return {}
+
+
+def _diff_dict(diff: Any, key: str) -> dict[str, Any]:
+    if diff is None:
+        return {}
+    if hasattr(diff, key):
+        value = getattr(diff, key)
+        return dict(value or {}) if isinstance(value, dict) else {}
+    if isinstance(diff, dict):
+        raw = diff.get(key) or {}
+        return dict(raw) if isinstance(raw, dict) else {}
+    return {}
+
+
+def _label_for_uri(diff: Any, uri: str, modified_key: str) -> str:
+    modified = _diff_dict(diff, modified_key)
+    entry = modified.get(uri) or {}
+    label = entry.get("label")
+    if label is not None and str(label).strip():
+        return str(label).strip()
+    return _label_from_uri(uri)
 
 
 def _session_store(session: Any) -> Any:
@@ -222,12 +248,14 @@ def publish_proposal(
         logger.warning("VersionManager.create_version failed: %s", exc)
         raise AdminError(500, "internal_error", f"Version creation failed: {exc}") from exc
 
+    nodes_removed, edges_removed = apply_removals(session, diff, diff_list=_diff_list)
+
     nodes_added = 0
     edges_added = 0
 
     class_nodes = []
     for class_uri in _diff_list(diff, "added_classes"):
-        label = _label_from_uri(class_uri)
+        label = _label_for_uri(diff, class_uri, "modified_classes")
         class_nodes.append(
             {
                 "id": class_uri,
@@ -236,12 +264,29 @@ def publish_proposal(
                 "properties": {"rdfs:label": label},
             }
         )
+    modified_classes = _diff_dict(diff, "modified_classes")
+    added_class_set = set(_diff_list(diff, "added_classes"))
+    for class_uri, changes in modified_classes.items():
+        if class_uri in added_class_set:
+            continue
+        label = changes.get("label")
+        if label is None or not str(label).strip():
+            continue
+        label_str = str(label).strip()
+        class_nodes.append(
+            {
+                "id": class_uri,
+                "type": "owl:Class",
+                "content": label_str,
+                "properties": {"rdfs:label": label_str},
+            }
+        )
     if class_nodes:
         nodes_added += session.add_nodes(class_nodes)
 
     property_nodes = []
     for prop_uri in _diff_list(diff, "added_properties"):
-        label = _label_from_uri(prop_uri)
+        label = _label_for_uri(diff, prop_uri, "modified_properties")
         property_nodes.append(
             {
                 "id": prop_uri,
@@ -250,8 +295,81 @@ def publish_proposal(
                 "properties": {"rdfs:label": label},
             }
         )
+    modified_properties = _diff_dict(diff, "modified_properties")
+    added_property_set = set(_diff_list(diff, "added_properties"))
+    for prop_uri, changes in modified_properties.items():
+        if prop_uri in added_property_set:
+            continue
+        label = changes.get("label")
+        if label is None or not str(label).strip():
+            continue
+        label_str = str(label).strip()
+        property_nodes.append(
+            {
+                "id": prop_uri,
+                "type": "owl:ObjectProperty",
+                "content": label_str,
+                "properties": {"rdfs:label": label_str},
+            }
+        )
     if property_nodes:
         nodes_added += session.add_nodes(property_nodes)
+
+    individual_nodes = []
+    for ind_uri in _diff_list(diff, "added_individuals"):
+        label = _label_from_uri(ind_uri)
+        individual_nodes.append(
+            {
+                "id": ind_uri,
+                "type": "owl:NamedIndividual",
+                "content": label,
+                "properties": {"rdfs:label": label},
+            }
+        )
+    if individual_nodes:
+        nodes_added += session.add_nodes(individual_nodes)
+
+    restriction_nodes, restriction_edges = materialize_restrictions(
+        ontology_uri,
+        _diff_list(diff, "added_restrictions"),
+    )
+    if restriction_nodes:
+        nodes_added += session.add_nodes(restriction_nodes)
+
+    edges_to_add: list[dict[str, Any]] = list(restriction_edges)
+    for raw_edge in _diff_list(diff, "added_edges"):
+        edge_map = as_draft_mapping(raw_edge)
+        source = str(edge_map.get("source", "")).strip()
+        target = str(edge_map.get("target", "")).strip()
+        edge_type = str(edge_map.get("type", "")).strip()
+        if not source or not target or not edge_type:
+            continue
+        edges_to_add.append(
+            {
+                "source": source,
+                "target": target,
+                "type": edge_type,
+                "weight": float(edge_map.get("weight", 1.0) or 1.0),
+            }
+        )
+
+    for raw_axiom in _diff_list(diff, "added_axioms"):
+        axiom_map = as_draft_mapping(raw_axiom)
+        axiom_type = str(axiom_map.get("type", "")).strip()
+        subject = str(axiom_map.get("subject") or axiom_map.get("source") or "").strip()
+        object_uri = str(axiom_map.get("object") or axiom_map.get("value") or "").strip()
+        if axiom_type == "subClassOf" and subject and object_uri:
+            edges_to_add.append(
+                {
+                    "source": subject,
+                    "target": object_uri,
+                    "type": "rdfs:subClassOf",
+                    "weight": 1.0,
+                }
+            )
+
+    if edges_to_add:
+        _, edges_added = session.add_nodes_and_edges([], edges_to_add)
 
     _set_field(proposal, "state", "published")
     _set_field(proposal, "updated_at", datetime.now(timezone.utc).isoformat())
@@ -262,4 +380,6 @@ def publish_proposal(
         "version": version_str,
         "nodes_added": nodes_added,
         "edges_added": edges_added,
+        "nodes_removed": nodes_removed,
+        "edges_removed": edges_removed,
     }

@@ -16,8 +16,10 @@ import {
   generateShacl,
   loadOntologyRegistry,
   loadShaclShapes,
+  saveGovernanceShacl,
   validateShacl,
 } from '../lib/api.js';
+import { toast } from 'sonner';
 import { useOntologyWorkspaceId } from "./ontology-workspace-context";
 import { wsApiErrorMessage } from '@/lib/workspace/ws-api-error';
 import type { OntologyEntry, ShaclShapeSummary, ShaclValidationResponse } from '../lib/types.js';
@@ -30,9 +32,11 @@ function localName(value: string): string {
 
 interface ShaclStudioProps {
   onJumpToNode?: (nodeId: string) => void;
+  /** Deep-link from data quality or review (`?ontology_uri=`). */
+  initialOntologyUri?: string | null;
 }
 
-export function ShaclStudio({ onJumpToNode }: ShaclStudioProps) {
+export function ShaclStudio({ onJumpToNode, initialOntologyUri }: ShaclStudioProps) {
   const workspaceId = useOntologyWorkspaceId();
   const { t, locale } = useI18n();
   const copy = t.ontology.shacl;
@@ -48,6 +52,7 @@ export function ShaclStudio({ onJumpToNode }: ShaclStudioProps) {
   const [shapes, setShapes] = useState<ShaclShapeSummary[]>([]);
   const [selectedShapeId, setSelectedShapeId] = useState<string | null>(null);
   const [validation, setValidation] = useState<ShaclValidationResponse | null>(null);
+  const [shapeSource, setShapeSource] = useState<"saved" | "generated" | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -57,7 +62,9 @@ export function ShaclStudio({ onJumpToNode }: ShaclStudioProps) {
       .then((entries) => {
         if (cancelled) return;
         setRegistry(entries);
-        setSelectedUri((current) => current || entries[0]?.uri || "");
+        const preferred = initialOntologyUri?.trim();
+        const match = preferred && entries.some((e) => e.uri === preferred) ? preferred : '';
+        setSelectedUri((current) => current || match || entries[0]?.uri || "");
       })
       .catch((err) => {
         if (cancelled) return;
@@ -66,7 +73,7 @@ export function ShaclStudio({ onJumpToNode }: ShaclStudioProps) {
     return () => {
       cancelled = true;
     };
-  }, [workspaceId]);
+  }, [workspaceId, initialOntologyUri]);
 
   const [prevUri, setPrevUri] = useState(selectedUri);
   if (selectedUri !== prevUri) {
@@ -90,6 +97,7 @@ export function ShaclStudio({ onJumpToNode }: ShaclStudioProps) {
           const turtle = data.shacl_turtle;
           setFullShacl(turtle);
           setShacl((current) => current || turtle);
+          setShapeSource(data.source ?? null);
           setSelectedShapeId(null);
           setValidation(null);
         }
@@ -121,6 +129,7 @@ export function ShaclStudio({ onJumpToNode }: ShaclStudioProps) {
       setSelectedShapeId(null);
       const shapeData = await loadShaclShapes(workspaceId, selectedUri, { locale: locale as Locale });
       setShapes(shapeData.shapes);
+      setShapeSource("generated");
       setValidation(null);
     } catch (err) {
       setError(wsApiErrorMessage(err, locale as Locale));
@@ -128,6 +137,21 @@ export function ShaclStudio({ onJumpToNode }: ShaclStudioProps) {
       setLoading(false);
     }
   }, [workspaceId, selectedUri]);
+
+  const handleSaveForScan = async () => {
+    if (!selectedUri || !shacl.trim()) return;
+    setLoading(true);
+    setError("");
+    try {
+      await saveGovernanceShacl(workspaceId, selectedUri, fullShacl || shacl, { locale: locale as Locale });
+      setShapeSource("saved");
+      toast.success(copy.save_success);
+    } catch (err) {
+      setError(wsApiErrorMessage(err, locale as Locale));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSelectShape = useCallback((shapeId: string) => {
     setSelectedShapeId(shapeId);
@@ -233,9 +257,25 @@ export function ShaclStudio({ onJumpToNode }: ShaclStudioProps) {
         <span className="hidden font-mono text-[11px] text-muted-foreground sm:inline">
           {shapes.length}
         </span>
-        <Button type="button" size="sm" variant="outline" className="h-8" disabled={loading || !selectedUri} onClick={handleGenerate}>
+        {shapeSource ? (
+          <span className="hidden text-[11px] text-muted-foreground sm:inline" data-testid="shacl-shape-source">
+            {shapeSource === "saved" ? copy.source_saved : copy.source_generated}
+          </span>
+        ) : null}
+        <Button type="button" size="sm" variant="outline" className="h-8" disabled={loading || !selectedUri} onClick={() => void handleGenerate()}>
           <PublicIcon name="magic-wand" size={14} />
           {copy.generate}
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          className="h-8"
+          disabled={loading || !selectedUri || !shacl.trim()}
+          onClick={() => void handleSaveForScan()}
+          data-testid="shacl-save-for-scan"
+        >
+          {loading ? copy.saving : copy.save_for_scan}
         </Button>
         <Button type="button" size="sm" className="h-8" disabled={loading || !shacl.trim()} onClick={() => void handleValidate()}>
           <PublicIcon name={loading ? "loader-01" : "play-03"} size={14} className={loading ? "animate-spin" : undefined} />

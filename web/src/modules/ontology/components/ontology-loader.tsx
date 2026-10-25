@@ -1,8 +1,8 @@
 import { PublicIcon } from "@/components/app/shared/primitives/public-icon.js";
 import { useRef, useState } from "react";
-import { wsApiErrorMessage, parseWsJson } from '@/lib/workspace/ws-api-error';
-import { workspaceFetch } from '@/lib/workspace/ws-http';
-import { ontologyPath, useOntologyWorkspaceId } from "./ontology-workspace-context";
+import { wsApiErrorMessage } from '@/lib/workspace/ws-api-error';
+import { workspaceOpenApiPOST } from '@/lib/openapi/client.js';
+import { ontologyApiSuffix, useOntologyWorkspaceId } from "./ontology-workspace-context";
 import {
   Dialog,
   DialogContent,
@@ -177,14 +177,12 @@ function URLImportPanel({ onLoaded }: { onLoaded: () => void }) {
     setPreview(null);
     setErrorMsg("");
     try {
-      const res = await workspaceFetch(ontologyPath(workspaceId, "preview"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: url.trim(), format: format || undefined }),
-      });
-      setPreview(
-        await parseWsJson<OntologyPreview>(res, l.api.preview_failed),
+      const preview = await workspaceOpenApiPOST<OntologyPreview>(
+        workspaceId,
+        ontologyApiSuffix('preview'),
+        { body: { url: url.trim(), format: format || undefined } },
       );
+      setPreview(preview);
       setPreviewState("idle");
     } catch (e) {
       setPreviewState("error");
@@ -196,18 +194,15 @@ function URLImportPanel({ onLoaded }: { onLoaded: () => void }) {
     if (!url.trim()) return;
     setLoadState("loading");
     try {
-      const res = await workspaceFetch(ontologyPath(workspaceId, "load"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      await workspaceOpenApiPOST(workspaceId, ontologyApiSuffix('load'), {
+        body: {
           url: url.trim(),
           format: format || undefined,
           name: customName || undefined,
           description: description || undefined,
           tags: tags ? tags.split(",").map((t) => t.trim()).filter(Boolean) : [],
-        }),
+        },
       });
-      await parseWsJson(res, l.api.load_failed);
       setLoadState("success");
       setTimeout(() => {
         setLoadState("idle");
@@ -397,13 +392,9 @@ function FileUploadPanel({ onLoaded }: { onLoaded: () => void }) {
     if (!content) return;
     setLoadState("loading");
     try {
-      const res = await workspaceFetch(ontologyPath(workspaceId, "load"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        // Omit format when empty so the backend _detect_format() runs
-        body: JSON.stringify({ content, ...(format ? { format } : {}) }),
+      await workspaceOpenApiPOST(workspaceId, ontologyApiSuffix('load'), {
+        body: { content, ...(format ? { format } : {}) },
       });
-      await parseWsJson(res, l.api.load_failed);
       setLoadState("success");
       setTimeout(() => {
         setLoadState("idle");
@@ -523,10 +514,8 @@ function CreateNewPanel({ onLoaded }: { onLoaded: () => void }) {
     if (!name.trim() || !namespace.trim()) return;
     setCreateState("loading");
     try {
-      const res = await workspaceFetch(ontologyPath(workspaceId, "create"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      await workspaceOpenApiPOST(workspaceId, ontologyApiSuffix('create'), {
+        body: {
           mode: createMode,
           namespace: namespace.trim(),
           name: name.trim(),
@@ -534,9 +523,8 @@ function CreateNewPanel({ onLoaded }: { onLoaded: () => void }) {
           tags: tags ? tags.split(",").map((t) => t.trim()).filter(Boolean) : [],
           sample_data: createMode === "data" ? sampleData : undefined,
           schema_text: createMode === "text" ? schemaText : undefined,
-        }),
+        },
       });
-      await parseWsJson(res, l.api.create_failed);
       setCreateState("success");
       setTimeout(() => {
         setCreateState("idle");

@@ -39,7 +39,6 @@ const FILE_TARGETS = {
   kbProcessing: 'modules/processing',
   kbDecisions: 'modules/decisions',
   kbConnectors: 'modules/connectors',
-  kbDataOnboarding: 'modules/data-onboarding',
   models: 'modules/admin-models',
   platformSettings: 'modules/admin-settings',
   platformAuditActions: 'modules/admin-audit',
@@ -95,7 +94,6 @@ const AGGREGATED = [
   ['kbProcessing', 'modules/processing'],
   ['kbDecisions', 'modules/decisions'],
   ['kbConnectors', 'modules/connectors'],
-  ['kbDataOnboarding', 'modules/data-onboarding'],
 ];
 
 function ensureDir(d) {

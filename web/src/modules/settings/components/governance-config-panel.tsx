@@ -26,13 +26,18 @@ import {
 import type { Locale } from '@/i18n/locale.js';
 import { formatUserFacingApiError } from '@/lib/errors/api-error-message.js';
 import { workspaceOpenApiGET, workspaceOpenApiPUT } from '@/lib/openapi/client.js';
-import { workspacePath } from '@/lib/nav/nav-config.js';
+import { workspacePath, workspaceReviewPath } from '@/lib/nav/nav-config.js';
+
+function workspaceQualityScanPath(workspaceId: string): string {
+  return `${workspacePath(workspaceId, 'quality')}?tab=scan`;
+}
 
 type GovernanceConfig = {
   governor_enabled: boolean;
   governor_interval_minutes: number;
   governor_confidence_min: number;
   governor_last_run_at?: string | null;
+  governance_ontology_uri?: string | null;
 };
 
 type GovernanceConfigResponse = {
@@ -91,6 +96,7 @@ export function GovernanceConfigPanel({
           governor_enabled: draft.governor_enabled,
           governor_interval_minutes: draft.governor_interval_minutes,
           governor_confidence_min: draft.governor_confidence_min,
+          governance_ontology_uri: draft.governance_ontology_uri ?? '',
         },
       });
       setConfig(body.config);
@@ -149,12 +155,21 @@ export function GovernanceConfigPanel({
                   ? formatLocaleDateTime(loc, config.governor_last_run_at)
                   : emptyCell}
               </p>
+              <p>
+                <span className="text-muted-foreground">{g.ontology_uri_label}{t.settings.panel.label_suffix}</span>
+                {config.governance_ontology_uri?.trim() ? config.governance_ontology_uri : emptyCell}
+              </p>
               <p className="text-[11px] leading-snug text-muted-foreground">
                 {g.manual_hint}{' '}
-                <Link to={workspacePath(workspaceId, 'review')} className="text-foreground underline-offset-2 hover:underline">
+                <Link to={workspaceReviewPath(workspaceId)} className="text-foreground underline-offset-2 hover:underline">
                   {g.review_link}
                 </Link>
                 {g.manual_hint_suffix}
+              </p>
+              <p className="text-[11px] leading-snug text-muted-foreground">
+                <Link to={workspaceQualityScanPath(workspaceId)} className="text-foreground underline-offset-2 hover:underline">
+                  {g.data_quality_link}
+                </Link>
               </p>
             </>
           ) : null}
@@ -219,6 +234,21 @@ export function GovernanceConfigPanel({
                     )
                   }
                 />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="gov-ontology-uri">{g.ontology_uri_label}</Label>
+                <Input
+                  id="gov-ontology-uri"
+                  type="text"
+                  placeholder="https://…"
+                  value={draft.governance_ontology_uri ?? ''}
+                  onChange={(event) =>
+                    setDraft((current) =>
+                      current ? { ...current, governance_ontology_uri: event.target.value } : current,
+                    )
+                  }
+                />
+                <p className="text-[11px] text-muted-foreground">{g.ontology_uri_hint}</p>
               </div>
             </div>
             <DialogFooter>

@@ -7,7 +7,7 @@ export function processingAlertEpisodeKey(jobId: string): string {
   return `processing:${jobId.trim()}`;
 }
 
-/** Matches `emit_statement_conflict_alert` episode keys. */
+/** Review-queue deep links for governance alerts. */
 export function reviewAlertEpisodeKey(reviewItemId: string): string {
   return `review:${reviewItemId.trim()}`;
 }

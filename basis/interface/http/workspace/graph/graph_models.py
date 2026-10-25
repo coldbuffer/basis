@@ -62,6 +62,14 @@ class ReasoningRunRequest(BaseModel):
         default=None,
         description="Optional edge type label when apply_to_graph is true.",
     )
+    chunk_id: str | None = Field(
+        default=None,
+        description="Optional ledger chunk id to cite on inferred edges when apply_to_graph is true.",
+    )
+    quote: str | None = Field(
+        default=None,
+        description="Optional quote override for chunk_id evidence.",
+    )
 
 
 class ReasoningGroundFactsResponse(BaseModel):
@@ -91,3 +99,4 @@ class ReasoningRunResponse(BaseModel):
     ground_facts: list[str] = Field(default_factory=list)
     derived_facts_persisted: ReasoningDerivedPersistedSummary | None = None
     projection: dict[str, Any] | None = None
+    evidence: dict[str, Any] | None = None

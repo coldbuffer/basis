@@ -3,7 +3,7 @@ import { createContext, useContext, type ReactNode } from "react";
 import { localeFromBrowser } from "@/i18n/locale.js";
 import { messagesForLocale } from "@/i18n/pick-locale.js";
 
-import { buildWorkspaceApiPath } from '@/lib/workspace/ws-http';
+import { workspaceApiPath } from '@/lib/openapi/client.js';
 
 const OntologyWorkspaceCatalogContext = createContext<string | null>(null);
 
@@ -28,20 +28,24 @@ export function useOntologyWorkspaceId(): string {
   return workspaceId;
 }
 
-/** `/api/v1/workspaces/{workspaceId}/ontology/{suffix}` with optional query string (no leading `?`). */
+/** OpenAPI suffix under `ontology/…`. */
+export function ontologyApiSuffix(suffix: string): string {
+  return `ontology/${suffix.replace(/^\//, "")}`;
+}
+
+/** OpenAPI suffix under `vocabulary/…`. */
+export function vocabularyApiSuffix(suffix: string): string {
+  return `vocabulary/${suffix.replace(/^\//, "")}`;
+}
+
+/** Absolute API path for links/debug (`/api/v1/workspaces/{id}/ontology/…`). */
 export function ontologyPath(workspaceId: string, suffix: string, query?: string): string {
-  const path = buildWorkspaceApiPath(
-    `ontology/${suffix.replace(/^\//, "")}`,
-    workspaceId,
-  );
+  const path = workspaceApiPath(workspaceId, ontologyApiSuffix(suffix));
   return query ? `${path}?${query}` : path;
 }
 
-/** `/api/v1/workspaces/{workspaceId}/vocabulary/{suffix}` */
+/** Absolute API path for vocabulary routes. */
 export function vocabularyPath(workspaceId: string, suffix: string, query?: string): string {
-  const path = buildWorkspaceApiPath(
-    `vocabulary/${suffix.replace(/^\//, "")}`,
-    workspaceId,
-  );
+  const path = workspaceApiPath(workspaceId, vocabularyApiSuffix(suffix));
   return query ? `${path}?${query}` : path;
 }

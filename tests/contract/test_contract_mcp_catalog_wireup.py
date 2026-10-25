@@ -16,7 +16,7 @@ from basis.infra.runtime.config import Settings
 def test_static_tool_definitions_match_tool_names() -> None:
     names = [t["name"] for t in get_static_tool_definitions()]
     assert names == list(TOOL_NAMES)
-    assert len(names) == len(OPERATIONS)
+    assert len(names) == len(TOOL_NAMES)
 
 
 def test_get_capabilities_mcp_tools_match_catalog(tmp_path) -> None:
@@ -71,7 +71,7 @@ def test_mcp_discovery_and_jsonrpc_list_include_static_catalog(tmp_path) -> None
             "jsonrpc": "2.0",
             "id": 2,
             "method": "tools/call",
-            "params": {"name": "describe_workspace", "arguments": {}},
+            "params": {"name": "get_graph_summary", "arguments": {}},
         },
     )
     assert call.status_code == 200

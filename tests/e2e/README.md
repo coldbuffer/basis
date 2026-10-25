@@ -80,8 +80,7 @@ Routes follow [`web/src/routes/index.tsx`](../../web/src/routes/index.tsx) (`App
 
 | Route | E2E | Spec(s) | Notes |
 |-------|-----|---------|-------|
-| `/workspaces/:id/onboarding/data` | D | `connector-mapping-suggest.e2e.spec.ts` | SQL hint → suggest → sync |
-| `…/connectors/catalog` | S | `connectors.e2e.spec.ts` | Cards, connection → new mapping |
+| `/workspaces/:id/connectors` | S | `connectors.e2e.spec.ts` | Catalog + authorization tabs |
 | `…/connectors/policy` | S | `connectors.e2e.spec.ts` | Save allowlist |
 | `…/connectors/mappings` | P | `connectors.e2e.spec.ts`, `connector-mapping-suggest.e2e.spec.ts` | List; REST suggest (mock); cross-stream dialog |
 | `…/connectors/mappings/new` | S | `connectors.e2e.spec.ts` | Prefill from connection |
@@ -96,20 +95,18 @@ Routes follow [`web/src/routes/index.tsx`](../../web/src/routes/index.tsx) (`App
 | Route | E2E | Spec(s) | Notes |
 |-------|-----|---------|-------|
 | `/workspaces/:id/ontology` | P | `governance.e2e.spec.ts`, `ontology-proposal-url.e2e.spec.ts` | Versions tab; proposal deep link |
-| `/workspaces/:id/analyze` | P | `analyze-hub.e2e.spec.ts` | Tabs; legacy `/sparql`, `/reasoning` redirects |
+| `/workspaces/:id/analyze` | P | `analyze-hub.e2e.spec.ts` | SPARQL + reasoning tabs |
 | `/workspaces/:id/vocabulary` | S | `schema-surfaces.e2e.spec.ts` | Hub loads |
 | `/workspaces/:id/mappings` (statement / extraction) | S | `schema-surfaces.e2e.spec.ts` | Title/subtitle vs connector mappings |
-| `/workspaces/:id/ontology-versions` | P | `analyze-hub.e2e.spec.ts` | Via redirect/hub |
-| `/workspaces/:id/shacl` | S | `schema-surfaces.e2e.spec.ts` | Legacy route → ontology `?tab=shacl` |
-| `/workspaces/:id/alignments` | S | `schema-surfaces.e2e.spec.ts` | Legacy route → ontology `?tab=alignments` |
+| `/workspaces/:id/ontology?tab=alignments` | S | `schema-surfaces.e2e.spec.ts` | Alignments hub tab |
+| `/workspaces/:id/quality` | — | — | Data quality hub (structure / scan) |
 
 ### Workspace — Govern
 
 | Route | E2E | Spec(s) | Notes |
 |-------|-----|---------|-------|
 | `/workspaces/:id/review` | D | `governance.e2e.spec.ts`, `connectors.e2e.spec.ts` | Conflicts, approve narrative, writeback |
-| `/workspaces/:id/entity-resolution` | S | `schema-surfaces.e2e.spec.ts` | Dedup scan action |
-| `/workspaces/:id/decisions` | P | `decisions-deep-link.e2e.spec.ts`, `governance.e2e.spec.ts` | List + `?decision=` |
+| `/workspaces/:id/log` | P | `decisions-deep-link.e2e.spec.ts`, `governance.e2e.spec.ts` | Activity log + `?graph_decision=` |
 | `/workspaces/:id/lineage` | P | `lineage.e2e.spec.ts` | `?node=` deep link |
 | `/workspaces/:id/graph-diff` | P | `graph-diff.e2e.spec.ts` | `from` / `to` query |
 
@@ -117,11 +114,9 @@ Routes follow [`web/src/routes/index.tsx`](../../web/src/routes/index.tsx) (`App
 
 | Route | E2E | Spec(s) | Notes |
 |-------|-----|---------|-------|
-| `/workspaces/:id/alerts` | D | `governance.e2e.spec.ts` | Dismiss, deep links to sources/processing/review/decisions |
+| `/workspaces/:id/alerts` | D | `governance.e2e.spec.ts` | Dismiss, deep links to sources/processing/review/log |
 | `/workspaces/:id/integration` | S | `mcp-integration.e2e.spec.ts` | Tab visible |
 | `/workspaces/:id/settings` | P | `settings-graph-audit.e2e.spec.ts`, `settings-tabs.e2e.spec.ts` | Graph audit; general/members/search tabs |
-| `/workspaces/:id/mcp`, `/chat` (legacy) | S | `mcp-integration.e2e.spec.ts` | Redirects to integration |
-
 ### Desktop product
 
 | Surface | E2E | Spec(s) |
@@ -139,7 +134,7 @@ Routes follow [`web/src/routes/index.tsx`](../../web/src/routes/index.tsx) (`App
 | File | Primary intent |
 |------|----------------|
 | `admin-connectors.e2e.spec.ts` | Platform connector catalog admin |
-| `analyze-hub.e2e.spec.ts` | Query & reasoning hub + legacy routes |
+| `analyze-hub.e2e.spec.ts` | Query & reasoning hub tabs |
 | `connector-mapping-suggest.e2e.spec.ts` | Onboarding wizard; SQL/REST suggest API; auto-expand; mappings dialog |
 | `connector-workspace.e2e.spec.ts` | Runs, mapping edit, sync now, OAuth callback (mock exchange + error) |
 | `settings-tabs.e2e.spec.ts` | Workspace settings general/members/search tabs |
@@ -154,14 +149,14 @@ Routes follow [`web/src/routes/index.tsx`](../../web/src/routes/index.tsx) (`App
 | `graph-diff-cross-link.e2e.spec.ts` | Graph → diff navigation |
 | `home.e2e.spec.ts` | Marketing + register entry |
 | `lineage.e2e.spec.ts` | Lineage node deep link |
-| `mcp-integration.e2e.spec.ts` | Integration / MCP / legacy chat paths |
+| `mcp-integration.e2e.spec.ts` | Integration page (MCP, OpenAPI, tokens) |
 | `onboarding.e2e.spec.ts` | Register → sources paste → graph |
 | `ontology-proposal-url.e2e.spec.ts` | Ontology proposal list highlight |
 | `org-saml-settings.e2e.spec.ts` | Org SAML settings panel |
 | `org-sso-login.e2e.spec.ts` | Login SSO affordance |
 | `processing-job.e2e.spec.ts` | Processing job detail / failed flows |
 | `reasoning-derived.e2e.spec.ts` | Reasoning → entities derived facts UI |
-| `schema-surfaces.e2e.spec.ts` | Statement mappings, entity resolution, vocabulary, SHACL/alignments redirects |
+| `schema-surfaces.e2e.spec.ts` | Statement mappings, vocabulary, ontology alignments tab |
 | `search-graph-at.e2e.spec.ts` | Search graph tab URL |
 | `search-temporal-url.e2e.spec.ts` | Search chunk `as_of` URL |
 | `settings-graph-audit.e2e.spec.ts` | Workspace settings graph audit tab |

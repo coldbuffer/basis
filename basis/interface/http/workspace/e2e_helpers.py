@@ -14,7 +14,7 @@ from basis.infra.runtime.config import Settings
 from basis.domain.graph.governance.decision import emit_governance_tripped_for_workspace
 from basis.domain.ontology.hub.scoped_state import OntologyHubState
 from basis.domain.graph.session.guard import require_graph_session
-from basis.domain.knowledge.services.conflict_review import scan_statement_conflicts
+from basis.domain.knowledge.services.conflict_review import run_shacl_conflict_scan
 from basis.domain.knowledge.store import KnowledgeStore
 from basis.interface.http.shared.deps import graph_runtime_for, save_graph
 from basis.domain.ontology.hub.create_write import create_ontology as create_ontology_write
@@ -53,15 +53,15 @@ async def e2e_governance_trip(
     return {"decision_id": decision_id}
 
 
-@router.post("/{workspace_id}/_e2e/statement-conflict")
-async def e2e_statement_conflict(
+@router.post("/{workspace_id}/_e2e/shacl-violation")
+async def e2e_shacl_violation(
     workspace_id: str,
     request: Request,
     user: User = Depends(get_current_user),
     store: AdminStore = Depends(get_store),
     knowledge: KnowledgeStore = Depends(get_knowledge_store),
 ) -> dict[str, object]:
-    """Seed conflicting ledger statements and run conflict scan (Playwright / data-e2e only)."""
+    """Seed mapped conflicting statements and run SHACL scan (Playwright / data-e2e only)."""
     if not _e2e_helpers_enabled(request):
         raise AdminError(404, "not_found", "资源不存在")
     get_workspace_for_editor(request, user, workspace_id, store)
@@ -81,6 +81,16 @@ async def e2e_statement_conflict(
     object_a = knowledge.create_entity(workspace_id, canonical_label="E2E conflict object A")
     object_b = knowledge.create_entity(workspace_id, canonical_label="E2E conflict object B")
     surface = f"e2e_predicate_{uuid4().hex[:10]}"
+    predicate_iri = f"http://example.org/e2e/{surface}"
+    knowledge.create_mapping(
+        workspace_id,
+        actor_id=user.id,
+        signature=surface,
+        target_uri=predicate_iri,
+        target_kind="property",
+        direction="forward",
+        status="confirmed",
+    )
     for obj_id in (object_a, object_b):
         knowledge.add_open_statement(
             workspace_id,
@@ -94,7 +104,7 @@ async def e2e_statement_conflict(
             quote=surface,
         )
 
-    scan = scan_statement_conflicts(knowledge, workspace_id)
+    scan = run_shacl_conflict_scan(knowledge, workspace_id)
     item_ids = scan.get("item_ids") or []
     review_item_id = item_ids[0] if item_ids else None
     return {

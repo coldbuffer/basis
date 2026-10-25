@@ -2,9 +2,16 @@ import { fmt } from "@/i18n/format.js";
 import type { Locale } from "@/i18n/locale.js";
 import { messagesForLocale } from "@/i18n/pick-locale.js";
 
-import { parseWsJson } from '@/lib/workspace/ws-api-error';
-import { workspaceFetch } from '@/lib/workspace/ws-http';
-import { ontologyPath } from '../components/ontology-workspace-context.js';
+import { parseWsJson, wsMutationResult } from '@/lib/workspace/ws-api-error';
+import {
+  workspaceOpenApiDELETE,
+  workspaceOpenApiGET,
+  workspaceOpenApiPATCH,
+  workspaceOpenApiPOST,
+  workspaceOpenApiResponse,
+} from '@/lib/openapi/client.js';
+import type { OntologyEditorDraftDiff } from './ontology-editor-draft.js';
+import { ontologyApiSuffix } from '../components/ontology-workspace-context.js';
 import type {
   AlignmentRelation,
   AlignmentSuggestion,
@@ -67,10 +74,7 @@ export async function loadOntologyRegistry(
   workspaceId: string,
   options?: OntologyRequestOptions,
 ): Promise<OntologyEntry[]> {
-  return parseResponse<OntologyEntry[]>(
-    await workspaceFetch(ontologyPath(workspaceId, "registry")),
-    options?.locale,
-  );
+  return workspaceOpenApiGET<OntologyEntry[]>(workspaceId, ontologyApiSuffix("registry"));
 }
 
 export async function loadOntologyGraph(
@@ -78,12 +82,11 @@ export async function loadOntologyGraph(
   uri: string,
   options?: OntologyGraphRequestOptions,
 ): Promise<OntologyGraphResponse> {
-  return parseResponse<OntologyGraphResponse>(
-    await workspaceFetch(ontologyPath(workspaceId, "graph", `uri=${encodeURIComponent(uri)}`), {
-      signal: options?.signal,
-    }),
-    options?.locale,
-  );
+  const response = await workspaceOpenApiResponse('GET', workspaceId, ontologyApiSuffix("graph"), {
+    signal: options?.signal,
+    params: { query: { uri } },
+  });
+  return parseResponse<OntologyGraphResponse>(response, options?.locale);
 }
 
 export type OntologyOwnerVerdict = string | null | undefined;
@@ -92,13 +95,16 @@ export async function loadOntologyEntityOwner(
   workspaceId: string,
   uri: string,
 ): Promise<OntologyOwnerVerdict> {
-  const response = await workspaceFetch(
-    ontologyPath(workspaceId, `entity/${encodeURIComponent(uri)}`),
-  );
-  if (!response.ok) return undefined;
-  const owner = (await response.json()) as OntologyEntityOwner | null;
-  const verdict = owner?.owning_ontology;
-  return verdict === undefined ? undefined : verdict;
+  try {
+    const owner = await workspaceOpenApiGET<OntologyEntityOwner>(
+      workspaceId,
+      ontologyApiSuffix(`entity/${encodeURIComponent(uri)}`),
+    );
+    const verdict = owner?.owning_ontology;
+    return verdict === undefined ? undefined : verdict;
+  } catch {
+    return undefined;
+  }
 }
 
 export async function loadAlignments(
@@ -106,11 +112,9 @@ export async function loadAlignments(
   uri?: string,
   options?: OntologyRequestOptions,
 ): Promise<OntologyAlignment[]> {
-  const query = uri ? `uri=${encodeURIComponent(uri)}` : undefined;
-  return parseResponse<OntologyAlignment[]>(
-    await workspaceFetch(ontologyPath(workspaceId, "alignments", query)),
-    options?.locale,
-  );
+  return workspaceOpenApiGET<OntologyAlignment[]>(workspaceId, ontologyApiSuffix("alignments"), {
+    params: uri ? { query: { uri } } : undefined,
+  });
 }
 
 export async function saveAlignment(
@@ -126,14 +130,10 @@ export async function saveAlignment(
   },
   options?: OntologyRequestOptions,
 ): Promise<OntologyAlignment> {
-  return parseResponse<OntologyAlignment>(
-    await workspaceFetch(ontologyPath(workspaceId, "alignments"), {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    }),
-    options?.locale,
-  );
+  const response = await workspaceOpenApiResponse('POST', workspaceId, ontologyApiSuffix("alignments"), {
+    body: payload,
+  });
+  return parseResponse<OntologyAlignment>(response, options?.locale);
 }
 
 export async function removeAlignment(
@@ -141,13 +141,9 @@ export async function removeAlignment(
   id: string,
   options?: OntologyRequestOptions,
 ): Promise<void> {
-  await parseResponse<{ status: string }>(
-    await workspaceFetch(
-      ontologyPath(workspaceId, "alignments", `id=${encodeURIComponent(id)}`),
-      { method: "DELETE" },
-    ),
-    options?.locale,
-  );
+  await workspaceOpenApiDELETE(workspaceId, ontologyApiSuffix("alignments"), {
+    params: { query: { id } },
+  });
 }
 
 export async function suggestAlignments(
@@ -160,14 +156,10 @@ export async function suggestAlignments(
   },
   options?: OntologyRequestOptions,
 ): Promise<AlignmentSuggestion[]> {
-  return parseResponse<AlignmentSuggestion[]>(
-    await workspaceFetch(ontologyPath(workspaceId, "suggest-alignments"), {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    }),
-    options?.locale,
-  );
+  const response = await workspaceOpenApiResponse('POST', workspaceId, ontologyApiSuffix("suggest-alignments"), {
+    body: payload,
+  });
+  return parseResponse<AlignmentSuggestion[]>(response, options?.locale);
 }
 
 export async function loadOntologyHealth(
@@ -175,12 +167,10 @@ export async function loadOntologyHealth(
   uri: string,
   options?: OntologyRequestOptions,
 ): Promise<OntologyHealthResponse> {
-  return parseResponse<OntologyHealthResponse>(
-    await workspaceFetch(
-      ontologyPath(workspaceId, "health", `uri=${encodeURIComponent(uri)}`),
-    ),
-    options?.locale,
-  );
+  const response = await workspaceOpenApiResponse('GET', workspaceId, ontologyApiSuffix("health"), {
+    params: { query: { uri } },
+  });
+  return parseResponse<OntologyHealthResponse>(response, options?.locale);
 }
 
 export async function generateShacl(
@@ -189,14 +179,10 @@ export async function generateShacl(
   qualityTier: "standard" | "strict" = "strict",
   options?: OntologyRequestOptions,
 ): Promise<ShaclGenerateResponse> {
-  return parseResponse<ShaclGenerateResponse>(
-    await workspaceFetch(ontologyPath(workspaceId, "shacl/generate"), {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ uri, quality_tier: qualityTier }),
-    }),
-    options?.locale,
-  );
+  const response = await workspaceOpenApiResponse('POST', workspaceId, ontologyApiSuffix("shacl/generate"), {
+    body: { uri, quality_tier: qualityTier },
+  });
+  return parseResponse<ShaclGenerateResponse>(response, options?.locale);
 }
 
 export async function loadShaclShapes(
@@ -204,12 +190,10 @@ export async function loadShaclShapes(
   uri: string,
   options?: OntologyRequestOptions,
 ): Promise<ShaclShapesResponse> {
-  return parseResponse<ShaclShapesResponse>(
-    await workspaceFetch(
-      ontologyPath(workspaceId, "shacl/shapes", `uri=${encodeURIComponent(uri)}`),
-    ),
-    options?.locale,
-  );
+  const response = await workspaceOpenApiResponse('GET', workspaceId, ontologyApiSuffix("shacl/shapes"), {
+    params: { query: { uri } },
+  });
+  return parseResponse<ShaclShapesResponse>(response, options?.locale);
 }
 
 export async function validateShacl(
@@ -218,12 +202,62 @@ export async function validateShacl(
   shaclTurtle: string,
   options?: OntologyRequestOptions,
 ): Promise<ShaclValidationResponse> {
-  return parseResponse<ShaclValidationResponse>(
-    await workspaceFetch(ontologyPath(workspaceId, "shacl/validate"), {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ uri, shacl_turtle: shaclTurtle }),
-    }),
-    options?.locale,
-  );
+  const response = await workspaceOpenApiResponse('POST', workspaceId, ontologyApiSuffix("shacl/validate"), {
+    body: { uri, shacl_turtle: shaclTurtle },
+  });
+  return parseResponse<ShaclValidationResponse>(response, options?.locale);
 }
+
+export async function saveGovernanceShacl(
+  workspaceId: string,
+  ontologyUri: string,
+  shaclTurtle: string,
+  options?: OntologyRequestOptions,
+): Promise<{ config: { governance_ontology_uri?: string | null; governance_shacl_turtle?: string | null } }> {
+  const response = await workspaceOpenApiResponse('PUT', workspaceId, 'governance/shacl', {
+    body: { ontology_uri: ontologyUri, shacl_turtle: shaclTurtle },
+  });
+  return parseResponse(response, options?.locale);
+}
+
+export type OntologyDraftSaveResult = { draft_id: string };
+
+export type OntologyProposalSubmitResult = { proposal_id: string };
+
+export async function saveOntologyDraft(
+  workspaceId: string,
+  payload: {
+    ontology_uri: string;
+    diff: OntologyEditorDraftDiff;
+    author: string;
+    summary?: string;
+  },
+  options?: OntologyRequestOptions,
+): Promise<OntologyDraftSaveResult> {
+  const response = await workspaceOpenApiPATCH<OntologyDraftSaveResult>(
+    workspaceId,
+    ontologyApiSuffix('draft'),
+    { body: payload },
+  );
+  return response;
+}
+
+export async function submitOntologyProposal(
+  workspaceId: string,
+  payload: {
+    draft_id: string;
+    ontology_uri: string;
+    summary: string;
+    reviewer?: string | null;
+  },
+  options?: OntologyRequestOptions,
+): Promise<OntologyProposalSubmitResult> {
+  const response = await workspaceOpenApiPOST<OntologyProposalSubmitResult>(
+    workspaceId,
+    ontologyApiSuffix('propose'),
+    { body: payload },
+  );
+  return response;
+}
+
+export { wsMutationResult };

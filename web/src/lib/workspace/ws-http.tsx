@@ -10,6 +10,8 @@ import { localeFromBrowser, type Locale } from "@/i18n/locale.js";
 import { messagesForLocale } from "@/i18n/pick-locale.js";
 import { errorFromApiResponse } from "@/lib/errors/api-error.js";
 import { basisApiUrl } from "@/lib/session/basis-session-fetch.js";
+import { basisSessionClient } from "@/lib/session/basis-session-client.js";
+import { workspaceOpenApiResponse } from "@/lib/openapi/client.js";
 import { isWorkspaceScopedApiPath, workspaceApiRoot } from "@/lib/workspace/api-path.js";
 import { ensureRequestIdHeader } from "@/lib/workspace/request-id.js";
 
@@ -134,6 +136,52 @@ function rewriteApiPath(pathname: string, apiRoot: string): string {
   return `${root}${suffix}`;
 }
 
+/** Map a resolved workspace URL to an `/api/...` path for the OpenAPI session transport. */
+function sessionPathFromResolvedUrl(resolved: string): string {
+  const absolute =
+    resolved.startsWith("http://") || resolved.startsWith("https://")
+      ? resolved
+      : basisApiUrl(resolved);
+  const base = basisSessionClient().apiUrl("");
+  if (base && absolute.startsWith(base)) {
+    const rest = absolute.slice(base.length);
+    return rest.startsWith("/") ? rest : `/${rest}`;
+  }
+  try {
+    const url = new URL(absolute);
+    return `${url.pathname}${url.search}`;
+  } catch {
+    return absolute.startsWith("/") ? absolute : `/${absolute}`;
+  }
+}
+
+function parseWorkspaceOpenApiRequest(pathWithQuery: string): {
+  workspaceId: string;
+  suffix: string;
+  query: Record<string, string>;
+} | null {
+  const [pathname, search = ""] = pathWithQuery.split("?");
+  const match = pathname.match(/^\/api\/v1\/workspaces\/([^/]+)\/(.+)$/);
+  if (!match) {
+    return null;
+  }
+  const query: Record<string, string> = {};
+  if (search) {
+    new URLSearchParams(search).forEach((value, key) => {
+      query[key] = value;
+    });
+  }
+  return {
+    workspaceId: decodeURIComponent(match[1]!),
+    suffix: match[2]!,
+    query,
+  };
+}
+
+/**
+ * @deprecated Prefer `workspaceOpenApiGET` / `workspaceOpenApiPOST` / `workspaceOpenApiResponse`.
+ * Workspace routes are executed via the OpenAPI session client (`openapi-fetch`).
+ */
 export async function workspaceFetch(
   input: string | URL,
   init?: RequestInit,
@@ -142,6 +190,27 @@ export async function workspaceFetch(
     typeof input === "string"
       ? resolveWorkspaceApiUrl(input)
       : resolveWorkspaceApiUrl(input.toString());
+  const path = sessionPathFromResolvedUrl(url);
+  const parsed = parseWorkspaceOpenApiRequest(path);
+  const method = (init?.method ?? "GET").toUpperCase();
+  if (
+    parsed &&
+    (method === "GET" || method === "POST" || method === "PUT" || method === "PATCH" || method === "DELETE")
+  ) {
+    return workspaceOpenApiResponse(
+      method as "GET" | "POST" | "PUT" | "PATCH" | "DELETE",
+      parsed.workspaceId,
+      parsed.suffix,
+      {
+        params: Object.keys(parsed.query).length ? { query: parsed.query } : undefined,
+        body:
+          method === "GET" || method === "DELETE"
+            ? undefined
+            : init?.body,
+        signal: init?.signal ?? undefined,
+      },
+    );
+  }
   const headers = new Headers(init?.headers);
   ensureRequestIdHeader(headers);
   const auth = activeConfig.getAuthHeaders?.();
@@ -152,9 +221,7 @@ export async function workspaceFetch(
       }
     });
   }
-  const absolute =
-    url.startsWith("http://") || url.startsWith("https://") ? url : basisApiUrl(url);
-  return fetch(absolute, { ...init, headers });
+  return basisSessionClient().sessionFetch(path, { ...init, headers });
 }
 
 /** Workspace-scoped fetch with auth, request ID, and coded API errors (X-01). */

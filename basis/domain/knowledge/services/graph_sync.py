@@ -7,6 +7,7 @@ edges become ledger rows, which the projector can draw again.
 
 from __future__ import annotations
 
+import uuid
 from typing import Any
 
 from basis.domain.graph.projection.session import GraphSession
@@ -30,7 +31,8 @@ def _props(obj: Any) -> dict[str, Any]:
     return merged
 
 
-def _label(node: Any) -> str:
+def _display_label(node: Any) -> str:
+    """Human-facing label for ledger ``canonical_label`` (never the graph node id)."""
     content = getattr(node, "content", None)
     if isinstance(content, str) and content.strip():
         return content.strip()[:500]
@@ -38,7 +40,70 @@ def _label(node: Any) -> str:
         value = _props(node).get(key)
         if isinstance(value, str) and value.strip():
             return value.strip()[:500]
+    return ""
+
+
+def _label(node: Any) -> str:
+    """Best-effort label for literals and legacy callers (may fall back to node id)."""
+    display = _display_label(node)
+    if display:
+        return display
     return str(getattr(node, "node_id", "")).strip()[:500]
+
+
+def _is_ledger_entity_id(knowledge: KnowledgeStore, workspace_id: str, value: str) -> bool:
+    try:
+        uuid.UUID(value)
+    except ValueError:
+        return False
+    return knowledge.ledger_entity_exists(workspace_id, value)
+
+
+def _stamp_ledger_entity_link(
+    session: GraphSession, node_id: str, ledger_entity_id: str
+) -> None:
+    graph = session.graph
+    if hasattr(graph, "add_node_attribute"):
+        graph.add_node_attribute(node_id, {"ledger_entity_id": ledger_entity_id})
+        return
+    node = graph.nodes.get(node_id)
+    if node is None:
+        return
+    props = _props(node)
+    props["ledger_entity_id"] = ledger_entity_id
+    content = getattr(node, "content", None)
+    graph.add_node(
+        node_id,
+        str(getattr(node, "node_type", "") or "entity"),
+        content=content if isinstance(content, str) else None,
+        **props,
+    )
+
+
+def _collapse_slug_entity_duplicate(
+    knowledge: KnowledgeStore,
+    workspace_id: str,
+    *,
+    display_entity_id: str,
+    graph_node_id: str,
+) -> None:
+    """Merge a mistaken slug ``canonical_label`` row into the display-label entity."""
+    slug = graph_node_id.strip()
+    if not slug or slug == display_entity_id:
+        return
+    slug_entity_id = knowledge.find_entity_id_by_label(workspace_id, slug)
+    if slug_entity_id is None or slug_entity_id == display_entity_id:
+        return
+    redirect = knowledge.entity_merge_redirect(workspace_id)
+    if slug_entity_id in redirect:
+        return
+    knowledge.record_entity_merge(
+        workspace_id,
+        source_entity_id=slug_entity_id,
+        target_entity_id=display_entity_id,
+        actor_id=None,
+        why="graph_sync: collapse duplicate entity keyed by graph node id",
+    )
 
 
 def _skip_node(node: Any) -> bool:
@@ -71,7 +136,7 @@ def resolve_ledger_entity_id(
     node_id: str,
 ) -> str | None:
     """Return the ledger entity for a graph node, creating one when the node is new."""
-    if knowledge.ledger_entity_exists(workspace_id, node_id):
+    if _is_ledger_entity_id(knowledge, workspace_id, node_id):
         return node_id
     node = session.graph.nodes.get(node_id)
     if node is None or _skip_node(node):
@@ -80,10 +145,25 @@ def resolve_ledger_entity_id(
     ledger_id = meta.get("ledger_entity_id")
     if isinstance(ledger_id, str) and knowledge.ledger_entity_exists(workspace_id, ledger_id):
         return ledger_id
-    label = _label(node)
-    if not label or label == "unknown":
+
+    display = _display_label(node)
+    slug = str(node_id).strip()
+    if display:
+        entity_id = knowledge.get_or_create_entity_by_label(workspace_id, display)
+        if slug and slug != display:
+            _collapse_slug_entity_duplicate(
+                knowledge,
+                workspace_id,
+                display_entity_id=entity_id,
+                graph_node_id=slug,
+            )
+    elif slug and slug != "unknown":
+        entity_id = knowledge.get_or_create_entity_by_label(workspace_id, slug)
+    else:
         return None
-    return knowledge.get_or_create_entity_by_label(workspace_id, label)
+
+    _stamp_ledger_entity_link(session, node_id, entity_id)
+    return entity_id
 
 
 def _sync_chunk(knowledge: KnowledgeStore, workspace_id: str) -> str:
@@ -143,9 +223,9 @@ def sync_graph_to_ledger(
         if node.node_id not in entity_ids:
             continue
         linked = _props(node).get("ledger_entity_id")
-        if knowledge.ledger_entity_exists(workspace_id, node.node_id):
-            continue
         if isinstance(linked, str) and linked == entity_ids[node.node_id]:
+            continue
+        if _is_ledger_entity_id(knowledge, workspace_id, node.node_id):
             continue
         if isinstance(linked, str) and knowledge.ledger_entity_exists(workspace_id, linked):
             continue

@@ -33,9 +33,6 @@ async def list_alerts(
       `shacl_violation_count`, `episode_key`
     - `processing.failed`: `job_id`, `error_code`, `message`, `episode_key`
     - `sync_failed`: `source_id`, `source_name`, `mode`, `error`, `episode_key`
-    - `governance.statement_conflict`: `item_id`, `surface_phrase`, `statement_ids`,
-      `episode_key`
-
     `episode_key` correlates multiple rows in the UI (F-ALT).
     """
     get_workspace_for_viewer(request, user, workspace_id, store)

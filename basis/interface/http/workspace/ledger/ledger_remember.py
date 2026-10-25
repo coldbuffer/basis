@@ -34,9 +34,10 @@ async def create_remember_proposal(
         store=store,
         require_editor=True,
     )
-    payload = await asyncio.to_thread(
-        op_propose_remember,
-        ctx,
-        {"content": body.content, "source": "api"},
-    )
+    args: dict[str, Any] = {"content": body.content, "source": "api"}
+    if body.chunk_id is not None:
+        args["chunk_id"] = body.chunk_id
+    if body.quote is not None:
+        args["quote"] = body.quote
+    payload = await asyncio.to_thread(op_propose_remember, ctx, args)
     return http_response_from_payload(payload)

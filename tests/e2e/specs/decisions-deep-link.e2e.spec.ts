@@ -26,20 +26,26 @@ test('decisions list selection updates shareable decision query', async ({ page 
   const decisionLink = page.getByTestId('review-approve-decision-link');
   await expect(decisionLink).toBeVisible({ timeout: 30_000 });
   await decisionLink.click();
-  await expect(page).toHaveURL(/\/decisions/);
-  await expect(page).toHaveURL(/decision=/);
+  await expect(page).toHaveURL(/\/log/);
+  await expect(page).toHaveURL(/graph_decision=/);
+  await expect(page.getByTestId('graph-decision-detail-dialog')).toBeVisible({ timeout: 30_000 });
 
   const url = new URL(page.url());
-  const decisionId = url.searchParams.get('decision');
+  const decisionId = url.searchParams.get('graph_decision');
   expect(decisionId).toBeTruthy();
 
+  await page.keyboard.press('Escape');
+  await expect(page.getByTestId('graph-decision-detail-dialog')).toBeHidden({ timeout: 15_000 });
+
+  await page.getByTestId('activity-log-browse-decisions').click();
   const listItem = page.getByTestId(`decision-list-item-${decisionId}`);
   if ((await listItem.count()) > 0) {
     await listItem.click();
     await expect(page).toHaveURL(
       new RegExp(
-        `decision=${encodeURIComponent(decisionId!).replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}`,
+        `graph_decision=${encodeURIComponent(decisionId!).replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}`,
       ),
     );
+    await expect(page.getByTestId('graph-decision-detail-dialog')).toBeVisible();
   }
 });

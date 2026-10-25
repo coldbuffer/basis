@@ -35,6 +35,24 @@ def _similarity_score(pair: dict[str, Any]) -> float | None:
     return None
 
 
+def _normalize_dedup_pair(raw: Any) -> dict[str, Any] | None:
+    """Accept dict or Semantica ``DuplicateCandidate`` (governor used to drop non-dicts)."""
+    if isinstance(raw, dict):
+        return raw
+    entity1 = getattr(raw, "entity1", None)
+    entity2 = getattr(raw, "entity2", None)
+    if entity1 is None or entity2 is None:
+        return None
+    similarity = getattr(raw, "similarity_score", None)
+    if similarity is None:
+        similarity = getattr(raw, "similarity", None)
+    out: dict[str, Any] = {"entity1": entity1, "entity2": entity2}
+    if isinstance(similarity, (int, float)):
+        out["similarity"] = float(similarity)
+        out["score"] = float(similarity)
+    return out
+
+
 async def _detect_duplicate_pairs(session: Any, threshold: float) -> list[dict[str, Any]]:
     from semantica.deduplication import DuplicateDetector
 
@@ -71,8 +89,9 @@ async def scan_graph_semantic_dedup_clusters(
         return {"created": 0, "skipped": 0, "unavailable": True}
     created: list[str] = []
     skipped = 0
-    for pair in pairs:
-        if not isinstance(pair, dict):
+    for raw_pair in pairs:
+        pair = _normalize_dedup_pair(raw_pair)
+        if not pair:
             continue
         left = _extract_dedup_id(pair.get("entity_a") or pair.get("entity1"))
         right = _extract_dedup_id(pair.get("entity_b") or pair.get("entity2"))

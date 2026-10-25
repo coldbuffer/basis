@@ -10,6 +10,14 @@ import {
   setActiveWorkspaceHttpConfig,
 } from './ws-http.js';
 
+const { workspaceOpenApiResponse } = vi.hoisted(() => ({
+  workspaceOpenApiResponse: vi.fn(),
+}));
+
+vi.mock('@/lib/openapi/client.js', () => ({
+  workspaceOpenApiResponse,
+}));
+
 const workspaceId = 'kb-test-uuid';
 const root = workspaceApiRoot(workspaceId);
 
@@ -52,37 +60,37 @@ describe('ws-http workspace API scoping (§9.6)', () => {
 describe('workspaceFetchJson', () => {
   beforeEach(() => {
     setActiveWorkspaceHttpConfig({ apiRoot: root });
+    workspaceOpenApiResponse.mockReset();
   });
 
   afterEach(() => {
-    vi.unstubAllGlobals();
     setActiveWorkspaceHttpConfig({});
   });
 
   it('throws coded errors from API detail', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async () =>
-        new Response(JSON.stringify({ detail: { code: 'not_found', message: 'x' } }), {
-          status: 404,
-          headers: { 'content-type': 'application/json' },
-        }),
-      ),
+    workspaceOpenApiResponse.mockResolvedValue(
+      new Response(JSON.stringify({ detail: { code: 'not_found', message: 'x' } }), {
+        status: 404,
+        headers: { 'content-type': 'application/json' },
+      }),
     );
     await expect(workspaceFetchJson('/api/graph/stats')).rejects.toMatchObject({
       code: 'not_found',
     });
+    expect(workspaceOpenApiResponse).toHaveBeenCalledWith(
+      'GET',
+      workspaceId,
+      'graph/stats',
+      expect.objectContaining({ params: undefined }),
+    );
   });
 
   it('returns JSON on success', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async () =>
-        new Response(JSON.stringify({ node_count: 3 }), {
-          status: 200,
-          headers: { 'content-type': 'application/json' },
-        }),
-      ),
+    workspaceOpenApiResponse.mockResolvedValue(
+      new Response(JSON.stringify({ node_count: 3 }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
     );
     const data = await workspaceFetchJson<{ node_count: number }>('/api/graph/stats');
     expect(data.node_count).toBe(3);

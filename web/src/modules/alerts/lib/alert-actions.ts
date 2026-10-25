@@ -1,5 +1,5 @@
 import type { WorkspaceAlertStreamItem } from '@/modules/alerts/lib/alerts-stream.js';
-import { workspaceOntologyProposalPath, workspacePath } from '@/lib/nav/nav-config.js';
+import { workspaceOntologyProposalPath, workspacePath, workspaceReviewPath } from '@/lib/nav/nav-config.js';
 import { decisionIdFromDetail, reviewDecisionPath, reviewItemPath } from '@/modules/review/lib/review-url-state.js';
 import { processingJobPath } from '@/modules/processing/lib/processing-url-state.js';
 
@@ -30,17 +30,6 @@ export function workspaceAlertAction(workspaceId: string, alert: WorkspaceAlertS
     return { href: workspaceOntologyProposalPath(workspaceId, proposalId), labelKey: 'viewProposal' };
   }
 
-  if (alert.kind === 'governance.statement_conflict') {
-    const itemId =
-      (typeof detail.item_id === 'string' && detail.item_id) ||
-      (typeof detail.review_item_id === 'string' && detail.review_item_id) ||
-      '';
-    if (itemId.length > 0) {
-      return { href: reviewItemPath(workspaceId, itemId), labelKey: 'viewReview' };
-    }
-    return { href: workspacePath(workspaceId, 'review'), labelKey: 'viewReview' };
-  }
-
   if (alert.kind === 'governance.tripped') {
     const decisionId = decisionIdFromDetail(detail);
     if (decisionId) {
@@ -53,7 +42,7 @@ export function workspaceAlertAction(workspaceId: string, alert: WorkspaceAlertS
     if (typeof itemId === 'string' && itemId.length > 0) {
       return { href: reviewItemPath(workspaceId, itemId), labelKey: 'viewReview' };
     }
-    return { href: workspacePath(workspaceId, 'review'), labelKey: 'viewReview' };
+    return { href: workspaceReviewPath(workspaceId), labelKey: 'viewReview' };
   }
 
   if (alert.kind === 'processing.failed') {

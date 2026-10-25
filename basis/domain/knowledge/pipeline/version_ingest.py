@@ -142,11 +142,11 @@ def run_version_ingest(
                 for key in ledger_stats:
                     ledger_stats[key] += part_stats.get(key, 0)
 
-        conflict_scan: dict[str, Any] | None = None
+        shacl_scan: dict[str, Any] | None = None
         if ledger_stats["ledger_statements_written"] > 0:
-            from basis.domain.knowledge.services.conflict_review import scan_statement_conflicts
+            from basis.domain.knowledge.services.conflict_review import run_shacl_conflict_scan
 
-            conflict_scan = scan_statement_conflicts(knowledge, workspace_id)
+            shacl_scan = run_shacl_conflict_scan(knowledge, workspace_id)
 
         projection_meta = apply_rebuild_to_session(
             knowledge, workspace_id, graph, include_version_ids=(version_id,)
@@ -159,8 +159,8 @@ def run_version_ingest(
             "extracted": bool(options.extract and normalized.strip()),
             **ledger_stats,
         }
-        if conflict_scan is not None:
-            graph_result["conflicts"] = conflict_scan
+        if shacl_scan is not None:
+            graph_result["shacl_scan"] = shacl_scan
 
         result = {
             **graph_result,

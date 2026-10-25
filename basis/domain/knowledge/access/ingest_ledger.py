@@ -66,6 +66,16 @@ class IngestLedgerAccess:
         with self._store._lock:
             return entity_persist.count_entities_named(self._store._conn, workspace_id, label)
 
+    def find_entity_id_by_label(self, workspace_id: str, label: str) -> str | None:
+        clean = label.strip()
+        if not clean:
+            return None
+        with self._store._lock:
+            row = entity_persist.find_active_entity_id_by_label(
+                self._store._conn, workspace_id, clean
+            )
+        return None if row is None else str(row["id"])
+
     def has_statement_on_chunk(
         self,
         workspace_id: str,

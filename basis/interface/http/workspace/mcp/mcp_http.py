@@ -14,7 +14,8 @@ from basis.application.tool_catalog import TOOL_NAMES
 from basis.application.tool_catalog.mcp_access import mcp_tool_access
 from basis.interface.mcp.dispatch import get_tool_definitions
 from basis.interface.http.shared.http_operation_catalog import workspace_http_operation_entries
-from basis.interface.mcp.tools import PROTOCOL_VERSION
+from basis.interface.mcp.resources import list_resources
+from basis.interface.mcp.tools import CAPABILITIES, PROTOCOL_VERSION
 
 router = APIRouter(tags=["mcp"])
 
@@ -51,8 +52,11 @@ Mcp Integration Info. MCP JSON-RPC transport for agent integrations. Requires wo
         "mcp_url": mcp_url,
         "transport": "http",
         "protocol_version": PROTOCOL_VERSION,
+        "capabilities": CAPABILITIES,
         "auth": {"type": "bearer", "header": "Authorization", "prefix": "Bearer "},
         "tools": tool_names,
+        "resources": [r["uri"] for r in list_resources()],
+        "resource_entries": list_resources(),
         "tool_entries": tool_entries,
         "http_operation_entries": http_operation_entries,
         "static_tools": list(TOOL_NAMES),

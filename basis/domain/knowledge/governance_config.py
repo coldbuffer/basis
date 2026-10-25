@@ -19,6 +19,9 @@ class GovernanceConfig:
     governor_interval_minutes: int = DEFAULT_GOVERNOR_INTERVAL_MINUTES
     governor_confidence_min: float = DEFAULT_GOVERNOR_CONFIDENCE_MIN
     governor_last_run_at: str | None = None
+    governance_ontology_uri: str | None = None
+    governance_shacl_turtle: str | None = None
+    entity_type_surface_phrases_json: str | None = None
 
     def public_dict(self) -> dict[str, Any]:
         return asdict(self)

@@ -1,34 +1,22 @@
 import { workspacePath } from '@/lib/nav/nav-config.js';
 
-/** Legacy URL tab values (still parsed). */
-export type SearchTab = 'chunks' | 'graph' | 'entities';
+export type SearchScope = 'chunks' | 'graph' | 'entities';
 
-/** Active search target (documents, graph, or entities). */
-export type SearchScope = SearchTab;
-
-const TAB_PARAM = 'tab';
 const SCOPE_PARAM = 'scope';
 
-export function parseSearchTab(raw: string | null | undefined): SearchTab | undefined {
+export function parseSearchScope(raw: string | null | undefined): SearchScope | undefined {
   if (raw === 'chunks' || raw === 'graph' || raw === 'entities') return raw;
   return undefined;
 }
 
-/** Map URL scope/tab to a single search target (`all` legacy → documents). */
 export function resolveSearchScope(
   scopeRaw: string | null | undefined,
-  tabRaw: string | null | undefined,
   defaultScope: SearchScope = 'chunks',
 ): SearchScope {
-  const scope = scopeRaw?.trim();
-  if (scope === 'chunks' || scope === 'graph' || scope === 'entities') return scope;
-  if (scope === 'all') return 'chunks';
-  return parseSearchTab(tabRaw) ?? defaultScope;
+  return parseSearchScope(scopeRaw?.trim()) ?? defaultScope;
 }
 
 export type SearchUrlParams = {
-  /** Legacy — also sets scope when `scope` omitted. */
-  tab?: SearchTab;
   scope?: SearchScope;
   q?: string;
   /** Chunk search point-in-time (ISO). */
@@ -47,7 +35,7 @@ function setOptionalIso(sp: URLSearchParams, key: string, value: string | undefi
 /** Build `/workspaces/:id/search` with shareable query params (F-SRCH-03). */
 export function searchPath(workspaceId: string, params: SearchUrlParams): string {
   const sp = new URLSearchParams();
-  const scope = params.scope ?? params.tab;
+  const scope = params.scope;
   if (scope) sp.set(SCOPE_PARAM, scope);
   const q = params.q?.trim();
   if (q) sp.set('q', q);
@@ -63,10 +51,8 @@ export function parseSearchUrlState(search: string): SearchUrlParams & {
   scope: SearchScope;
 } {
   const params = new URLSearchParams(search);
-  const tab = parseSearchTab(params.get(TAB_PARAM));
-  const scope = resolveSearchScope(params.get(SCOPE_PARAM), params.get(TAB_PARAM));
+  const scope = resolveSearchScope(params.get(SCOPE_PARAM));
   return {
-    tab,
     scope,
     q: params.get('q') ?? undefined,
     asOf: params.get('as_of') ?? undefined,

@@ -18,6 +18,8 @@ from basis.application.review.schemas import TOOL_INPUT_MODELS as REVIEW_INPUT
 from basis.application.review.schemas import TOOL_RESPONSE_MODELS as REVIEW_RESPONSE
 from basis.application.workspace.schemas import TOOL_INPUT_MODELS as WORKSPACE_INPUT
 from basis.application.workspace.schemas import TOOL_RESPONSE_MODELS as WORKSPACE_RESPONSE
+from basis.application.semantica_compat.schemas import TOOL_INPUT_MODELS as SEMANTICA_INPUT
+from basis.application.semantica_compat.schemas import TOOL_RESPONSE_MODELS as SEMANTICA_RESPONSE
 
 OPERATION_INPUT_MODELS: dict[str, type[BaseModel]] = {
     **WORKSPACE_INPUT,
@@ -26,6 +28,7 @@ OPERATION_INPUT_MODELS: dict[str, type[BaseModel]] = {
     **REASONING_INPUT,
     **REVIEW_INPUT,
     **CONNECTOR_INPUT,
+    **SEMANTICA_INPUT,
 }
 
 OPERATION_RESPONSE_MODELS: dict[str, type[BaseModel]] = {
@@ -35,6 +38,7 @@ OPERATION_RESPONSE_MODELS: dict[str, type[BaseModel]] = {
     **REASONING_RESPONSE,
     **REVIEW_RESPONSE,
     **CONNECTOR_RESPONSE,
+    **SEMANTICA_RESPONSE,
 }
 
 
@@ -51,7 +55,7 @@ def coerce_operation_args(name: str, arguments: dict[str, Any] | None) -> dict[s
     raw = arguments or {}
     if model_cls is None:
         return raw
-    if name == "describe_workspace" and not raw:
+    if name in {"get_graph_summary", "get_graph_analytics"} and not raw:
         return {}
     validated = model_cls.model_validate(raw)
     return validated.model_dump(exclude_none=True)

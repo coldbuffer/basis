@@ -77,7 +77,7 @@ test('search open in graph focuses node', async ({ page }) => {
   const bounds = await fetchTemporalBounds(page, workspaceId);
   const at = bounds.max ?? bounds.min ?? '2030-01-01T00:00:00Z';
   await page.goto(
-    `/workspaces/${workspaceId}/search?tab=graph&q=smoke&at=${encodeURIComponent(at)}`,
+    `/workspaces/${workspaceId}/search?scope=graph&q=smoke&at=${encodeURIComponent(at)}`,
   );
 
   const unavailable = page.getByRole('heading', {
@@ -119,7 +119,7 @@ test('search graph scope opens timeline playback deep link', async ({ page }) =>
   const bounds = await fetchTemporalBounds(page, workspaceId);
   const at = bounds.max ?? bounds.min ?? '2030-01-01T00:00:00Z';
   await page.goto(
-    `/workspaces/${workspaceId}/search?tab=graph&q=smoke&at=${encodeURIComponent(at)}`,
+    `/workspaces/${workspaceId}/search?scope=graph&q=smoke&at=${encodeURIComponent(at)}`,
   );
 
   const unavailable = page.getByRole('heading', {

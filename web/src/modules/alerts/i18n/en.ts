@@ -13,7 +13,6 @@ export default {
     severity_info: "Info",
     kind_labels: {
       "governance.proposal_proposed": "Ontology proposal",
-      "governance.statement_conflict": "Statement conflict",
       "processing.failed": "Processing failed",
       "governance.tripped": "Governance rule",
       sync_failed: "Ingest sync failed"
@@ -21,7 +20,7 @@ export default {
     kind_llm_fallback: "LLM ({code})",
     view_proposal: "View proposal",
     view_sources: "Open sources",
-    view_review: "Open review queue",
+    view_review: "Open Smart review",
     view_decisions: "Open decisions",
     view_settings: "Open workspace settings",
     view_processing_job: "Open processing job",

@@ -3,8 +3,8 @@ import { Input } from "@/components/ui/input.js";
 import { PublicIcon } from "@/components/app/shared/primitives/public-icon.js";
 import { useEffect, useRef, useState } from "react";
 import { wsApiErrorMessage, wsGetJson, parseWsJson } from '@/lib/workspace/ws-api-error';
-import { workspaceFetch } from '@/lib/workspace/ws-http';
-import { ontologyPath, useOntologyWorkspaceId } from "./ontology-workspace-context";
+import { workspaceOpenApiResponse } from '@/lib/openapi/client.js';
+import { ontologyApiSuffix, useOntologyWorkspaceId } from "./ontology-workspace-context";
 import { useI18n } from "@/i18n/context.js";
 import { fmt, formatLocaleNumber, pickCountForm } from "@/i18n/format.js";
 import type { Locale } from "@/i18n/locale.js";
@@ -203,8 +203,8 @@ function DetailPanel({
   useEffect(() => {
     let ignore = false;
     void wsGetJson<EntityDetail>(
-      ontologyPath(workspaceId, `entity/${encodeURIComponent(uri)}`),
-      undefined,
+      workspaceId,
+      ontologyApiSuffix(`entity/${encodeURIComponent(uri)}`),
       {
         fallbackMessage: s.api.entity_not_found,
         partialWarning: s.api.partial_entity,
@@ -342,9 +342,11 @@ export function OntologySearch() {
     }
     setSearching(true);
     try {
-      const params = new URLSearchParams({ q: q.trim(), limit: "80" });
-      if (type !== "all") params.set("entity_type", type);
-      const res = await workspaceFetch(ontologyPath(workspaceId, "search", params.toString()));
+      const query: Record<string, string> = { q: q.trim(), limit: "80" };
+      if (type !== "all") query.entity_type = type;
+      const res = await workspaceOpenApiResponse('GET', workspaceId, ontologyApiSuffix("search"), {
+        params: { query },
+      });
       setResults(await parseWsJson<SearchResult[]>(res, s.api.search_failed));
     } catch {
       setResults([]);

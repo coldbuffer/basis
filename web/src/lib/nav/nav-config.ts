@@ -62,26 +62,18 @@ export function platformAdminEntryPath(
 }
 
 /**
- * Workspace navigation zones ordered by user mental model & task frequency:
- * 1. explore (high-frequency consumption: Graph, Search)
- * 2. knowledge (sources, processing, entity ledger)
- * 3. connectors (BOCP catalog, connections, stream mappings, sync)
- * 4. schema (ontology hub tabs, query/reasoning hub, vocabulary, mappings)
- * 5. govern (review, resolution, decisions, lineage, graph diff)
- * 6. system (integration, settings); alerts via account menu only
+ * Workspace sidebar zones:
+ * 1. explore — graph, graph diff, search, entity ledger
+ * 2. knowledge — sources, BOCP connections (stream sync lives under connectors routes)
+ * 3. schema — ontology, vocabulary, statement mappings
+ * 4. govern — smart review, change log, lineage (node provenance)
+ * 5. system — integration, settings; alerts via account menu only
  */
-export type WorkspaceZone =
-  | 'explore'
-  | 'knowledge'
-  | 'connectors'
-  | 'schema'
-  | 'govern'
-  | 'system';
+export type WorkspaceZone = 'explore' | 'knowledge' | 'schema' | 'govern' | 'system';
 
 export const WORKSPACE_ZONES: WorkspaceZone[] = [
   'explore',
   'knowledge',
-  'connectors',
   'schema',
   'govern',
   'system',
@@ -93,22 +85,22 @@ export type WorkspaceNavItem = {
   icon: string;
 };
 
+/** Canonical workspace routes (governance console). */
+export const WORKSPACE_REVIEW_SEGMENT = 'review' as const;
+export const WORKSPACE_LOG_SEGMENT = 'log' as const;
+
 /** Workspace primary navigation grouped by mental model, with unique icons per item. */
 export const WORKSPACE_NAV_BY_ZONE = {
   explore: [
     { segment: 'graph', labelKey: 'graph', icon: 'graph' },
+    { segment: 'graph-diff', labelKey: 'graphDiff', icon: 'git-diff' },
     { segment: 'search', labelKey: 'search', icon: 'search-01' },
+    { segment: 'entities', labelKey: 'entities', icon: 'atom' },
   ],
   knowledge: [
     { segment: 'sources', labelKey: 'sources', icon: 'book-01' },
     { segment: 'processing', labelKey: 'processing', icon: 'sync' },
-    { segment: 'entities', labelKey: 'entities', icon: 'atom' },
-  ],
-  connectors: [
-    { segment: 'connectors', labelKey: 'connectorCatalog', icon: 'database' },
-    { segment: 'connectors/mappings', labelKey: 'connectorStreamMappings', icon: 'arrows-left-right' },
-    { segment: 'connectors/policy', labelKey: 'connectorActionPolicy', icon: 'scales' },
-    { segment: 'connectors/runs', labelKey: 'connectorRunLogs', icon: 'list-dashes-01' },
+    { segment: 'connectors', labelKey: 'connectionsSync', icon: 'database' },
   ],
   schema: [
     { segment: 'ontology', labelKey: 'ontology', icon: 'shapes-01' },
@@ -117,11 +109,10 @@ export const WORKSPACE_NAV_BY_ZONE = {
     { segment: 'mappings', labelKey: 'mappings', icon: 'arrows-left-right' },
   ],
   govern: [
-    { segment: 'review', labelKey: 'review', icon: 'check-square-contained' },
-    { segment: 'entity-resolution', labelKey: 'entityResolution', icon: 'git-merge' },
-    { segment: 'decisions', labelKey: 'decisions', icon: 'scales' },
+    { segment: WORKSPACE_REVIEW_SEGMENT, labelKey: 'review', icon: 'check-square-contained' },
+    { segment: 'quality', labelKey: 'dataQuality', icon: 'shield-01' },
+    { segment: WORKSPACE_LOG_SEGMENT, labelKey: 'activityLog', icon: 'clock-01' },
     { segment: 'lineage', labelKey: 'lineage', icon: 'path' },
-    { segment: 'graph-diff', labelKey: 'graphDiff', icon: 'git-diff' },
   ],
   system: [
     { segment: 'integration', labelKey: 'integration', icon: 'plug-01' },
@@ -139,13 +130,12 @@ export type SidebarMenuKey = SidebarNavKey | 'alerts';
 /** Hub tab / legacy route segments (not primary sidebar nav keys). */
 export type HubCapabilityNavKey =
   | 'ontologyVersions'
-  | 'shacl'
   | 'alignments'
   | 'sparql'
   | 'reasoning';
 
 /** Routable segments and capability switches (includes legacy `processing`). */
-export type WorkspaceNavKey = SidebarMenuKey | HubCapabilityNavKey | 'processing';
+export type WorkspaceNavKey = SidebarMenuKey | HubCapabilityNavKey | 'processing' | typeof WORKSPACE_LOG_SEGMENT;
 
 export type SidebarNavItem = WorkspaceNavItem & { labelKey: SidebarMenuKey };
 
@@ -157,16 +147,6 @@ export const ALERTS_NAV_ITEM: SidebarNavItem = {
 };
 
 export const SETTINGS_NAV_ITEM: SidebarNavItem = WORKSPACE_NAV_BY_ZONE.system[1];
-
-/** Former sidebar routes kept for deep links and redirects. */
-export const KB_HUB_LEGACY_SEGMENTS = [
-  'ontology-versions',
-  'shacl',
-  'alignments',
-  'sparql',
-  'reasoning',
-  'onboarding',
-] as const;
 
 function buildWorkspaceNav(): SidebarNavItem[] {
   const items: SidebarNavItem[] = [];
@@ -183,6 +163,35 @@ export const WORKSPACE_NAV = buildWorkspaceNav();
 
 export function workspacePath(workspaceId: string, segment: string): string {
   return `/workspaces/${workspaceId}/${segment}`;
+}
+
+export function workspaceReviewPath(workspaceId: string): string {
+  return workspacePath(workspaceId, WORKSPACE_REVIEW_SEGMENT);
+}
+
+export function workspaceLogPath(workspaceId: string): string {
+  return workspacePath(workspaceId, WORKSPACE_LOG_SEGMENT);
+}
+
+export type DataQualityTab = 'overview' | 'structure' | 'scan';
+
+/** Data quality hub (`/quality`) with optional tab and ontology deep-link for SHACL. */
+export function workspaceQualityPath(
+  workspaceId: string,
+  tab: DataQualityTab = 'overview',
+  query?: { ontology_uri?: string },
+): string {
+  const base = workspacePath(workspaceId, 'quality');
+  const params = new URLSearchParams();
+  if (tab !== 'overview') {
+    params.set('tab', tab);
+  }
+  const ontologyUri = query?.ontology_uri?.trim();
+  if (ontologyUri) {
+    params.set('ontology_uri', ontologyUri);
+  }
+  const q = params.toString();
+  return q ? `${base}?${q}` : base;
 }
 
 /** BOCP workspace sub-panels (sidebar routes under `/connectors/…`). Home is `/connectors`. */
@@ -233,19 +242,8 @@ export function parseWorkspaceIdFromPath(pathname: string): string | null {
 export function menuIconForPath(pathname: string): string | undefined {
   const segment = /^\/workspaces\/[^/]+\/([^/]+)/.exec(pathname)?.[1];
   if (segment) {
-    if (segment === 'ontology-versions' || segment === 'shacl' || segment === 'alignments') {
-      return WORKSPACE_NAV_BY_ZONE.schema.find((item) => item.segment === 'ontology')?.icon;
-    }
-    if (segment === 'sparql' || segment === 'reasoning') {
-      return WORKSPACE_NAV_BY_ZONE.schema.find((item) => item.segment === 'analyze')?.icon;
-    }
     if (segment === 'connectors') {
-      const panel = /^\/workspaces\/[^/]+\/connectors\/([^/]+)/.exec(pathname)?.[1];
-      const navSegment =
-        panel === 'mappings' || panel === 'policy' || panel === 'runs'
-          ? `connectors/${panel}`
-          : 'connectors';
-      return WORKSPACE_NAV.find((item) => item.segment === navSegment)?.icon;
+      return WORKSPACE_NAV.find((item) => item.segment === 'connectors')?.icon;
     }
     return WORKSPACE_NAV.find((item) => item.segment === segment)?.icon;
   }
@@ -263,8 +261,5 @@ export function isWorkspaceScopedPath(pathname: string): boolean {
   if (segment === 'connectors') {
     return true;
   }
-  if (WORKSPACE_NAV.some((item) => item.segment === segment)) {
-    return true;
-  }
-  return (KB_HUB_LEGACY_SEGMENTS as readonly string[]).includes(segment);
+  return WORKSPACE_NAV.some((item) => item.segment === segment);
 }

@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 
 import { defaultWorkspaceId, registerFreshUser } from '../helpers';
 
-test('analyze hub tabs and legacy SPARQL/reasoning routes redirect', async ({ page }) => {
+test('analyze hub tabs (SPARQL and reasoning)', async ({ page }) => {
   test.setTimeout(90_000);
 
   await registerFreshUser(page);
@@ -12,14 +12,6 @@ test('analyze hub tabs and legacy SPARQL/reasoning routes redirect', async ({ pa
   await expect(page.getByRole('tab', { name: /^SPARQL$/i })).toHaveAttribute('data-state', 'active');
   await expect(page.getByText(/SPARQL and reasoning HTTP|SPARQL 与规则推理 HTTP/i)).toBeVisible({
     timeout: 60_000,
-  });
-
-  await page.goto(`/workspaces/${workspaceId}/sparql`);
-  await expect(page).toHaveURL(new RegExp(`/workspaces/${workspaceId}/analyze$`), { timeout: 30_000 });
-
-  await page.goto(`/workspaces/${workspaceId}/reasoning`);
-  await expect(page).toHaveURL(new RegExp(`/workspaces/${workspaceId}/analyze\\?tab=reasoning`), {
-    timeout: 30_000,
   });
 
   await page.getByRole('tab', { name: /Reasoning|规则推理/i }).click();

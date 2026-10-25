@@ -8,7 +8,7 @@ Graph **projection** and interactive reads live in `basis.domain.graph` (`projec
 
 | Path | Responsibility |
 | --- | --- |
-| `hub/` | Registry, persistence, proposals, governance lifecycle |
+| `hub/` | Registry, persistence, drafts/proposals, `draft_apply` (editor `DraftDiff` → graph on publish), governance lifecycle |
 | `shacl/` | Generate, validate, read SHACL |
 | `browse/` | Graph scope, health, SKOS-oriented reads, preview |
 | `io/` | RDF parse + admin error mapping for ontology HTTP |

@@ -7,8 +7,8 @@ import {
   wsPartialSuccessWarning,
   parseWsJson,
 } from '@/lib/workspace/ws-api-error';
-import { workspaceFetch } from '@/lib/workspace/ws-http';
-import { ontologyPath, useOntologyWorkspaceId } from "./ontology-workspace-context";
+import { workspaceOpenApiResponse } from '@/lib/openapi/client.js';
+import { ontologyApiSuffix, useOntologyWorkspaceId } from "./ontology-workspace-context";
 import { workspaceOntologyProposalPath } from "@/lib/nav/nav-config.js";
 import { readOntologyUrlState, writeProposalSelection } from '../lib/ontology-url-state.js';
 import { cn } from "@/lib/utils.js";
@@ -148,8 +148,8 @@ export function VersionsPanel() {
     setError("");
     try {
       const { data, partialWarning } = await wsGetJson<VersionEntry[]>(
-        ontologyPath(workspaceId, `versions/${encodeURIComponent(ontologyUri)}`),
-        undefined,
+        workspaceId,
+        ontologyApiSuffix(`versions/${encodeURIComponent(ontologyUri)}`),
         {
           fallbackMessage: v.api.load_versions_failed,
           partialWarning: v.api.partial_versions,
@@ -167,8 +167,8 @@ export function VersionsPanel() {
     setError("");
     try {
       const { data, partialWarning } = await wsGetJson<Proposal[]>(
-        ontologyPath(workspaceId, "proposals"),
-        undefined,
+        workspaceId,
+        ontologyApiSuffix("proposals"),
         {
           fallbackMessage: v.api.load_proposals_failed,
           partialWarning: v.api.partial_proposals,
@@ -188,8 +188,8 @@ export function VersionsPanel() {
       if (!ignore) setError("");
       try {
         const { data: propData, partialWarning: propWarn } = await wsGetJson<Proposal[]>(
-          ontologyPath(workspaceId, "proposals"),
-          undefined,
+          workspaceId,
+          ontologyApiSuffix("proposals"),
           {
             fallbackMessage: v.api.load_proposals_failed,
             partialWarning: v.api.partial_proposals,
@@ -207,8 +207,8 @@ export function VersionsPanel() {
       if (!ontologyUri) return;
       try {
         const { data: verData, partialWarning: verWarn } = await wsGetJson<VersionEntry[]>(
-          ontologyPath(workspaceId, `versions/${encodeURIComponent(ontologyUri)}`),
-          undefined,
+          workspaceId,
+          ontologyApiSuffix(`versions/${encodeURIComponent(ontologyUri)}`),
           {
             fallbackMessage: v.api.load_versions_failed,
             partialWarning: v.api.partial_versions,
@@ -230,9 +230,11 @@ export function VersionsPanel() {
   const approveProposal = useCallback(async (proposalId: string) => {
     setError("");
     try {
-      const response = await workspaceFetch(ontologyPath(workspaceId, `proposals/${proposalId}/approve`), {
-        method: "POST",
-      });
+      const response = await workspaceOpenApiResponse(
+        'POST',
+        workspaceId,
+        ontologyApiSuffix(`proposals/${proposalId}/approve`),
+      );
       const partial = await wsMutationResult(
         response,
         v.api.approve_failed,
@@ -250,9 +252,11 @@ export function VersionsPanel() {
   const rejectProposal = useCallback(async (proposalId: string) => {
     setError("");
     try {
-      const response = await workspaceFetch(ontologyPath(workspaceId, `proposals/${proposalId}/reject`), {
-        method: "POST",
-      });
+      const response = await workspaceOpenApiResponse(
+        'POST',
+        workspaceId,
+        ontologyApiSuffix(`proposals/${proposalId}/reject`),
+      );
       const partial = await wsMutationResult(
         response,
         v.api.reject_failed,
@@ -270,9 +274,11 @@ export function VersionsPanel() {
   const publishProposal = useCallback(async (proposalId: string) => {
     setError("");
     try {
-      const response = await workspaceFetch(ontologyPath(workspaceId, `proposals/${proposalId}/publish`), {
-        method: "POST",
-      });
+      const response = await workspaceOpenApiResponse(
+        'POST',
+        workspaceId,
+        ontologyApiSuffix(`proposals/${proposalId}/publish`),
+      );
       const partial = await wsMutationResult(
         response,
         v.api.publish_failed,
@@ -293,14 +299,17 @@ export function VersionsPanel() {
     setIsLoading(true);
     setError("");
     try {
-      const response = await workspaceFetch(ontologyPath(workspaceId, `versions/${encodeURIComponent(ontologyUri)}/compare`), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          version1: comparePair.v1,
-          version2: comparePair.v2,
-        }),
-      });
+      const response = await workspaceOpenApiResponse(
+        'POST',
+        workspaceId,
+        ontologyApiSuffix(`versions/${encodeURIComponent(ontologyUri)}/compare`),
+        {
+          body: {
+            version1: comparePair.v1,
+            version2: comparePair.v2,
+          },
+        },
+      );
       const data = await parseWsJson<Record<string, unknown>>(
         response,
         v.api.compare_failed,

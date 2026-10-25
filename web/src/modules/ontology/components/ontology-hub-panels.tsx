@@ -104,9 +104,11 @@ export function OntologyAlignmentsPanel({
 export function OntologyShaclPanel({
   workspaceId,
   className,
+  initialOntologyUri,
 }: {
   workspaceId: string;
   className?: string;
+  initialOntologyUri?: string | null;
 }) {
   const { t } = useI18n();
   const navigate = useNavigate();
@@ -120,7 +122,7 @@ export function OntologyShaclPanel({
       <OntologyWorkspaceCatalogProvider workspaceId={workspaceId}>
         <Suspense fallback={<OntologySuspenseFallback label={t.ontology.page.loading_shacl} />}>
           <div className={cn(wsPage, 'min-h-0 flex-1')}>
-            <ShaclStudio onJumpToNode={onJumpToGraphNode} />
+            <ShaclStudio onJumpToNode={onJumpToGraphNode} initialOntologyUri={initialOntologyUri} />
           </div>
         </Suspense>
       </OntologyWorkspaceCatalogProvider>

@@ -6,7 +6,11 @@ import { fmt, formatLocaleNumber, pickCountForm } from "@/i18n/format.js";
 import type { Locale } from "@/i18n/locale.js";
 import { useEffect, useState } from "react";
 import { wsApiErrorMessage, wsGetJson } from '@/lib/workspace/ws-api-error';
-import { ontologyPath, useOntologyWorkspaceId, vocabularyPath } from "./ontology-workspace-context";
+import {
+  ontologyApiSuffix,
+  useOntologyWorkspaceId,
+  vocabularyApiSuffix,
+} from "./ontology-workspace-context";
 import { cn } from "@/lib/utils.js";
 import {
   ontErrorBanner,
@@ -125,8 +129,8 @@ function ConceptDetailPanel({
   useEffect(() => {
     let ignore = false;
     void wsGetJson<SKOSConceptDetail>(
-      ontologyPath(workspaceId, `skos/concept/${encodeURIComponent(uri)}`),
-      undefined,
+      workspaceId,
+      ontologyApiSuffix(`skos/concept/${encodeURIComponent(uri)}`),
       {
         fallbackMessage: s.api.concept_not_found,
         partialWarning: s.api.partial_concept,
@@ -390,9 +394,10 @@ function SchemePanel({
     let ignore = false;
     if (!expanded) return;
     void wsGetJson<ConceptNode[]>(
-      vocabularyPath(workspaceId, "hierarchy", `scheme=${encodeURIComponent(scheme.uri)}`),
-      undefined,
+      workspaceId,
+      vocabularyApiSuffix("hierarchy"),
       {
+        query: { scheme: scheme.uri },
         fallbackMessage: s.api.hierarchy_failed,
         partialWarning: s.api.partial_hierarchy,
         locale: locale as Locale,
@@ -510,8 +515,8 @@ export function SKOSVocabularyManager({ schemeUri }: Props) {
 
   useEffect(() => {
     void wsGetJson<SKOSScheme[]>(
-      ontologyPath(workspaceId, "skos/schemes"),
-      undefined,
+      workspaceId,
+      ontologyApiSuffix("skos/schemes"),
       {
         fallbackMessage: s.api.schemes_failed,
         partialWarning: s.api.partial_schemes,

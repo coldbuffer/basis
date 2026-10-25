@@ -224,6 +224,12 @@
     },
     {
       "file": "web/src/lib/openapi/client.ts",
+      "kind": "literal",
+      "path": "/api/v1/workspaces/{param}",
+      "operationId": "get_workspace_api_v1_workspaces__workspace_id__get"
+    },
+    {
+      "file": "web/src/lib/openapi/client.ts",
       "kind": "dynamic",
       "path": "/api/v1/workspaces/{workspace_id}/{param}",
       "operationId": null
@@ -1191,8 +1197,8 @@
     {
       "file": "web/src/lib/openapi/schema-workspaces.d.ts",
       "kind": "literal",
-      "path": "/api/v1/workspaces/{workspace_id}/review/scan-statement-conflicts",
-      "operationId": "scan_statement_conflicts_route_api_v1_workspaces__workspace_id__review_scan_statement_conflicts_post"
+      "path": "/api/v1/workspaces/{workspace_id}/review/scan-shacl-violations",
+      "operationId": "scan_shacl_violations_route_api_v1_workspaces__workspace_id__review_scan_shacl_violations_post"
     },
     {
       "file": "web/src/lib/openapi/schema-workspaces.d.ts",
@@ -2439,8 +2445,8 @@
     {
       "file": "web/src/lib/openapi/schema.d.ts",
       "kind": "literal",
-      "path": "/api/v1/workspaces/{workspace_id}/review/scan-statement-conflicts",
-      "operationId": "scan_statement_conflicts_route_api_v1_workspaces__workspace_id__review_scan_statement_conflicts_post"
+      "path": "/api/v1/workspaces/{workspace_id}/review/scan-shacl-violations",
+      "operationId": "scan_shacl_violations_route_api_v1_workspaces__workspace_id__review_scan_shacl_violations_post"
     },
     {
       "file": "web/src/lib/openapi/schema.d.ts",

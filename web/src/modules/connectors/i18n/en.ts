@@ -4,13 +4,13 @@ export default {
     tabs: {
       catalog: "Catalog & Connections",
       mappings: "Connector table mappings",
-      policy: "Action Policy",
+      policy: "Allowlist & writeback",
       runs: "Run Logs",
     },
     catalog: {
       section_tabs: {
         connectors: "Connectors",
-        authorization: "Authorization",
+        authorization: "Credentials & sign-in",
       },
       search_placeholder: "Search connectors (e.g. postgres, airtable, github, hubspot)…",
       data_sync_supported: "Data sync",
@@ -215,7 +215,7 @@ export default {
       created_toast: "Stream mapping created",
       loading_connections: "Loading connections…",
       direction_bidirectional_option: "Bidirectional sync",
-      writeback_mode_review: "Review queue (recommended)",
+      writeback_mode_review: "Smart review (recommended)",
       writeback_mode_auto: "Auto write-back",
       writeback_mode_disabled: "Inbound only (no write-back)",
       configured_connection_label: "Configured connection",
@@ -318,10 +318,11 @@ export default {
     subtitle: "Basis Open Connector Protocol (BOCP): connect relational databases and SaaS APIs with bidirectional ontology ledger sync.",
   },
   menu: {
+    connections_sync: "Connections & sync",
     connectors: "Connectors",
     connector_catalog: "Connectors",
     connector_stream_mappings: "Table sync",
-    connector_action_policy: "Action policy",
+    connector_action_policy: "Allowlist & writeback",
     connector_run_logs: "Run logs",
   },
 } as const;

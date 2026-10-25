@@ -5,8 +5,8 @@ import {
   decisionIdFromDetail,
   reviewDecisionPath,
   reviewItemPath,
-  mergeKbDecisionParam,
-  parseDecisionUrlState,
+  mergeActivityLogGraphDecisionParam,
+  parseActivityLogDecisionUrlState,
   parseReviewUrlState,
 } from '@/modules/review/lib/review-url-state.js';
 
@@ -23,18 +23,20 @@ describe('reviewUrlState', () => {
 
   it('builds decision deep link path', () => {
     expect(reviewDecisionPath('kb-1', 'dec-1')).toBe(
-      '/workspaces/kb-1/decisions?decision=dec-1',
+      '/workspaces/kb-1/log?graph_decision=dec-1',
     );
   });
 
-  it('parses decision url state', () => {
-    expect(parseDecisionUrlState('?decision=dec-9&q=merge').decisionId).toBe('dec-9');
+  it('parses activity log decision url state', () => {
+    const state = parseActivityLogDecisionUrlState('?graph_decision=dec-9&decisions_q=merge');
+    expect(state.graphDecisionId).toBe('dec-9');
+    expect(state.decisionsQ).toBe('merge');
   });
 
-  it('merges decision param', () => {
-    const next = mergeKbDecisionParam('q=merge', 'dec-2');
-    expect(next.get('q')).toBe('merge');
-    expect(next.get('decision')).toBe('dec-2');
+  it('merges graph decision param', () => {
+    const next = mergeActivityLogGraphDecisionParam('decisions_q=merge', 'dec-2');
+    expect(next.get('decisions_q')).toBe('merge');
+    expect(next.get('graph_decision')).toBe('dec-2');
   });
 
   it('extracts decision_id from detail', () => {

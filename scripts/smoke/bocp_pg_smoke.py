@@ -9,7 +9,7 @@ Usage (from repo root, API running, `.env` loaded):
 
 Optional:
   --mcp              sync via MCP tools/call
-  --scan-conflicts   POST …/review/scan-statement-conflicts after sync
+  --scan-conflicts   POST …/review/scan-shacl-violations after sync
   --list-review      print open review queue counts by kind
   --writeback ENTITY --set tier=gold   propose connector writeback (review queue)
   --approve-writeback   approve first open connector_writeback review item
@@ -117,16 +117,11 @@ def _approve_review_item(
     workspace_id: str,
     headers: dict[str, str],
     item_id: str,
-    *,
-    keeper_statement_id: str | None = None,
 ) -> dict[str, Any]:
-    body: dict[str, Any] = {}
-    if keeper_statement_id:
-        body["keeper_statement_id"] = keeper_statement_id
     r = httpx.post(
         f"{base}/api/v1/workspaces/{workspace_id}/review/items/{item_id}/approve",
         headers=headers,
-        json=body,
+        json={},
         timeout=120,
     )
     if r.status_code >= 400:
@@ -136,7 +131,7 @@ def _approve_review_item(
 
 def _scan_conflicts(base: str, workspace_id: str, headers: dict[str, str]) -> dict[str, Any]:
     r = httpx.post(
-        f"{base}/api/v1/workspaces/{workspace_id}/review/scan-statement-conflicts",
+        f"{base}/api/v1/workspaces/{workspace_id}/review/scan-shacl-violations",
         headers=headers,
         timeout=120,
     )
@@ -170,7 +165,7 @@ def main() -> int:
     parser.add_argument(
         "--scan-conflicts",
         action="store_true",
-        help="POST review/scan-statement-conflicts after sync",
+        help="POST review/scan-shacl-violations after sync",
     )
     parser.add_argument(
         "--list-review",

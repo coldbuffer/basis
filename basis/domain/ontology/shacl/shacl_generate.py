@@ -91,11 +91,23 @@ def list_shacl_shapes(
     registry: dict[str, Any],
     *,
     uri: str,
+    shacl_turtle_override: str | None = None,
 ) -> dict[str, Any]:
+    if shacl_turtle_override and str(shacl_turtle_override).strip():
+        turtle = str(shacl_turtle_override).strip()
+        shapes = _shape_rows(summarize_shacl_shapes(turtle))
+        return {
+            "uri": uri,
+            "shapes": shapes,
+            "shacl_turtle": turtle,
+            "source": "saved",
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+        }
     shacl_turtle, shapes = generated_shacl_for_uri(session, registry, uri)
     return {
         "uri": uri,
         "shapes": shapes,
         "shacl_turtle": shacl_turtle,
+        "source": "generated",
         "generated_at": datetime.now(timezone.utc).isoformat(),
     }

@@ -111,7 +111,7 @@ export function ConnectorOAuthCallbackPage() {
   const crumbs = [
     { label: t.core.workspace_nav.platform.workspaces, to: '/workspaces' },
     {
-      label: t.core.workspace_nav.workspace_zones.connectors,
+      label: t.core.workspace_nav.workspace_zones.knowledge,
       to: workspaceConnectorsAuthorizationHref(workspaceId),
     },
     { label: c.oauth_callback_title },

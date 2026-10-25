@@ -97,14 +97,12 @@ def fetch_open_review_item(
     ).fetchone()
 
 
-def list_review_item_rows(
-    conn: Any,
+def _review_list_where(
     workspace_id: str,
     *,
     status: str | None,
     kind: str | None,
-    limit: int,
-) -> list[Any]:
+) -> tuple[list[str], list[Any]]:
     clauses = ["workspace_id = ?"]
     params: list[Any] = [workspace_id]
     if status:
@@ -113,13 +111,43 @@ def list_review_item_rows(
     if kind:
         clauses.append("kind = ?")
         params.append(kind)
-    params.append(limit)
+    return clauses, params
+
+
+def count_review_item_rows(
+    conn: Any,
+    workspace_id: str,
+    *,
+    status: str | None,
+    kind: str | None,
+) -> int:
+    clauses, params = _review_list_where(workspace_id, status=status, kind=kind)
+    row = conn.execute(
+        f"SELECT COUNT(*) AS n FROM review_items WHERE {' AND '.join(clauses)}",
+        tuple(params),
+    ).fetchone()
+    if row is None:
+        return 0
+    return int(row["n"] if hasattr(row, "keys") else row[0])
+
+
+def list_review_item_rows(
+    conn: Any,
+    workspace_id: str,
+    *,
+    status: str | None,
+    kind: str | None,
+    limit: int,
+    offset: int = 0,
+) -> list[Any]:
+    clauses, params = _review_list_where(workspace_id, status=status, kind=kind)
+    params.extend([limit, offset])
     sql = f"""
         {_REVIEW_SELECT}
         FROM review_items
         WHERE {' AND '.join(clauses)}
         ORDER BY priority DESC, created_at ASC
-        LIMIT ?
+        LIMIT ? OFFSET ?
     """
     return conn.execute(sql, tuple(params)).fetchall()
 

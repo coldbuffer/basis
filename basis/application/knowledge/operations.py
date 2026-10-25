@@ -56,13 +56,21 @@ def op_propose_remember(ctx: WorkspaceCoreContext, args: dict[str, Any]) -> dict
         return {"error": "content is required"}
     require_workspace_editor(ctx)
     source = str(args.get("source") or "mcp")
-    payload = propose_remember(
-        ctx.knowledge,
-        ctx.workspace.id,
-        ctx.user.id,
-        content,
-        source=source,
-    )
+    chunk_id = str(args.get("chunk_id") or "").strip() or None
+    quote_raw = args.get("quote")
+    quote = str(quote_raw).strip() if quote_raw is not None else None
+    try:
+        payload = propose_remember(
+            ctx.knowledge,
+            ctx.workspace.id,
+            ctx.user.id,
+            content,
+            source=source,
+            chunk_id=chunk_id,
+            quote=quote,
+        )
+    except AdminError as exc:
+        return {"error": exc.code, "message": exc.message}
     return {
         **payload,
         "message": "Fact submitted for review; it is not searchable until approved.",

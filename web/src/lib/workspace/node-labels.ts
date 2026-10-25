@@ -2,20 +2,27 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { workspaceOpenApiPOST } from '@/lib/openapi/client.js';
 
+const RESOLVE_LABELS_BATCH = 80;
+
 export async function fetchWorkspaceNodeLabels(
   workspaceId: string,
   ids: string[],
 ): Promise<Record<string, string | null>> {
-  const unique = [...new Set(ids.map((id) => id.trim()).filter(Boolean))].slice(0, 80);
+  const unique = [...new Set(ids.map((id) => id.trim()).filter(Boolean))];
   if (!unique.length) {
     return {};
   }
-  const data = await workspaceOpenApiPOST<{ labels: Record<string, string | null> }>(
-    workspaceId,
-    'graph/resolve-labels',
-    { body: { ids: unique } },
-  );
-  return data.labels ?? {};
+  const merged: Record<string, string | null> = {};
+  for (let offset = 0; offset < unique.length; offset += RESOLVE_LABELS_BATCH) {
+    const batch = unique.slice(offset, offset + RESOLVE_LABELS_BATCH);
+    const data = await workspaceOpenApiPOST<{ labels: Record<string, string | null> }>(
+      workspaceId,
+      'graph/resolve-labels',
+      { body: { ids: batch } },
+    );
+    Object.assign(merged, data.labels ?? {});
+  }
+  return merged;
 }
 
 /** Resolve ledger/graph labels for a set of node ids (refetches when id set changes). */

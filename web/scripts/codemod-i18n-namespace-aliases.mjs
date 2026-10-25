@@ -24,7 +24,6 @@ const aliases = [
   ['t.kbProcessing', 't.processing.jobs'],
   ['t.kbDecisions', 't.decisions.page'],
   ['t.kbConnectors', 't.connectors.page'],
-  ['t.kbDataOnboarding', 't.data_onboarding.wizard'],
   ['t.entityResolution', 't.entity_resolution.page'],
   ['t.kbMappings', 't.mappings.page'],
   ['t.kbSearch', 't.search.page'],

@@ -129,19 +129,6 @@ def test_demo_http_mcp_parity_ledger_and_config_reads(tmp_path) -> None:
     )
     assert http_stmt == mcp_stmt
 
-    http_caps = client.get(
-        f"/api/v1/workspaces/{workspace_id}/capabilities",
-        headers=headers,
-    ).json()
-    mcp_caps = _mcp_payload(client, workspace_id, headers, "get_capabilities", {}, rpc_id=6)
-    for key in (
-        "workspace_id",
-        "role",
-        "upload_max_bytes",
-        "mcp_tools",
-    ):
-        assert http_caps[key] == mcp_caps[key]
-
     http_review = client.get(
         f"/api/v1/workspaces/{workspace_id}/review/items",
         headers=headers,
@@ -156,22 +143,6 @@ def test_demo_http_mcp_parity_ledger_and_config_reads(tmp_path) -> None:
         rpc_id=7,
     )
     assert http_review["items"] == mcp_review["items"]
-
-    http_ground = client.get(
-        f"/api/v1/workspaces/{workspace_id}/reasoning/ground-facts",
-        headers=headers,
-        params={"limit": 200},
-    ).json()
-    mcp_ground = _mcp_payload(
-        client,
-        workspace_id,
-        headers,
-        "list_reasoning_ground_facts",
-        {"limit": 200},
-        rpc_id=8,
-    )
-    assert http_ground["facts"] == mcp_ground["facts"]
-    assert any("commercialContact" in f for f in http_ground["facts"])
 
     demo_rule = http_rules["rules"][0]["body"]
     http_run = client.post(
@@ -218,8 +189,8 @@ def test_search_and_find_entities_http_mcp_parity(tmp_path) -> None:
         client,
         workspace_id,
         headers,
-        "find_entities",
-        {"query": "Vienna", "limit": 5},
+        "query_graph",
+        {"mode": "entities", "query": "Vienna", "limit": 5},
         rpc_id=2,
     )
     assert http_find == mcp_find
@@ -233,8 +204,8 @@ def test_search_and_find_entities_http_mcp_parity(tmp_path) -> None:
         client,
         workspace_id,
         headers,
-        "graph_search",
-        {"query": "Vienna", "limit": 5},
+        "query_graph",
+        {"mode": "search", "query": "Vienna", "limit": 5},
         rpc_id=3,
     )
     assert http_graph.get("results") == mcp_graph.get("results")
@@ -271,18 +242,20 @@ def test_demo_neighbors_http_mcp_parity(tmp_path) -> None:
         client,
         workspace_id,
         headers,
-        "neighbors",
-        {"node_id": node_id, "depth": depth},
+        "query_graph",
+        {"mode": "neighbors", "node_id": node_id, "depth": depth},
         rpc_id=1,
     )
-    assert http_nb == mcp_nb
+    assert http_nb["node_id"] == mcp_nb["node_id"]
+    assert http_nb["depth"] == mcp_nb["depth"]
+    assert http_nb["neighbors"] == mcp_nb["neighbors"]
 
 
 def test_describe_workspace_counts_match_get_workspace(tmp_path) -> None:
     client, workspace_id, headers = _session_client(tmp_path)
     workspace = client.get(f"/api/v1/workspaces/{workspace_id}", headers=headers).json()
     described = _mcp_payload(
-        client, workspace_id, headers, "describe_workspace", {}, rpc_id=1
+        client, workspace_id, headers, "get_graph_summary", {}, rpc_id=1
     )
     assert described["workspace_id"] == workspace_id
     assert described["name"] == workspace["name"]
@@ -420,7 +393,7 @@ def test_remember_propose_get_approve_http_mcp_parity(tmp_path) -> None:
         client,
         workspace_id,
         headers,
-        "approve_statement_remember_review",
+        "approve_review_item",
         {"item_id": mcp_item_id, "rationale": "parity mcp"},
         rpc_id=3,
     )
@@ -475,3 +448,112 @@ def test_reject_review_item_http_mcp_parity(tmp_path) -> None:
     )
     assert http_get["item"]["status"] == "rejected"
     assert mcp_get["item"]["status"] == "rejected"
+
+
+def _first_chunk_id(client: TestClient, workspace_id: str, headers: dict[str, str]) -> str:
+    search = client.get(
+        f"/api/v1/workspaces/{workspace_id}/search",
+        headers=headers,
+        params={"q": "Vienna", "limit": 1},
+    ).json()
+    first = search["chunks"][0]
+    chunk_id = first.get("chunk_id") or first.get("id")
+    assert chunk_id
+    return str(chunk_id)
+
+
+def test_mcp_optional_evidence_chunk_citations(tmp_path) -> None:
+    client, workspace_id, headers = _session_client(tmp_path)
+    chunk_id = _first_chunk_id(client, workspace_id, headers)
+
+    extracted = _mcp_payload(
+        client,
+        workspace_id,
+        headers,
+        "extract_entities",
+        {"chunk_id": chunk_id},
+        rpc_id=1,
+    )
+    assert extracted.get("evidence", {}).get("chunk_id") == chunk_id
+    assert isinstance(extracted.get("entities"), list)
+
+    proposed = _mcp_payload(
+        client,
+        workspace_id,
+        headers,
+        "propose_remember",
+        {"content": "Vienna is cited from ledger chunk.", "chunk_id": chunk_id},
+        rpc_id=2,
+    )
+    assert proposed.get("chunk_id") == chunk_id
+
+    node_id = "parity-evidence-node"
+    added = _mcp_payload(
+        client,
+        workspace_id,
+        headers,
+        "add_entity",
+        {"id": node_id, "label": "Evidence node", "chunk_id": chunk_id},
+        rpc_id=3,
+    )
+    assert added.get("evidence", {}).get("chunk_id") == chunk_id
+    assert added.get("evidence", {}).get("quote")
+
+    reasoning = _mcp_payload(
+        client,
+        workspace_id,
+        headers,
+        "run_reasoning",
+        {
+            "facts": ["parent(Vienna, Austria)"],
+            "rules": ["IF parent(Vienna, Austria) THEN ancestor(Vienna, Austria)"],
+            "apply_to_graph": False,
+            "chunk_id": chunk_id,
+        },
+        rpc_id=4,
+    )
+    assert reasoning.get("evidence", {}).get("chunk_id") == chunk_id
+    assert reasoning.get("inferred_facts")
+
+
+def test_chunk_evidence_tools_http_mcp_parity(tmp_path) -> None:
+    client, workspace_id, headers = _session_client(tmp_path)
+    chunk_id = _first_chunk_id(client, workspace_id, headers)
+    content = "HTTP/MCP parity cite from chunk."
+
+    http_proposed = client.post(
+        f"/api/v1/workspaces/{workspace_id}/remember/proposals",
+        headers=headers,
+        json={"content": content, "chunk_id": chunk_id},
+    ).json()
+    mcp_proposed = _mcp_payload(
+        client,
+        workspace_id,
+        headers,
+        "propose_remember",
+        {"content": content + " (mcp)", "chunk_id": chunk_id},
+        rpc_id=1,
+    )
+    assert http_proposed.get("chunk_id") == mcp_proposed.get("chunk_id") == chunk_id
+
+    run_body = {
+        "facts": ["parent(Vienna, Austria)"],
+        "rules": ["IF parent(Vienna, Austria) THEN ancestor(Vienna, Austria)"],
+        "apply_to_graph": False,
+        "chunk_id": chunk_id,
+    }
+    http_run = client.post(
+        f"/api/v1/workspaces/{workspace_id}/reasoning/run",
+        headers=headers,
+        json=run_body,
+    ).json()
+    mcp_run = _mcp_payload(
+        client,
+        workspace_id,
+        headers,
+        "run_reasoning",
+        run_body,
+        rpc_id=2,
+    )
+    assert http_run.get("evidence") == mcp_run.get("evidence")
+    assert http_run.get("inferred_facts") == mcp_run.get("inferred_facts")

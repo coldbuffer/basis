@@ -18,8 +18,6 @@ const PAGE_BLOCKS = [
 const KB_SUBTITLE_MODULES = [
   ['review', '@/modules/review/i18n'],
   ['search', '@/modules/search/i18n'],
-  ['entityResolution', '@/modules/entity-resolution/i18n'],
-  ['decisions', '@/modules/decisions/i18n'],
   ['analyze', '@/modules/analyze/i18n'],
   ['entities', '@/modules/entities/i18n'],
   ['sources', '@/modules/library/i18n'],

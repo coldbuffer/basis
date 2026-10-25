@@ -89,7 +89,7 @@ def test_mcp_basic_graph_closed_loop(tmp_path) -> None:
         client,
         workspace_id,
         headers,
-        "approve_statement_remember_review",
+        "approve_review_item",
         {"item_id": review_item_id},
         rpc_id=4,
     )
@@ -99,8 +99,8 @@ def test_mcp_basic_graph_closed_loop(tmp_path) -> None:
         client,
         workspace_id,
         headers,
-        "find_entities",
-        {"query": "Agent memory"},
+        "query_graph",
+        {"mode": "entities", "query": "Agent memory"},
         rpc_id=5,
     )
     ledger = entities.get("ledger_entities") or []
@@ -171,18 +171,17 @@ def test_mcp_tools_with_api_token(tmp_path) -> None:
     names = {t["name"] for t in tools["result"]["tools"]}
     assert "search_chunks" in names
     assert "propose_remember" in names
-    assert "graph_search" in names
+    assert "query_graph" in names
+    assert "get_graph_summary" in names
     assert "list_review_items" in names
     assert "list_derived_facts" in names
     assert "list_typed_facts" in names
     assert "list_rules" in names
     assert "get_rule" in names
-    assert "list_reasoning_ground_facts" in names
     assert "list_mappings" in names
     assert "get_statement" in names
-    assert "get_capabilities" in names
     assert "run_reasoning" in names
-    assert "approve_statement_remember_review" in names
+    assert "approve_review_item" in names
     assert "approve_review_item" in names
     assert "reject_review_item" in names
     assert "list_processing_jobs" in names
@@ -249,7 +248,7 @@ def test_mcp_tools_with_api_token(tmp_path) -> None:
             "id": 7,
             "method": "tools/call",
             "params": {
-                "name": "approve_statement_remember_review",
+                "name": "approve_review_item",
                 "arguments": {"item_id": review_item_id, "rationale": "looks good"},
             },
         },
@@ -331,3 +330,71 @@ def test_mcp_timeout(tmp_path) -> None:
         )
     assert resp.status_code == 504
     assert resp.json()["detail"]["code"] == "mcp_timeout"
+
+
+def test_mcp_resources(tmp_path) -> None:
+    client = TestClient(create_app(Settings(data_dir=tmp_path)))
+    admin = client.post(
+        "/api/v1/auth/register",
+        json={"email": "res@example.com", "password": "password1", "display_name": "Res"},
+    ).json()
+    headers = {"Authorization": f"Bearer {admin['token']}"}
+    workspace_id = client.get("/api/v1/workspaces", headers=headers).json()["workspaces"][0]["id"]
+    client.post(
+        f"/api/v1/workspaces/{workspace_id}/documents",
+        headers=headers,
+        json={
+            "doc_id": "alias-doc",
+            "text": "The capital of France is Paris.",
+            "wait": True,
+            "extract": False,
+            "chunk": True,
+        },
+    )
+
+    init = client.post(
+        f"/api/v1/workspaces/{workspace_id}/mcp",
+        headers=headers,
+        json={"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}},
+    ).json()
+    assert "resources" in init["result"]["capabilities"]
+
+    discovery = client.get(f"/api/v1/workspaces/{workspace_id}/mcp", headers=headers).json()
+    assert "semantica://graph/summary" in discovery["resources"]
+
+    listed = client.post(
+        f"/api/v1/workspaces/{workspace_id}/mcp",
+        headers=headers,
+        json={"jsonrpc": "2.0", "id": 2, "method": "resources/list", "params": {}},
+    ).json()
+    uris = {r["uri"] for r in listed["result"]["resources"]}
+    assert "semantica://schema/info" in uris
+    assert "semantica://guide/evidence" in uris
+
+    schema_read = client.post(
+        f"/api/v1/workspaces/{workspace_id}/mcp",
+        headers=headers,
+        json={
+            "jsonrpc": "2.0",
+            "id": 25,
+            "method": "resources/read",
+            "params": {"uri": "semantica://schema/info"},
+        },
+    ).json()
+    schema_payload = json.loads(schema_read["result"]["contents"][0]["text"])
+    assert schema_payload.get("evidence_guide", {}).get("version") == 1
+    assert "propose_remember" in str(schema_payload.get("evidence_guide", {}))
+
+    read = client.post(
+        f"/api/v1/workspaces/{workspace_id}/mcp",
+        headers=headers,
+        json={
+            "jsonrpc": "2.0",
+            "id": 3,
+            "method": "resources/read",
+            "params": {"uri": "semantica://graph/summary"},
+        },
+    ).json()
+    summary = json.loads(read["result"]["contents"][0]["text"])
+    assert summary.get("graph_ready") is True
+    assert summary.get("workspace_id") == workspace_id

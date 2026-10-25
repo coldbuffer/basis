@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 
 import type { Locale } from "@/i18n/locale.js";
-
-import { buildWorkspaceGraphApiPath, workspaceFetchJson } from '@/lib/workspace/ws-http';
+import { workspaceOpenApiGET } from '@/lib/openapi/client.js';
 import type { GraphCatalogTotals } from '../lib/graph-load-budget.js';
 
 const EMPTY_TOTALS: GraphCatalogTotals = { nodeTotal: null, edgeTotal: null };
@@ -19,11 +18,9 @@ export function useGraphCatalogStats(
 
     void (async () => {
       try {
-        const data = await workspaceFetchJson<{ node_count?: number; edge_count?: number }>(
-          buildWorkspaceGraphApiPath("stats", workspaceId),
-          undefined,
-          undefined,
-          locale,
+        const data = await workspaceOpenApiGET<{ node_count?: number; edge_count?: number }>(
+          workspaceId,
+          'graph/stats',
         );
         if (cancelled) {
           return;
@@ -42,7 +39,7 @@ export function useGraphCatalogStats(
     return () => {
       cancelled = true;
     };
-  }, [workspaceId, locale, refreshKey]);
+  }, [workspaceId, refreshKey, locale]);
 
   return totals;
 }

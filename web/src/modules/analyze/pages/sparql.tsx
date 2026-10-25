@@ -16,7 +16,7 @@ import { useI18n } from "@/i18n/context.js";
 import { fmt, formatLocaleNumber, pickCountForm, requestFailedStatusMessage } from "@/i18n/format.js";
 import type { Locale } from "@/i18n/locale.js";
 import type { LocaleMessages } from "@/i18n/en.js";
-import { buildWorkspaceApiPath, workspaceFetch } from '@/lib/workspace/ws-http';
+import { workspaceOpenApiResponse } from '@/lib/openapi/client.js';
 import { errorFromApiResponse } from "@/lib/errors/api-error.js";
 import { useApiErrorMessage } from "@/lib/errors/use-api-error-message.js";
 import { useTheme } from "@/lib/shell/theme.js";
@@ -112,10 +112,8 @@ export function SparqlScreen({ workspaceId }: { workspaceId: string }) {
       (monaco as any).editor.setModelMarkers((editorRef.current as any).getModel(), "sparql", []);
     }
     try {
-      const res = await workspaceFetch(buildWorkspaceApiPath("sparql", workspaceId), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query }),
+      const res = await workspaceOpenApiResponse('POST', workspaceId, 'sparql', {
+        body: { query },
       });
       if (!res.headers.get("content-type")?.includes("application/json")) {
         const text = await res.text();

@@ -38,7 +38,7 @@ export default {
     propose_writeback_button: "Propose write-back",
     proposing_writeback: "Submitting…",
     writeback_review_queued: "Write-back staged for governance review.",
-    open_review_queue: "Open in Review queue",
+    open_review_queue: "Open in Smart review",
     writeback_applied_toast: "Write-back applied to external source",
     recent_derived_facts: "Recent reasoning",
     recent_derived_facts_hint: "Facts written back by inference, newest first.",

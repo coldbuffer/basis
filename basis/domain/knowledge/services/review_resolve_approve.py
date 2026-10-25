@@ -8,6 +8,10 @@ from typing import Any, Callable
 
 from basis.domain.errors import AdminError
 from basis.domain.graph.governance.decision import record_governance_decision_for_workspace
+from basis.domain.graph.governance.review_decision_record import (
+    build_entity_cluster_promote_decision,
+    build_entity_merge_decision,
+)
 from basis.domain.graph.governance.enrich_write import merge_nodes
 from basis.domain.graph.reads.import_write import import_graph_file
 from basis.domain.graph.session.guard import require_graph_session
@@ -16,10 +20,10 @@ from basis.domain.graph.projection.projection_lifecycle import GraphProjectionBi
 from basis.domain.knowledge.blob_store import BlobStore
 from basis.domain.knowledge.ports.platform import WorkspaceAuditActor, WorkspaceAuditStore
 from basis.domain.knowledge.services.conflict_review import (
-    STATEMENT_CONFLICT_KIND,
-    resolve_statement_conflict_group,
-    scan_statement_conflicts,
+    SHACL_VIOLATION_KIND,
+    run_shacl_conflict_scan,
 )
+
 from basis.domain.knowledge.services.governor import LOW_CONFIDENCE_KIND, resolve_low_confidence_approve
 from basis.domain.knowledge.services.governor_cluster import ENTITY_CLUSTER_KIND
 from basis.domain.knowledge.services.graph_audit import audit_graph
@@ -67,7 +71,6 @@ async def approve_review_item(
     workspace_id: str,
     item_id: str,
     rationale: str | None,
-    keeper_statement_id: str | None,
     primary_id_override: str | None,
     deps: ReviewApproveDeps,
 ) -> dict[str, Any]:
@@ -98,35 +101,12 @@ async def approve_review_item(
         )
         mapping_result = {
             **mapping_result,
-            "conflicts": scan_statement_conflicts(knowledge, workspace_id),
+            "shacl_scan": run_shacl_conflict_scan(knowledge, workspace_id),
         }
     elif item["kind"] == "entity_merge":
         payload = item["payload"]
         primary_id = str(payload.get("primary_id") or "")
         duplicate_ids = [str(d) for d in payload.get("duplicate_ids") or []]
-        graph_decision_id = record_governance_decision_for_workspace(
-            workspace_id,
-            message="Review approve: entity_merge",
-            detail={
-                "item_id": item_id,
-                "primary_id": primary_id,
-                "duplicate_ids": duplicate_ids,
-            },
-            actor_id=user.id,
-            runtime_loader=lambda: deps.runtime_loader(),
-            persist_graph=lambda kid: deps.persist_graph(kid),
-        )
-        decision_id = knowledge.record_agent_decision(
-            workspace_id,
-            action="approve_entity_merge",
-            review_item_id=item_id,
-            rationale=rationale,
-            trace={
-                "primary_id": primary_id,
-                "duplicate_ids": duplicate_ids,
-                "graph_decision_id": graph_decision_id,
-            },
-        )
 
         if ledger_entity_merge_ids(knowledge, workspace_id, primary_id, duplicate_ids):
             ledger_merges = [
@@ -195,6 +175,37 @@ async def approve_review_item(
                     "ledger_notice": "partial_ledger",
                     "ledger_skipped_ids": partial,
                 }
+        scenario, reasoning_text, merge_detail = build_entity_merge_decision(
+            knowledge,
+            workspace_id,
+            review_item_id=item_id,
+            primary_id=primary_id,
+            duplicate_ids=duplicate_ids,
+            rationale=rationale,
+            merge_result=merge_result,
+        )
+        graph_decision_id = record_governance_decision_for_workspace(
+            workspace_id,
+            message=scenario,
+            detail=merge_detail,
+            reasoning=reasoning_text,
+            category="merge",
+            actor_id=user.id,
+            runtime_loader=lambda: deps.runtime_loader(),
+            persist_graph=lambda kid: deps.persist_graph(kid),
+        )
+        agent_decision_id = knowledge.record_agent_decision(
+            workspace_id,
+            action="approve_entity_merge",
+            review_item_id=item_id,
+            rationale=rationale,
+            trace={
+                "primary_id": primary_id,
+                "duplicate_ids": duplicate_ids,
+                "graph_decision_id": graph_decision_id,
+            },
+        )
+        decision_id = graph_decision_id or agent_decision_id
     elif item["kind"] == STATEMENT_REVIEW_KIND:
         decision_id = record_governance_decision_for_workspace(
             workspace_id,
@@ -247,6 +258,26 @@ async def approve_review_item(
             "entity_merge_item_id": merge_item["id"],
             "payload": payload,
         }
+        scenario, reasoning_text, cluster_detail = build_entity_cluster_promote_decision(
+            knowledge,
+            workspace_id,
+            review_item_id=item_id,
+            primary_id=primary_id,
+            duplicate_ids=duplicate_ids,
+            cluster_payload=payload,
+        )
+        graph_decision_id = record_governance_decision_for_workspace(
+            workspace_id,
+            message=scenario,
+            detail=cluster_detail,
+            reasoning=reasoning_text,
+            category="merge",
+            outcome="deferred",
+            actor_id=user.id,
+            runtime_loader=lambda: deps.runtime_loader(),
+            persist_graph=lambda kid: deps.persist_graph(kid),
+        )
+        decision_id = graph_decision_id
     elif item["kind"] == LOW_CONFIDENCE_KIND:
         payload = dict(item.get("payload") or {})
         statement_id = str(payload.get("statement_id") or item["subject_id"])
@@ -254,26 +285,10 @@ async def approve_review_item(
         deps.rebuild_projection()
         approve_action = "workspace.statement.low_confidence_confirmed"
         merge_result = {"status": "confirmed", "resolution": resolution, "payload": payload}
-    elif item["kind"] == STATEMENT_CONFLICT_KIND:
+    elif item["kind"] == SHACL_VIOLATION_KIND:
         payload = dict(item.get("payload") or {})
-        statement_ids = list(payload.get("statement_ids") or [])
-        if keeper_statement_id:
-            resolution = resolve_statement_conflict_group(
-                knowledge,
-                workspace_id,
-                statement_ids,
-                keeper_statement_id,
-            )
-            deps.rebuild_projection()
-            approve_action = "workspace.statement.conflict_resolved"
-            merge_result = {
-                "status": "resolved",
-                "resolution": resolution,
-                "payload": payload,
-            }
-        else:
-            approve_action = "workspace.statement.conflict_acknowledged"
-            merge_result = {"status": "acknowledged", "payload": payload}
+        approve_action = "workspace.shacl.violation_acknowledged"
+        merge_result = {"status": "acknowledged", "payload": payload}
     elif item["kind"] == "connector_writeback":
         approve_action = "workspace.connector.writeback_approved"
         outbox_id = str((item.get("payload") or {}).get("outbox_id") or item["subject_id"])

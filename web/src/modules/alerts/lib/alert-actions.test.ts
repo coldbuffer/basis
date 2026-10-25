@@ -40,25 +40,8 @@ describe('workspaceAlertAction', () => {
       'kb-1',
       alert({ kind: 'governance.tripped', detail: { decision_id: 'dec-9' } }),
     );
-    expect(action?.href).toBe('/workspaces/kb-1/decisions?decision=dec-9');
+    expect(action?.href).toBe('/workspaces/kb-1/log?graph_decision=dec-9');
     expect(action?.labelKey).toBe('viewDecisions');
-  });
-
-  it('links statement conflict alerts to review item', () => {
-    const action = workspaceAlertAction(
-      'kb-1',
-      alert({ kind: 'governance.statement_conflict', detail: { item_id: 'conf-1' } }),
-    );
-    expect(action?.href).toBe('/workspaces/kb-1/review?reviewItem=conf-1');
-    expect(action?.labelKey).toBe('viewReview');
-  });
-
-  it('links statement conflict via review_item_id detail', () => {
-    const action = workspaceAlertAction(
-      'kb-1',
-      alert({ kind: 'governance.statement_conflict', detail: { review_item_id: 'conf-2' } }),
-    );
-    expect(action?.href).toBe('/workspaces/kb-1/review?reviewItem=conf-2');
   });
 
   it('links governance tripped with review item to queue deep link', () => {

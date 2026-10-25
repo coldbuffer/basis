@@ -106,13 +106,9 @@ export function workspaceNavSegmentEnabled(segment: string, caps: WorkspaceCapab
   if (!caps) return true;
   if (segment === 'connectors' || segment.startsWith('connectors/')) return true;
   if (segment === 'graph-diff') return caps.graph;
-  if (segment === 'entity-resolution') return caps.enrichment;
-  if (segment === 'decisions') return caps.decisions;
+  if (segment === 'quality') return caps.review;
   if (segment === 'analyze') {
     return caps.sparql || caps.reasoning;
-  }
-  if (segment === 'ontology-versions' || segment === 'alignments' || segment === 'shacl') {
-    return caps.graph_runtime && caps.graph;
   }
   const key = segment as WorkspaceNavKey;
   switch (key) {
@@ -128,6 +124,8 @@ export function workspaceNavSegmentEnabled(segment: string, caps: WorkspaceCapab
     case 'reasoning':
       return caps.reasoning;
     case 'review':
+      return caps.review;
+    case 'log':
       return caps.review;
     case 'sources':
     case 'processing':

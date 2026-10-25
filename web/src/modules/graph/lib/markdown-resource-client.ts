@@ -5,11 +5,11 @@ import type {
   MarkdownEditorError,
   MarkdownResourceRef,
 } from "./markdown-editor-state";
+import type { ApiErrorWithMeta } from "@/lib/errors/api-error.js";
 import {
-  buildWorkspaceApiPath,
-  workspaceFetch,
-  resolveWorkspaceApiUrl,
-} from '@/lib/workspace/ws-http';
+  workspaceOpenApiGET,
+  workspaceOpenApiPUT,
+} from "@/lib/openapi/client.js";
 
 export type MarkdownClientOptions = {
   locale?: Locale;
@@ -37,13 +37,6 @@ export interface MarkdownApplyResult extends MarkdownDocument {
   changed: boolean;
 }
 
-type ErrorDetail = {
-  code?: string;
-  message?: string;
-  field?: string;
-  current_revision?: string;
-};
-
 export class MarkdownClientError extends Error implements MarkdownEditorError {
   readonly kind: MarkdownEditorError["kind"];
   readonly code?: string;
@@ -63,69 +56,36 @@ export class MarkdownClientError extends Error implements MarkdownEditorError {
   }
 }
 
-function resourceUrl(ref: MarkdownResourceRef, workspaceId: string): string {
-  const segment = `markdown/${ref.kind}/${encodeURIComponent(ref.id)}`;
-  return buildWorkspaceApiPath(segment, workspaceId);
+function resourceSuffix(ref: MarkdownResourceRef): string {
+  return `markdown/${ref.kind}/${encodeURIComponent(ref.id)}`;
 }
 
-async function responseError(
-  response: Response,
+function apiErrorFromUnknown(
+  error: unknown,
   locale: Locale,
-): Promise<MarkdownClientError> {
-  let detail: ErrorDetail = {};
-  try {
-    const payload = (await response.json()) as { detail?: ErrorDetail };
-    if (payload.detail && typeof payload.detail === "object") {
-      detail = payload.detail;
-    }
-  } catch {
-    // A non-JSON response is mapped from its status below.
-  }
-
-  const kind: MarkdownEditorError["kind"] =
-    response.status === 422
-      ? "validation"
-      : response.status === 409
-        ? "conflict"
-        : "save";
-  const { requestFailedStatus } = markdownClientMessages(locale);
-  const fallback = requestFailedStatus(response.status);
-  const message = detail.code ? "" : (detail.message?.trim() || fallback);
-  return new MarkdownClientError({
-    kind,
-    code: detail.code?.trim() || undefined,
-    message,
-    field: detail.field,
-    currentRevision: detail.current_revision,
-  });
-}
-
-async function request<T>(
-  input: RequestInfo | URL,
-  init?: RequestInit,
-  options?: MarkdownClientOptions,
-): Promise<T> {
-  const locale = options?.locale ?? "en";
-  const { networkUnreachable } = markdownClientMessages(locale);
-  try {
-    const resolved =
-      typeof input === "string"
-        ? resolveWorkspaceApiUrl(input)
-        : input instanceof URL
-          ? resolveWorkspaceApiUrl(input.toString())
-          : resolveWorkspaceApiUrl(input.url);
-    const response = await workspaceFetch(resolved, init);
-    if (!response.ok) {
-      throw await responseError(response, locale);
-    }
-    return (await response.json()) as T;
-  } catch (error) {
-    if (error instanceof MarkdownClientError) throw error;
-    throw new MarkdownClientError({
-      kind: "network",
-      message: networkUnreachable,
+): MarkdownClientError {
+  if (error instanceof MarkdownClientError) return error;
+  const meta = error as ApiErrorWithMeta;
+  if (typeof meta?.status === "number") {
+    const kind: MarkdownEditorError["kind"] =
+      meta.status === 422
+        ? "validation"
+        : meta.status === 409
+          ? "conflict"
+          : "save";
+    const { requestFailedStatus } = markdownClientMessages(locale);
+    const fallback = requestFailedStatus(meta.status);
+    const message = meta.code ? "" : (meta.message?.trim() || fallback);
+    return new MarkdownClientError({
+      kind,
+      code: meta.code?.trim() || undefined,
+      message,
     });
   }
+  return new MarkdownClientError({
+    kind: "network",
+    message: markdownClientMessages(locale).networkUnreachable,
+  });
 }
 
 export function readMarkdownResource(
@@ -133,7 +93,12 @@ export function readMarkdownResource(
   workspaceId: string,
   options?: MarkdownClientOptions,
 ): Promise<MarkdownDocument> {
-  return request<MarkdownDocument>(resourceUrl(ref, workspaceId), undefined, options);
+  const locale = options?.locale ?? "en";
+  return workspaceOpenApiGET<MarkdownDocument>(workspaceId, resourceSuffix(ref)).catch(
+    (error) => {
+      throw apiErrorFromUnknown(error, locale);
+    },
+  );
 }
 
 export function applyMarkdownResource(
@@ -143,16 +108,13 @@ export function applyMarkdownResource(
   workspaceId: string,
   options?: MarkdownClientOptions,
 ): Promise<MarkdownApplyResult> {
-  return request<MarkdownApplyResult>(
-    resourceUrl(ref, workspaceId),
-    {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        markdown,
-        expected_revision: expectedRevision,
-      }),
+  const locale = options?.locale ?? "en";
+  return workspaceOpenApiPUT<MarkdownApplyResult>(workspaceId, resourceSuffix(ref), {
+    body: {
+      markdown,
+      expected_revision: expectedRevision,
     },
-    options,
-  );
+  }).catch((error) => {
+    throw apiErrorFromUnknown(error, locale);
+  });
 }

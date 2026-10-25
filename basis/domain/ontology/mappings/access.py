@@ -11,6 +11,12 @@ from sqlalchemy.exc import IntegrityError as SQLAlchemyIntegrityError
 
 from basis.domain.errors import AdminError
 from basis.domain.ontology.mappings import sql as mapping_persist
+from basis.domain.ontology.mappings.entity_type import (
+    entity_type_surface_phrases_from_config,
+    filter_type_phrases,
+    object_label_from_statement_row,
+    statement_matches_object_label,
+)
 
 if TYPE_CHECKING:
     from basis.domain.knowledge.store import KnowledgeStore
@@ -18,6 +24,7 @@ if TYPE_CHECKING:
 MAPPING_TARGET_KINDS = frozenset({"class", "property", "none"})
 MAPPING_DIRECTIONS = frozenset({"forward", "reverse", "n/a"})
 MAPPING_STATUSES = frozenset({"proposed", "confirmed", "rejected", "superseded"})
+RDF_TYPE_URI = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
 
 
 def _now() -> str:
@@ -157,15 +164,56 @@ class MappingsAccess:
                 self._store._conn, workspace_id, limit
             )
 
+    def entity_type_surface_phrases(self, workspace_id: str) -> list[str]:
+        config = self._store.get_governance_config(workspace_id)
+        return filter_type_phrases(entity_type_surface_phrases_from_config(config))
+
+    def _entity_type_surface_phrases(self, workspace_id: str) -> list[str]:
+        return self.entity_type_surface_phrases(workspace_id)
+
+    def list_entity_type_object_labels(self, workspace_id: str, *, limit: int = 100) -> list[str]:
+        limit = min(max(1, limit), 200)
+        type_phrases = self._entity_type_surface_phrases(workspace_id)
+        with self._store._lock:
+            self._store._assert_workspace_exists(workspace_id)
+            rows = mapping_persist.statements_for_entity_type_materialization(
+                self._store._conn, workspace_id, type_phrases
+            )
+        labels: list[str] = []
+        seen: set[str] = set()
+        for row in rows:
+            label = object_label_from_statement_row(row)
+            if not label:
+                continue
+            key = label.casefold()
+            if key in seen:
+                continue
+            seen.add(key)
+            labels.append(label)
+            if len(labels) >= limit:
+                break
+        return sorted(labels, key=lambda s: s.casefold())
+
     def materialize_mapping_facts(self, workspace_id: str, mapping_id: str) -> dict[str, Any]:
         mapping = self.get_mapping(workspace_id, mapping_id)
         if mapping["status"] != "confirmed":
             return {"created": 0, "reason": "mapping_not_confirmed"}
-        if mapping["target_kind"] != "property":
-            return {"created": 0, "reason": "target_not_property"}
+        target_kind = mapping["target_kind"]
+        if target_kind == "property":
+            return self._materialize_property_mapping_facts(workspace_id, mapping_id, mapping)
+        if target_kind == "class":
+            return self._materialize_class_mapping_facts(workspace_id, mapping_id, mapping)
+        return {"created": 0, "reason": "target_not_materializable", "mapping_id": mapping_id}
+
+    def _materialize_property_mapping_facts(
+        self,
+        workspace_id: str,
+        mapping_id: str,
+        mapping: dict[str, Any],
+    ) -> dict[str, Any]:
         predicate_uri = (mapping["target_uri"] or "").strip()
         if not predicate_uri:
-            return {"created": 0, "reason": "missing_predicate_uri"}
+            return {"created": 0, "reason": "missing_predicate_uri", "mapping_id": mapping_id}
         signature = mapping["signature"]
         now = _now()
         created = 0
@@ -194,6 +242,56 @@ class MappingsAccess:
                     predicate_uri=predicate_uri,
                     object_entity_id=object_entity_id,
                     object_value=object_value,
+                    from_statement_id=row["id"],
+                    mapping_id=mapping_id,
+                    confidence=row["confidence"],
+                    recorded_at=now,
+                )
+                created += 1
+            conn.commit()
+        return {"created": created, "mapping_id": mapping_id}
+
+    def _materialize_class_mapping_facts(
+        self,
+        workspace_id: str,
+        mapping_id: str,
+        mapping: dict[str, Any],
+    ) -> dict[str, Any]:
+        class_uri = (mapping["target_uri"] or "").strip()
+        if not class_uri:
+            return {"created": 0, "reason": "missing_class_uri", "mapping_id": mapping_id}
+        object_label = (mapping["signature"] or "").strip()
+        if not object_label:
+            return {"created": 0, "reason": "missing_object_label", "mapping_id": mapping_id}
+        type_phrases = self._entity_type_surface_phrases(workspace_id)
+        if not type_phrases:
+            return {"created": 0, "reason": "no_type_surface_phrases", "mapping_id": mapping_id}
+        now = _now()
+        created = 0
+        with self._store._lock:
+            conn = self._store._conn
+            rows = mapping_persist.statements_for_entity_type_materialization(
+                conn, workspace_id, type_phrases
+            )
+            for row in rows:
+                if not statement_matches_object_label(row, object_label):
+                    continue
+                subject_id = row["subject_id"]
+                if not subject_id:
+                    continue
+                if mapping_persist.typed_fact_exists_for_statement_mapping(
+                    conn, workspace_id, row["id"], mapping_id
+                ):
+                    continue
+                fact_id = str(uuid.uuid4())
+                mapping_persist.insert_typed_fact_from_statement(
+                    conn,
+                    fact_id=fact_id,
+                    workspace_id=workspace_id,
+                    subject_id=subject_id,
+                    predicate_uri=RDF_TYPE_URI,
+                    object_entity_id=None,
+                    object_value=class_uri,
                     from_statement_id=row["id"],
                     mapping_id=mapping_id,
                     confidence=row["confidence"],

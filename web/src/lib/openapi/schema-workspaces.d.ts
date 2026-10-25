@@ -493,9 +493,6 @@ export interface paths {
          *       `shacl_violation_count`, `episode_key`
          *     - `processing.failed`: `job_id`, `error_code`, `message`, `episode_key`
          *     - `sync_failed`: `source_id`, `source_name`, `mode`, `error`, `episode_key`
-         *     - `governance.statement_conflict`: `item_id`, `surface_phrase`, `statement_ids`,
-         *       `episode_key`
-         *
          *     `episode_key` correlates multiple rows in the UI (F-ALT).
          */
         get: operations["list_alerts_api_v1_workspaces__workspace_id__alerts_get"];
@@ -1548,6 +1545,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{workspace_id}/governance/shacl": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update Governance Shacl
+         * @description Governance Shacl. Persist workspace SHACL Turtle for conflict scans (paired with ontology URI). Requires workspace editor+.
+         */
+        put: operations["update_governance_shacl_api_v1_workspaces__workspace_id__governance_shacl_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{workspace_id}/graph/diff": {
         parameters: {
             query?: never;
@@ -2156,6 +2173,26 @@ export interface paths {
          * @description Revert Entity Merge Route. Evidence ledger: documents, chunks, statements, entities. Requires workspace membership (session) or workspace API token with read/write scope. All paths are scoped to `{workspace_id}`.
          */
         post: operations["revert_entity_merge_route_api_v1_workspaces__workspace_id__ledger_entity_merges__merge_id__revert_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspace_id}/ledger/entity-type-object-labels": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Entity Type Object Labels
+         * @description List object labels from type assertions (e.g. 是 / instance_of) for entity-class mappings.
+         */
+        get: operations["list_entity_type_object_labels_api_v1_workspaces__workspace_id__ledger_entity_type_object_labels_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -3282,7 +3319,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/workspaces/{workspace_id}/review/scan-statement-conflicts": {
+    "/api/v1/workspaces/{workspace_id}/review/scan-shacl-violations": {
         parameters: {
             query?: never;
             header?: never;
@@ -3292,10 +3329,10 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Scan Statement Conflicts Route
-         * @description Re-scan ledger statements and enqueue `statement_conflict` review items (F-RUL-04).
+         * Scan Shacl Violations Route
+         * @description Materialize mappings and enqueue SHACL violation review items (F-RUL-04).
          */
-        post: operations["scan_statement_conflicts_route_api_v1_workspaces__workspace_id__review_scan_statement_conflicts_post"];
+        post: operations["scan_shacl_violations_route_api_v1_workspaces__workspace_id__review_scan_shacl_violations_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4165,6 +4202,14 @@ export interface components {
                     [key: string]: unknown;
                 };
             };
+            /** Added Individuals */
+            added_individuals?: string[];
+            /** Removed Individuals */
+            removed_individuals?: string[];
+            /** Added Edges */
+            added_edges?: components["schemas"]["OntologyEdgeChange"][];
+            /** Removed Edges */
+            removed_edges?: string[];
             /** Added Restrictions */
             added_restrictions?: {
                 [key: string]: unknown;
@@ -4309,6 +4354,25 @@ export interface components {
              * @default 0.75
              */
             governor_confidence_min: number;
+            /**
+             * Governance Ontology Uri
+             * @description Ontology URI for Hub SHACL during conflict scans (empty clears).
+             */
+            governance_ontology_uri?: string | null;
+        };
+        /** GovernanceShaclRequest */
+        GovernanceShaclRequest: {
+            /**
+             * Ontology Uri
+             * @description Ontology URI these shapes apply to (also sets scan URI).
+             */
+            ontology_uri: string;
+            /**
+             * Shacl Turtle
+             * @description Persisted SHACL Turtle for governance scans (empty clears saved shapes).
+             * @default
+             */
+            shacl_turtle: string;
         };
         /** GovernorRunRequest */
         GovernorRunRequest: {
@@ -4322,6 +4386,30 @@ export interface components {
              * @description Graph semantic dedup similarity threshold (default 0.8).
              */
             dedup_threshold?: number | null;
+            /**
+             * Include Shacl
+             * @description Run SHACL violation scan (mapped ledger facts).
+             * @default true
+             */
+            include_shacl: boolean;
+            /**
+             * Include Low Confidence
+             * @description Enqueue active statements below confidence_min.
+             * @default true
+             */
+            include_low_confidence: boolean;
+            /**
+             * Include Entity Label Clusters
+             * @description Enqueue ledger entities sharing the same canonical label.
+             * @default true
+             */
+            include_entity_label_clusters: boolean;
+            /**
+             * Include Graph Dedup
+             * @description Enqueue graph semantic duplicate pairs (requires graph runtime).
+             * @default true
+             */
+            include_graph_dedup: boolean;
         };
         /** GraphSearchRequest */
         GraphSearchRequest: {
@@ -4459,6 +4547,17 @@ export interface components {
             client_id?: string | null;
             /** Client Secret */
             client_secret?: string | null;
+        };
+        /** OntologyEdgeChange */
+        OntologyEdgeChange: {
+            /** Source */
+            source: string;
+            /** Target */
+            target: string;
+            /** Type */
+            type: string;
+            /** Id */
+            id?: string | null;
         };
         /** OrgOidcUpsert */
         OrgOidcUpsert: {
@@ -4689,6 +4788,16 @@ export interface components {
              * @description Optional edge type label when apply_to_graph is true.
              */
             inferred_edge_type?: string | null;
+            /**
+             * Chunk Id
+             * @description Optional ledger chunk id to cite on inferred edges when apply_to_graph is true.
+             */
+            chunk_id?: string | null;
+            /**
+             * Quote
+             * @description Optional quote override for chunk_id evidence.
+             */
+            quote?: string | null;
         };
         /** ReasoningRunResponse */
         ReasoningRunResponse: {
@@ -4711,6 +4820,10 @@ export interface components {
             projection?: {
                 [key: string]: unknown;
             } | null;
+            /** Evidence */
+            evidence?: {
+                [key: string]: unknown;
+            } | null;
         } & {
             [key: string]: unknown;
         };
@@ -4727,6 +4840,16 @@ export interface components {
         RememberProposalRequest: {
             /** Content */
             content: string;
+            /**
+             * Chunk Id
+             * @description Optional ledger chunk to cite as evidence for this proposal.
+             */
+            chunk_id?: string | null;
+            /**
+             * Quote
+             * @description Optional quote override when chunk_id is set.
+             */
+            quote?: string | null;
         };
         /** ResolveNodeLabelsRequest */
         ResolveNodeLabelsRequest: {
@@ -4737,11 +4860,6 @@ export interface components {
         ResolveReviewRequest: {
             /** Rationale */
             rationale?: string | null;
-            /**
-             * Keeper Statement Id
-             * @description For `statement_conflict` approve: keep this statement and invalidate siblings (F-RUL-04).
-             */
-            keeper_statement_id?: string | null;
             /**
              * Primary Id
              * @description For `entity_cluster` approve: ledger entity id to keep as primary (F-GOV-04).
@@ -8225,6 +8343,45 @@ export interface operations {
             };
         };
     };
+    update_governance_shacl_api_v1_workspaces__workspace_id__governance_shacl_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                workspace_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GovernanceShaclRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     graph_diff_api_v1_workspaces__workspace_id__graph_diff_get: {
         parameters: {
             query: {
@@ -9309,6 +9466,43 @@ export interface operations {
             path: {
                 workspace_id: string;
                 merge_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_entity_type_object_labels_api_v1_workspaces__workspace_id__ledger_entity_type_object_labels_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                workspace_id: string;
             };
             cookie?: never;
         };
@@ -11278,6 +11472,7 @@ export interface operations {
                 status?: string | null;
                 kind?: string | null;
                 limit?: number;
+                offset?: number;
             };
             header?: {
                 authorization?: string | null;
@@ -11503,7 +11698,7 @@ export interface operations {
             };
         };
     };
-    scan_statement_conflicts_route_api_v1_workspaces__workspace_id__review_scan_statement_conflicts_post: {
+    scan_shacl_violations_route_api_v1_workspaces__workspace_id__review_scan_shacl_violations_post: {
         parameters: {
             query?: never;
             header?: {

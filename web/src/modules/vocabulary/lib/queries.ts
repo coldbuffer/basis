@@ -1,10 +1,13 @@
 // queries.ts
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useI18n } from '@/i18n/context.js';
-import { errorFromApiResponse } from '@/lib/errors/api-error.js';
-import { workspaceFetch } from '@/lib/workspace/ws-http';
+import { workspaceOpenApiResponse } from '@/lib/openapi/client.js';
+import { parseWsJson } from '@/lib/workspace/ws-api-error.js';
 import type { VocabularyScheme, ConceptNode, ImportResponse } from './types';
-import { useVocabularyWorkspaceId, vocabularyPath } from '../components/vocabulary-workspace-context.js';
+import {
+  useVocabularyWorkspaceId,
+  vocabularyApiSuffix,
+} from '../components/vocabulary-workspace-context.js';
 
 type VocabularyApiCopy = {
   fetch_schemes_failed: string;
@@ -17,16 +20,9 @@ function useVocabularyApiCopy(): VocabularyApiCopy {
   return t.vocabulary.page.api;
 }
 
-async function throwIfWsNotOk(res: Response, fallback: string): Promise<void> {
-  if (res.ok) return;
-  const body = await res.json().catch(() => ({}));
-  throw errorFromApiResponse(res.status, body, fallback);
-}
-
 const fetchSchemes = async (workspaceId: string, fallback: string): Promise<VocabularyScheme[]> => {
-  const res = await workspaceFetch(vocabularyPath(workspaceId, 'schemes'));
-  await throwIfWsNotOk(res, fallback);
-  return res.json();
+  const res = await workspaceOpenApiResponse('GET', workspaceId, vocabularyApiSuffix('schemes'));
+  return parseWsJson<VocabularyScheme[]>(res, fallback);
 };
 
 const fetchHierarchy = async (
@@ -34,11 +30,10 @@ const fetchHierarchy = async (
   schemeUri: string,
   fallback: string,
 ): Promise<ConceptNode[]> => {
-  const res = await workspaceFetch(
-    vocabularyPath(workspaceId, 'hierarchy', `scheme=${encodeURIComponent(schemeUri)}`),
-  );
-  await throwIfWsNotOk(res, fallback);
-  return res.json();
+  const res = await workspaceOpenApiResponse('GET', workspaceId, vocabularyApiSuffix('hierarchy'), {
+    params: { query: { scheme: schemeUri } },
+  });
+  return parseWsJson<ConceptNode[]>(res, fallback);
 };
 
 const importVocabulary = async (
@@ -48,12 +43,10 @@ const importVocabulary = async (
 ): Promise<ImportResponse> => {
   const formData = new FormData();
   formData.append('file', file);
-  const res = await workspaceFetch(vocabularyPath(workspaceId, 'import'), {
-    method: 'POST',
+  const res = await workspaceOpenApiResponse('POST', workspaceId, vocabularyApiSuffix('import'), {
     body: formData,
   });
-  await throwIfWsNotOk(res, fallback);
-  return res.json();
+  return parseWsJson<ImportResponse>(res, fallback);
 };
 
 export const useVocabularies = () => {

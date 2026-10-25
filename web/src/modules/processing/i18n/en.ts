@@ -18,8 +18,6 @@ export default {
     view_related_alerts: "Related alerts",
     process_dialog_options_preview: "Pipeline summary",
     options_snapshot_raw: "Raw JSON (same options as summary)",
-    limits_hint: "Server limits: upload ≤ {upload}; up to {inflight} jobs at once, {pending} queued; timeout {timeoutMin} min.",
-    ops_queue_hint: "Queue now: {inflight} running (max {inflightMax}), {queued} waiting (max {pendingMax}).",
     jobs_api_link: "Ingest jobs API (OpenAPI)",
     retry_all_failed: "Retry all failed",
     retry_all_queued: "Retry queued for all failed jobs",
@@ -32,7 +30,7 @@ export default {
     options_request_id: "Request id {id}",
   },
   page: {
-    subtitle: "Extract, chunk, and project jobs; start from source versions and retry failures.",
+    subtitle: "Track job progress and retry failures here.",
   },
   menu: {
     processing: "Jobs",

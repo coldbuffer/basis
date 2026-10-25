@@ -3,7 +3,12 @@ import { createContext, useContext, type ReactNode } from "react";
 import { localeFromBrowser } from "@/i18n/locale.js";
 import { messagesForLocale } from "@/i18n/pick-locale.js";
 
-import { vocabularyPath as buildVocabularyPath } from "@/modules/ontology/components/ontology-workspace-context.js";
+import {
+  vocabularyApiSuffix,
+  vocabularyPath as buildVocabularyPath,
+} from "@/modules/ontology/components/ontology-workspace-context.js";
+
+export { vocabularyApiSuffix };
 
 const VocabularyWorkspaceCatalogContext = createContext<string | null>(null);
 

@@ -1169,7 +1169,7 @@
           "workspaces"
         ],
         "summary": "List Alerts",
-        "description": "List workspace alert episodes with unread count (viewer+).\n\nEach alert includes a `detail` object (JSON). Common keys by `kind`:\n\n- `governance.tripped`: `code`, `decision_id`, `item_id`, `proposal_id`,\n  `shacl_violation_count`, `episode_key`\n- `processing.failed`: `job_id`, `error_code`, `message`, `episode_key`\n- `sync_failed`: `source_id`, `source_name`, `mode`, `error`, `episode_key`\n- `governance.statement_conflict`: `item_id`, `surface_phrase`, `statement_ids`,\n  `episode_key`\n\n`episode_key` correlates multiple rows in the UI (F-ALT).",
+        "description": "List workspace alert episodes with unread count (viewer+).\n\nEach alert includes a `detail` object (JSON). Common keys by `kind`:\n\n- `governance.tripped`: `code`, `decision_id`, `item_id`, `proposal_id`,\n  `shacl_violation_count`, `episode_key`\n- `processing.failed`: `job_id`, `error_code`, `message`, `episode_key`\n- `sync_failed`: `source_id`, `source_name`, `mode`, `error`, `episode_key`\n`episode_key` correlates multiple rows in the UI (F-ALT).",
         "operationId": "list_alerts_api_v1_workspaces__workspace_id__alerts_get",
         "parameters": [
           {
@@ -5881,6 +5881,79 @@
         "x-basis-auth": "session-or-workspace-api-token"
       }
     },
+    "/api/v1/workspaces/{workspace_id}/governance/shacl": {
+      "put": {
+        "tags": [
+          "workspaces"
+        ],
+        "summary": "Update Governance Shacl",
+        "description": "Governance Shacl. Persist workspace SHACL Turtle for conflict scans (paired with ontology URI). Requires workspace editor+.",
+        "operationId": "update_governance_shacl_api_v1_workspaces__workspace_id__governance_shacl_put",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Workspace Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GovernanceShaclRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Update Governance Shacl Api V1 Workspaces  Workspace Id  Governance Shacl Put"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-basis-surface": "workspaces",
+        "x-basis-auth": "session-or-workspace-api-token"
+      }
+    },
     "/api/v1/workspaces/{workspace_id}/graph/diff": {
       "get": {
         "tags": [
@@ -8299,6 +8372,82 @@
                   "type": "object",
                   "additionalProperties": true,
                   "title": "Response Revert Entity Merge Route Api V1 Workspaces  Workspace Id  Ledger Entity Merges  Merge Id  Revert Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-basis-surface": "workspaces",
+        "x-basis-auth": "session-or-workspace-api-token"
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/ledger/entity-type-object-labels": {
+      "get": {
+        "tags": [
+          "workspaces",
+          "workspaces"
+        ],
+        "summary": "List Entity Type Object Labels",
+        "description": "List object labels from type assertions (e.g. 是 / instance_of) for entity-class mappings.",
+        "operationId": "list_entity_type_object_labels_api_v1_workspaces__workspace_id__ledger_entity_type_object_labels_get",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Workspace Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response List Entity Type Object Labels Api V1 Workspaces  Workspace Id  Ledger Entity Type Object Labels Get"
                 }
               }
             }
@@ -12347,6 +12496,17 @@
             }
           },
           {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
             "name": "authorization",
             "in": "header",
             "required": false,
@@ -12778,15 +12938,15 @@
         "x-basis-auth": "session-or-workspace-api-token"
       }
     },
-    "/api/v1/workspaces/{workspace_id}/review/scan-statement-conflicts": {
+    "/api/v1/workspaces/{workspace_id}/review/scan-shacl-violations": {
       "post": {
         "tags": [
           "workspaces",
           "workspaces"
         ],
-        "summary": "Scan Statement Conflicts Route",
-        "description": "Re-scan ledger statements and enqueue `statement_conflict` review items (F-RUL-04).",
-        "operationId": "scan_statement_conflicts_route_api_v1_workspaces__workspace_id__review_scan_statement_conflicts_post",
+        "summary": "Scan Shacl Violations Route",
+        "description": "Materialize mappings and enqueue SHACL violation review items (F-RUL-04).",
+        "operationId": "scan_shacl_violations_route_api_v1_workspaces__workspace_id__review_scan_shacl_violations_post",
         "parameters": [
           {
             "name": "workspace_id",
@@ -12822,7 +12982,7 @@
                 "schema": {
                   "type": "object",
                   "additionalProperties": true,
-                  "title": "Response Scan Statement Conflicts Route Api V1 Workspaces  Workspace Id  Review Scan Statement Conflicts Post"
+                  "title": "Response Scan Shacl Violations Route Api V1 Workspaces  Workspace Id  Review Scan Shacl Violations Post"
                 }
               }
             }
@@ -15956,6 +16116,34 @@
             "type": "object",
             "title": "Modified Properties"
           },
+          "added_individuals": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Added Individuals"
+          },
+          "removed_individuals": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Removed Individuals"
+          },
+          "added_edges": {
+            "items": {
+              "$ref": "#/components/schemas/OntologyEdgeChange"
+            },
+            "type": "array",
+            "title": "Added Edges"
+          },
+          "removed_edges": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Removed Edges"
+          },
           "added_restrictions": {
             "items": {
               "additionalProperties": true,
@@ -16347,10 +16535,42 @@
             "minimum": 0.0,
             "title": "Governor Confidence Min",
             "default": 0.75
+          },
+          "governance_ontology_uri": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Governance Ontology Uri",
+            "description": "Ontology URI for Hub SHACL during conflict scans (empty clears)."
           }
         },
         "type": "object",
         "title": "GovernanceConfigRequest"
+      },
+      "GovernanceShaclRequest": {
+        "properties": {
+          "ontology_uri": {
+            "type": "string",
+            "title": "Ontology Uri",
+            "description": "Ontology URI these shapes apply to (also sets scan URI)."
+          },
+          "shacl_turtle": {
+            "type": "string",
+            "title": "Shacl Turtle",
+            "description": "Persisted SHACL Turtle for governance scans (empty clears saved shapes).",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "ontology_uri"
+        ],
+        "title": "GovernanceShaclRequest"
       },
       "GovernorRunRequest": {
         "properties": {
@@ -16381,6 +16601,30 @@
             ],
             "title": "Dedup Threshold",
             "description": "Graph semantic dedup similarity threshold (default 0.8)."
+          },
+          "include_shacl": {
+            "type": "boolean",
+            "title": "Include Shacl",
+            "description": "Run SHACL violation scan (mapped ledger facts).",
+            "default": true
+          },
+          "include_low_confidence": {
+            "type": "boolean",
+            "title": "Include Low Confidence",
+            "description": "Enqueue active statements below confidence_min.",
+            "default": true
+          },
+          "include_entity_label_clusters": {
+            "type": "boolean",
+            "title": "Include Entity Label Clusters",
+            "description": "Enqueue ledger entities sharing the same canonical label.",
+            "default": true
+          },
+          "include_graph_dedup": {
+            "type": "boolean",
+            "title": "Include Graph Dedup",
+            "description": "Enqueue graph semantic duplicate pairs (requires graph runtime).",
+            "default": true
           }
         },
         "type": "object",
@@ -16831,6 +17075,40 @@
         "type": "object",
         "title": "OAuthCreds"
       },
+      "OntologyEdgeChange": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "target": {
+            "type": "string",
+            "title": "Target"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source",
+          "target",
+          "type"
+        ],
+        "title": "OntologyEdgeChange"
+      },
       "OrgOidcUpsert": {
         "properties": {
           "issuer": {
@@ -17271,6 +17549,30 @@
             ],
             "title": "Inferred Edge Type",
             "description": "Optional edge type label when apply_to_graph is true."
+          },
+          "chunk_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chunk Id",
+            "description": "Optional ledger chunk id to cite on inferred edges when apply_to_graph is true."
+          },
+          "quote": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quote",
+            "description": "Optional quote override for chunk_id evidence."
           }
         },
         "type": "object",
@@ -17371,6 +17673,18 @@
               }
             ],
             "title": "Projection"
+          },
+          "evidence": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence"
           }
         },
         "additionalProperties": true,
@@ -17408,6 +17722,30 @@
             "maxLength": 8000,
             "minLength": 1,
             "title": "Content"
+          },
+          "chunk_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chunk Id",
+            "description": "Optional ledger chunk to cite as evidence for this proposal."
+          },
+          "quote": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quote",
+            "description": "Optional quote override when chunk_id is set."
           }
         },
         "type": "object",
@@ -17442,18 +17780,6 @@
               }
             ],
             "title": "Rationale"
-          },
-          "keeper_statement_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Keeper Statement Id",
-            "description": "For `statement_conflict` approve: keep this statement and invalidate siblings (F-RUL-04)."
           },
           "primary_id": {
             "anyOf": [

@@ -71,8 +71,8 @@ export default {
     ingest_incomplete: "资料处理未完成，图谱投影可能已过期，请重试处理或重建投影。",
     ingest_failed: "资料处理失败，请查看任务详情后重试。",
     ingest_overloaded: "处理队列已满，请稍后重试。",
-    merge_requires_review: "图节点合并需经审核队列批准后再应用。",
-    import_requires_review: "图导入需经审核队列批准后再应用。",
+    merge_requires_review: "图节点合并需经智能审查批准后再应用。",
+    import_requires_review: "图导入需经智能审查批准后再应用。",
     mcp_busy: "MCP 请求过多，请稍后重试。",
     api_busy: "API 请求过多，请稍后重试。",
     oauth_exchange_failed:
@@ -188,10 +188,10 @@ export default {
     },
     workspace_zones: {
       explore: "探索",
-      knowledge: "内容与实体",
-      connectors: "数据接入",
+      knowledge: "内容与接入",
+      connectors: "内容与接入",
       schema: "业务语义",
-      govern: "治理",
+      govern: "治理与质量",
       system: "集成与设置",
       sources: "资料",
       processing: "处理",
@@ -209,7 +209,7 @@ export default {
     },
     placeholder: {
       title: "功能开发中",
-      hint: "导航按资料、知识、探索、治理和设置组织；文档处理状态与操作集中在资料页。"
+      hint: "导航按探索、内容与接入、业务语义、治理与质量组织；处理任务等入口在资料页。"
     },
     capabilities: {
       graph_runtime_unavailable: "未安装图运行时。请在后端执行 uv sync --extra explorer 后重启服务。",

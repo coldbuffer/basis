@@ -1,6 +1,6 @@
 /**
  * Sources library UI (upload, document table). Processing jobs live at `/workspaces/:id/processing`.
- * Mounted from `library sources page` on route `/workspaces/:id/sources`; legacy `/workspaces/:id/knowledge` redirects there.
+ * Mounted on route `/workspaces/:id/sources`.
  */
 import { type FormEvent, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -71,10 +71,6 @@ import {
   parseProcessingUrlState,
 } from '@/modules/processing/lib/processing-url-state.js';
 import { ProcessingOptionsSnapshot } from '@/modules/processing/components/processing-options-snapshot.js';
-import {
-  buildIngestLimitsHint,
-  buildIngestOpsQueueHint,
-} from '@/modules/processing/lib/ingest-ops-hints.js';
 import { type ProcessingJob, jobIsActive, statusIsProcessing } from '@/modules/processing/lib/processing-job.js';
 import { parseSourcesUrlState } from '@/modules/library/lib/sources-url-state.js';
 import { formatByteSize } from '@/modules/library/lib/format-byte-size.js';
@@ -334,15 +330,6 @@ export function SourcesPage() {
   const failedJobCount = useMemo(
     () => jobs.filter((job) => job.status === 'failed').length,
     [jobs],
-  );
-
-  const ingestLimitsHint = useMemo(
-    () => buildIngestLimitsHint(caps, locale as Locale, pProcessing),
-    [caps, locale, pProcessing],
-  );
-  const ingestQueueHint = useMemo(
-    () => buildIngestOpsQueueHint(caps, jobs, locale as Locale, pProcessing),
-    [caps, jobs, locale, pProcessing],
   );
 
   const filteredDocuments = useMemo(() => {
@@ -960,21 +947,7 @@ export function SourcesPage() {
         { label: kbName ?? id ?? t.core.common.ellipsis, to: id ? workspacePath(id, 'graph') : '/workspaces' },
         { label: t.library.menu.sources },
       ]}
-      subtitle={
-        <div className="space-y-1">
-          <p>{t.library.page.subtitle}</p>
-          {ingestLimitsHint ? (
-            <p className="text-xs text-muted-foreground" data-testid="sources-ingest-limits-hint">
-              {ingestLimitsHint}
-            </p>
-          ) : null}
-          {ingestQueueHint ? (
-            <p className="text-xs text-muted-foreground" data-testid="sources-ingest-queue-hint">
-              {ingestQueueHint}
-            </p>
-          ) : null}
-        </div>
-      }
+      subtitle={t.library.page.subtitle}
     >
       <DataPanel>
         <DataPanelToolbar

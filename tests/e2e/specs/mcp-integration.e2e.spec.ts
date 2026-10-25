@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 import { e2eWorkspaceApiPath } from '../api-v1-path.js';
 import { bearerToken, defaultWorkspaceId, registerFreshUser } from '../helpers';
 
-test('workspace integration page loads (MCP, OpenAPI, access tokens); tab deep links redirect', async ({ page }) => {
+test('workspace integration page loads (MCP, OpenAPI, access tokens)', async ({ page }) => {
   test.setTimeout(90_000);
 
   await registerFreshUser(page);
@@ -30,15 +30,6 @@ test('workspace integration page loads (MCP, OpenAPI, access tokens); tab deep l
     timeout: 30_000,
   });
   await expect(page.getByTestId('integration-tokens-panel')).toBeVisible({ timeout: 30_000 });
-
-  await page.goto(`/workspaces/${workspaceId}/mcp`);
-  await expect(page).toHaveURL(new RegExp(`/workspaces/${workspaceId}/integration\\?tab=mcp`), { timeout: 30_000 });
-
-  await page.goto(`/workspaces/${workspaceId}/chat?tab=connect`);
-  await expect(page).toHaveURL(new RegExp(`/workspaces/${workspaceId}/integration\\?tab=mcp`), { timeout: 30_000 });
-
-  await page.goto(`/workspaces/${workspaceId}/chat`);
-  await expect(page).toHaveURL(new RegExp(`/workspaces/${workspaceId}/search$`), { timeout: 30_000 });
 });
 
 test('connectors authorization lists end_user connection for subject', async ({ page }) => {

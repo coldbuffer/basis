@@ -138,6 +138,29 @@ def invalidate_mapping_row(
     )
 
 
+def statements_for_entity_type_materialization(
+    conn: Any,
+    workspace_id: str,
+    type_surface_phrases: list[str],
+) -> list[Any]:
+    if not type_surface_phrases:
+        return []
+    placeholders = ",".join("?" for _ in type_surface_phrases)
+    sql = f"""
+        SELECT s.id, s.subject_id, s.object_entity_id, s.object_value, s.confidence,
+               e.canonical_label AS object_entity_label
+        FROM statements s
+        LEFT JOIN entities e
+          ON e.id = s.object_entity_id AND e.workspace_id = s.workspace_id
+        WHERE s.workspace_id = ?
+          AND s.invalidated_at IS NULL
+          AND s.status IN ('pending', 'confirmed')
+          AND s.surface_phrase IN ({placeholders})
+    """
+    params: list[Any] = [workspace_id, *type_surface_phrases]
+    return conn.execute(sql, tuple(params)).fetchall()
+
+
 def list_distinct_surface_phrases(conn: Any, workspace_id: str, limit: int) -> list[str]:
     rows = conn.execute(
         """

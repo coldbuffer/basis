@@ -38,6 +38,7 @@ import type { Locale } from '@/i18n/locale.js';
 import { ledgerStatementStatusLabel } from '@/modules/library/lib/ledger-labels.js';
 import { useWorkspaceNodeLabels } from '@/lib/workspace/node-labels.js';
 import { workspacePath } from '@/lib/nav/nav-config.js';
+import { reviewItemPath } from '@/modules/review/lib/review-url-state.js';
 import { useWorkspaceCapabilities } from '@/lib/workspace/capabilities.js';
 import { workspaceOpenApiDELETE, workspaceOpenApiGET, workspaceOpenApiPOST } from '@/lib/openapi/client.js';
 import { useApiErrorMessage } from '@/lib/errors/use-api-error-message.js';
@@ -275,7 +276,7 @@ function EntityFactsPanel({
                     <span className="text-muted-foreground">{l.writeback_review_queued}</span>
                     <Button variant="link" size="sm" className="h-auto p-0 text-xs" asChild>
                       <Link
-                        to={`${workspacePath(workspaceId, 'review')}?reviewItem=${encodeURIComponent(queuedReviewItemId)}`}
+                        to={reviewItemPath(workspaceId, queuedReviewItemId)}
                         data-testid="open-writeback-review-link"
                       >
                         {l.open_review_queue}

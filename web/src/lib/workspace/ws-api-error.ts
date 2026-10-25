@@ -3,7 +3,7 @@ import type { Locale } from '@/i18n/locale.js';
 import { messagesForLocale } from '@/i18n/pick-locale.js';
 import { errorFromApiResponse } from '@/lib/errors/api-error.js';
 import { formatUserFacingApiError } from '@/lib/errors/api-error-message.js';
-import { workspaceFetch } from './ws-http';
+import { workspaceOpenApiResponse } from '@/lib/openapi/client.js';
 
 function wsCommonMessages(locale: Locale = 'en') {
   return messagesForLocale(locale).core.common;
@@ -53,11 +53,20 @@ export function wsPartialSuccessWarning(
 }
 
 export async function wsGetJson<T>(
-  url: string,
-  init?: RequestInit,
-  options?: { fallbackMessage?: string; partialWarning?: string; locale?: Locale },
+  workspaceId: string,
+  apiSuffix: string,
+  options?: {
+    signal?: AbortSignal;
+    query?: Record<string, unknown>;
+    fallbackMessage?: string;
+    partialWarning?: string;
+    locale?: Locale;
+  },
 ): Promise<{ data: T; partialWarning: string | null }> {
-  const response = await workspaceFetch(url, init);
+  const response = await workspaceOpenApiResponse('GET', workspaceId, apiSuffix, {
+    signal: options?.signal,
+    params: options?.query ? { query: options.query } : undefined,
+  });
   const locale = options?.locale ?? 'en';
   const common = wsCommonMessages(locale);
   const fallback =

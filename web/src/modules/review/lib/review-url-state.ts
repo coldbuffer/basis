@@ -1,4 +1,4 @@
-import { workspacePath } from '@/lib/nav/nav-config.js';
+import { workspaceLogPath, workspaceReviewPath } from '@/lib/nav/nav-config.js';
 
 /** Sole owner of review queue deep-link query params. */
 const ITEM_PARAM = 'reviewItem';
@@ -13,34 +13,55 @@ export function parseReviewUrlState(search: string): { reviewItemId?: string } {
 /** Deep-link to the review queue with a specific item in view (F-GOV / F-ALT). */
 export function reviewItemPath(workspaceId: string, itemId: string): string {
   const params = new URLSearchParams({ [ITEM_PARAM]: itemId });
-  return `${workspacePath(workspaceId, 'review')}?${params.toString()}`;
+  return `${workspaceReviewPath(workspaceId)}?${params.toString()}`;
 }
 
-/** Deep-link to Decisions workspace with causal chain loaded (F-GOV-07). */
+export const GRAPH_DECISION_PARAM = 'graph_decision';
+export const DECISIONS_BROWSE_PARAM = 'decisions_browse';
+export const DECISIONS_Q_PARAM = 'decisions_q';
+
+/** Deep-link to governance log with graph decision detail open (F-GOV-07). */
 export function reviewDecisionPath(workspaceId: string, decisionId: string): string {
-  const params = new URLSearchParams({ decision: decisionId });
-  return `${workspacePath(workspaceId, 'decisions')}?${params.toString()}`;
+  const params = new URLSearchParams({ [GRAPH_DECISION_PARAM]: decisionId });
+  return `${workspaceLogPath(workspaceId)}?${params.toString()}`;
 }
 
-const DECISION_PARAM = 'decision';
+/** Open the full graph-decisions catalog on the change log. */
+export function activityLogBrowseDecisionsPath(
+  workspaceId: string,
+  options?: { q?: string },
+): string {
+  const params = new URLSearchParams({ [DECISIONS_BROWSE_PARAM]: '1' });
+  const q = options?.q?.trim();
+  if (q) params.set(DECISIONS_Q_PARAM, q);
+  return `${workspaceLogPath(workspaceId)}?${params.toString()}`;
+}
 
-export function parseDecisionUrlState(search: string): { decisionId?: string; q?: string } {
+export function parseActivityLogDecisionUrlState(search: string): {
+  graphDecisionId?: string;
+  decisionsQ?: string;
+  openBrowse?: boolean;
+} {
   const params = new URLSearchParams(search);
+  const graphDecisionId = params.get(GRAPH_DECISION_PARAM) ?? undefined;
+  const decisionsQ = params.get(DECISIONS_Q_PARAM) ?? undefined;
+  const openBrowse = params.get(DECISIONS_BROWSE_PARAM) === '1';
   return {
-    decisionId: params.get(DECISION_PARAM) ?? undefined,
-    q: params.get('q') ?? undefined,
+    graphDecisionId: graphDecisionId?.trim() || undefined,
+    decisionsQ: decisionsQ?.trim() || undefined,
+    openBrowse,
   };
 }
 
-/** Sync decisions route `?decision=` while preserving other query params (e.g. `q`). */
-export function mergeKbDecisionParam(
+/** Sync governance log `?graph_decision=` while preserving other query params. */
+export function mergeActivityLogGraphDecisionParam(
   search: string,
   decisionId: string | null | undefined,
 ): URLSearchParams {
   const params = new URLSearchParams(search);
   const trimmed = decisionId?.trim();
-  if (trimmed) params.set(DECISION_PARAM, trimmed);
-  else params.delete(DECISION_PARAM);
+  if (trimmed) params.set(GRAPH_DECISION_PARAM, trimmed);
+  else params.delete(GRAPH_DECISION_PARAM);
   return params;
 }
 

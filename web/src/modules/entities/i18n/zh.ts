@@ -3,7 +3,7 @@ export default {
     subtitle: "搜索账本实体，点开一行查看陈述与派生事实。右侧是推理最近写回的结果。"
   },
   menu: {
-    entities: "实体账本"
+    entities: "实体"
   },
   ledger: {
     open_evidence: "证据",
@@ -37,8 +37,8 @@ export default {
     external_sync_section: "外部连接器双向同步",
     propose_writeback_button: "提交写回提案",
     proposing_writeback: "提交中…",
-    writeback_review_queued: "写回变更已进入治理审核队列。",
-    open_review_queue: "前往审核队列审批",
+    writeback_review_queued: "写回变更已进入智能审查。",
+    open_review_queue: "前往智能审查审批",
     writeback_applied_toast: "已直接写回外部数据源",
     recent_derived_facts: "最近推理",
     recent_derived_facts_hint: "推理写回账本的结果，按时间从新到旧。",

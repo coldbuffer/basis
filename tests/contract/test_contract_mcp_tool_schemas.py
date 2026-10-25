@@ -1,7 +1,7 @@
 """MCP tool list metadata (catalog-owned schemas and descriptions)."""
 
 from basis.application.tool_catalog import TOOL_NAMES
-from basis.application.tool_catalog.catalog import OPERATIONS
+from basis.application.tool_catalog.catalog import OPERATIONS, mcp_exposed
 from basis.application.tool_catalog.mcp_metadata import MCP_TOOL_METADATA
 from basis.application.tool_catalog.run import description_for_tool, input_schema_for_tool
 from basis.application.tool_catalog.validation import OPERATION_INPUT_MODELS
@@ -18,10 +18,9 @@ def test_mcp_metadata_is_descriptions_only() -> None:
 
 
 def test_static_catalog_has_mcp_metadata_for_every_tool() -> None:
-    catalog_names = set(OPERATIONS)
-    assert len(TOOL_NAMES) == len(catalog_names)
-    assert set(TOOL_NAMES) == catalog_names
-    for name in catalog_names:
+    mcp_names = {name for name in OPERATIONS if mcp_exposed(name)}
+    assert set(TOOL_NAMES) == mcp_names
+    for name in mcp_names:
         assert input_schema_for_tool(name) is not None, name
         assert description_for_tool(name), name
 
@@ -33,8 +32,8 @@ def test_mcp_tools_have_object_schemas() -> None:
         assert schema.get("type") == "object"
 
 
-def test_describe_workspace_schema_empty_object() -> None:
-    schema = input_schema_for_tool("describe_workspace")
+def test_get_graph_summary_schema_empty_object() -> None:
+    schema = input_schema_for_tool("get_graph_summary")
     assert schema is not None
     assert schema.get("type") == "object"
     assert not (schema.get("properties") or {})
@@ -85,8 +84,8 @@ def test_search_chunks_schema_uses_query_not_q() -> None:
     assert "query" in (schema.get("required") or [])
 
 
-def test_approve_remember_review_schema_merges_path_and_body() -> None:
-    schema = input_schema_for_tool("approve_statement_remember_review")
+def test_approve_review_item_schema_merges_path_and_body() -> None:
+    schema = input_schema_for_tool("approve_review_item")
     assert schema is not None
     props = schema.get("properties") or {}
     assert "item_id" in props
@@ -94,8 +93,8 @@ def test_approve_remember_review_schema_merges_path_and_body() -> None:
     assert "item_id" in (schema.get("required") or [])
 
 
-def test_reject_remember_review_schema_merges_path_and_body() -> None:
-    schema = input_schema_for_tool("reject_statement_remember_review")
+def test_reject_review_item_schema_merges_path_and_body() -> None:
+    schema = input_schema_for_tool("reject_review_item")
     assert schema is not None
     props = schema.get("properties") or {}
     assert "item_id" in props
@@ -120,7 +119,7 @@ def test_approve_review_openapi_response_includes_decision_id() -> None:
 
 def test_tool_definitions_match_registry() -> None:
     by_name = {t["name"]: t for t in TOOL_DEFINITIONS}
-    for name in OPERATIONS:
+    for name in TOOL_NAMES:
         assert name in by_name
         assert by_name[name]["inputSchema"]["type"] == "object"
 
@@ -136,7 +135,7 @@ def test_invoke_connector_primitive_schema() -> None:
 
 
 def test_mcp_descriptions_from_catalog() -> None:
-    for name in ("search_chunks", "describe_workspace"):
+    for name in ("search_chunks", "get_graph_summary"):
         desc = description_for_tool(name)
         assert desc
         by_name = {t["name"]: t for t in TOOL_DEFINITIONS}

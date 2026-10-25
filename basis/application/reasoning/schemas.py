@@ -14,12 +14,6 @@ class GetRuleInput(ExtraAllowedModel):
 class GetRuleResponse(ExtraAllowedModel):
     rule: dict[str, Any]
 
-class ListReasoningGroundFactsInput(ExtraAllowedModel):
-    limit: int = Field(default=200, ge=1, le=500)
-
-class ListReasoningGroundFactsResponse(ExtraAllowedModel):
-    facts: list[str] = Field(default_factory=list)
-
 class ListRulesInput(ExtraAllowedModel):
     limit: int = Field(default=100, ge=1, le=200)
 
@@ -33,6 +27,8 @@ class RunReasoningInput(ExtraAllowedModel):
     apply_to_graph: bool = False
     mode: str = "forward"
     inferred_edge_type: str | None = None
+    chunk_id: str | None = None
+    quote: str | None = None
 
 class RunReasoningResponse(ExtraAllowedModel):
     inferred_facts: list[str] = Field(default_factory=list)
@@ -42,17 +38,16 @@ class RunReasoningResponse(ExtraAllowedModel):
     proof_chains: list[Any] = Field(default_factory=list)
     facts_source: str | None = None
     ground_facts: list[str] = Field(default_factory=list)
+    evidence: dict[str, Any] | None = None
 
 TOOL_INPUT_MODELS: dict[str, type[ExtraAllowedModel]] = {
     "get_rule": GetRuleInput,
-    "list_reasoning_ground_facts": ListReasoningGroundFactsInput,
     "list_rules": ListRulesInput,
     "run_reasoning": RunReasoningInput,
 }
 
 TOOL_RESPONSE_MODELS: dict[str, type[ExtraAllowedModel]] = {
     "get_rule": GetRuleResponse,
-    "list_reasoning_ground_facts": ListReasoningGroundFactsResponse,
     "list_rules": ListRulesResponse,
     "run_reasoning": RunReasoningResponse,
 }

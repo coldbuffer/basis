@@ -13,6 +13,6 @@ export default {
     provenance_download_failed: "溯源报告下载失败",
   },
   menu: {
-    lineage: "溯源血缘",
+    lineage: "血缘",
   },
 } as const;

@@ -5,9 +5,10 @@ from __future__ import annotations
 from typing import Any
 
 from basis.domain.errors import AdminError
-from basis.domain.knowledge.services.conflict_review import scan_statement_conflicts
+from basis.domain.knowledge.services.conflict_review import run_shacl_conflict_scan
 from basis.domain.knowledge.governance_config import DEFAULT_GOVERNOR_CONFIDENCE_MIN
 from basis.domain.knowledge.services.governor_cluster import scan_entity_label_clusters
+from basis.domain.knowledge.conflict.scan_context import ConflictScanContext
 from basis.domain.knowledge.store import KnowledgeStore
 
 LOW_CONFIDENCE_KIND = "low_confidence"
@@ -57,24 +58,39 @@ def run_governor_pass(
     workspace_id: str,
     *,
     confidence_min: float | None = None,
+    scan_ctx: ConflictScanContext | None = None,
+    include_shacl: bool = True,
+    include_low_confidence: bool = True,
+    include_entity_label_clusters: bool = True,
 ) -> dict[str, Any]:
-    """Run conflict scan + low-confidence enqueue (on-demand governor)."""
+    """Run selected governor scans (on-demand)."""
     if confidence_min is None:
         threshold = knowledge.get_governance_config(workspace_id).governor_confidence_min
     else:
         threshold = confidence_min
-    conflicts = scan_statement_conflicts(knowledge, workspace_id)
-    low_confidence = scan_low_confidence_statements(
-        knowledge,
-        workspace_id,
-        confidence_min=threshold,
-    )
-    entity_clusters = scan_entity_label_clusters(knowledge, workspace_id)
+    if include_shacl:
+        shacl_scan = run_shacl_conflict_scan(knowledge, workspace_id, scan_ctx=scan_ctx)
+    else:
+        shacl_scan = {"created": 0, "skipped": 0, "materialize": {"facts_created": 0}, "shacl": {}}
+    if include_low_confidence:
+        low_confidence = scan_low_confidence_statements(
+            knowledge,
+            workspace_id,
+            confidence_min=threshold,
+        )
+    else:
+        low_confidence = {"created": 0, "skipped": 0}
+    if include_entity_label_clusters:
+        entity_clusters = scan_entity_label_clusters(knowledge, workspace_id)
+    else:
+        entity_clusters = {"created": 0, "skipped": 0}
     return {
         "confidence_min": threshold,
-        "conflicts": {
-            "created": conflicts.get("created", 0),
-            "skipped": conflicts.get("skipped", 0),
+        "shacl_scan": {
+            "created": shacl_scan.get("created", 0),
+            "skipped": shacl_scan.get("skipped", 0),
+            "hub_created": (shacl_scan.get("shacl") or {}).get("hub_created", 0),
+            "facts_materialized": (shacl_scan.get("materialize") or {}).get("facts_created", 0),
         },
         "low_confidence": {
             "created": low_confidence.get("created", 0),

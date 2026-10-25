@@ -31,6 +31,6 @@ export default {
     workspace_required: "词汇表路由需要 workspaceId（VocabularyWorkspaceCatalogProvider）。"
   },
   menu: {
-    vocabulary: "受控词表"
+    vocabulary: "词表"
   }
 } as const;

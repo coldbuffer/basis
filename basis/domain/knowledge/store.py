@@ -148,6 +148,7 @@ for _name in (
     "get_or_create_entity_by_label",
     "create_entity",
     "count_entities_named",
+    "find_entity_id_by_label",
     "has_statement_on_chunk",
     "has_equivalent_statement",
     "add_extraction_drop",
@@ -162,6 +163,7 @@ for _name in (
 
 for _name in (
     "create_review_item",
+    "count_review_items",
     "list_review_items",
     "find_open_review_item",
     "get_review_item",
@@ -175,6 +177,8 @@ for _name in (
     "get_mapping",
     "update_mapping_status",
     "list_distinct_surface_phrases",
+    "list_entity_type_object_labels",
+    "entity_type_surface_phrases",
     "materialize_mapping_facts",
 ):
     setattr(KnowledgeStore, _name, _workspace_access_delegate("_mappings", _name))
@@ -254,6 +258,7 @@ for _name in (
 for _name in (
     "get_governance_config",
     "update_governance_config",
+    "save_governance_shacl",
     "touch_governor_last_run",
     "list_governor_enabled_workspace_ids",
 ):

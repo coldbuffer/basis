@@ -63,7 +63,7 @@ export default {
     },
     governance: {
       title: "Agent 治理扫描",
-      description: "按计划扫描陈述冲突并将低置信陈述入审核队列。服务端需配置 BASIS_GOVERNOR_TICK_SECONDS。",
+      description: "按计划扫描陈述冲突并将低置信陈述入智能审查。服务端需配置 BASIS_GOVERNOR_TICK_SECONDS。",
       scheduled_label: "定时扫描",
       enabled_on: "已开启",
       enabled_off: "已关闭",
@@ -71,10 +71,15 @@ export default {
       interval_minutes: "{minutes} 分钟",
       confidence_label: "置信度阈值",
       last_run_label: "上次运行",
+      ontology_uri_label: "SHACL 本体 URI",
+      ontology_uri_hint: "冲突扫描使用的 Ontology Hub 本体 URI；留空则使用注册表中的第一个本体。",
       manual_hint: "也可在",
-      review_link: "审核队列",
-      manual_hint_suffix: "手动执行「治理扫描」。",
-      edit_title: "治理扫描设置",
+      review_link: "智能审查",
+      manual_hint_suffix: "中点击「开始检查」。",
+      data_quality_link: "在「数据质量 → 扫描配置」中集中管理规则与 SHACL。",
+      settings_redirect_body: "定时治理扫描、置信度阈值与 SHACL 本体 URI 已迁至「数据质量 → 扫描配置」。",
+      settings_redirect_button: "打开数据质量",
+      edit_title: "定时检查设置",
       edit_desc: "为本工作区开启后台扫描并设置阈值。",
       toast_saved: "治理设置已保存"
     }

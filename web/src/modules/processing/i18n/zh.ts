@@ -18,8 +18,6 @@ export default {
     view_related_alerts: "相关告警",
     process_dialog_options_preview: "流水线摘要",
     options_snapshot_raw: "原始 JSON（与上方摘要一致）",
-    limits_hint: "服务端限制：上传 ≤ {upload}；并发 {inflight} 个任务、排队 {pending} 个；单任务超时 {timeoutMin} 分钟。",
-    ops_queue_hint: "当前队列：运行中 {inflight}（上限 {inflightMax}），排队 {queued}（上限 {pendingMax}）。",
     jobs_api_link: "摄入任务 API（OpenAPI）",
     retry_all_failed: "重试全部失败",
     retry_all_queued: "已为全部失败任务排队重试",
@@ -32,7 +30,7 @@ export default {
     options_request_id: "请求 ID {id}",
   },
   page: {
-    subtitle: "抽取、分块与投图任务队列；可从资料源版本发起处理并重试失败任务。",
+    subtitle: "查看处理进度；失败任务可在此重试。",
   },
   menu: {
     processing: "处理任务",

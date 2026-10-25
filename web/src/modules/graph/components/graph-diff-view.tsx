@@ -38,7 +38,7 @@ import { Label } from '@/components/ui/label.js';
 import { graphPath } from '@/modules/graph/lib/graph-url-state.js';
 import { useWorkspaceNodeLabels } from '@/lib/workspace/node-labels.js';
 import { graphDiffPreviewPath, graphImportDialogPath } from '@/modules/graph/lib/graph-url-state.js';
-import { workspaceGraphDiffPath, workspacePath } from '@/lib/nav/nav-config.js';
+import { workspaceGraphDiffPath, workspacePath, workspaceReviewPath } from '@/lib/nav/nav-config.js';
 import { toast } from 'sonner';
 import { searchPath } from '@/modules/search/lib/search-url-state.js';
 import { endOfLocalDayIso, startOfLocalDayIso } from '@/modules/graph/lib/temporal/day-range.js';
@@ -581,7 +581,7 @@ export function GraphDiff({
               <AlertDescription className="text-muted-foreground">{g.studio_description}</AlertDescription>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Button type="button" variant="outline" size="sm" asChild>
-                  <Link to={workspacePath(workspaceId, 'review')}>{g.studio_open_review}</Link>
+                  <Link to={workspaceReviewPath(workspaceId)}>{g.studio_open_review}</Link>
                 </Button>
                 <Button type="button" variant="outline" size="sm" asChild>
                   <Link to={graphImportDialogPath(workspaceId)} data-testid="graph-diff-open-import">

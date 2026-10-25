@@ -86,8 +86,8 @@ def test_demo_keyword_vs_ontology_contrast(tmp_path) -> None:
             client,
             workspace_id,
             headers,
-            "find_entities",
-            {"query": "唐悦"},
+            "query_graph",
+            {"mode": "entities", "query": "唐悦"},
             rpc_id=2,
         ).get("ledger_entities")
         or []
@@ -98,8 +98,8 @@ def test_demo_keyword_vs_ontology_contrast(tmp_path) -> None:
             client,
             workspace_id,
             headers,
-            "neighbors",
-            {"node_id": tang["id"], "depth": 2},
+            "query_graph",
+            {"mode": "neighbors", "node_id": tang["id"], "depth": 2},
             rpc_id=5,
         )
     )
@@ -111,8 +111,8 @@ def test_demo_keyword_vs_ontology_contrast(tmp_path) -> None:
             client,
             workspace_id,
             headers,
-            "find_entities",
-            {"query": "程浩"},
+            "query_graph",
+            {"mode": "entities", "query": "程浩"},
             rpc_id=3,
         ).get("ledger_entities")
         or []
@@ -123,8 +123,8 @@ def test_demo_keyword_vs_ontology_contrast(tmp_path) -> None:
             client,
             workspace_id,
             headers,
-            "neighbors",
-            {"node_id": cheng["id"], "depth": 2},
+            "query_graph",
+            {"mode": "neighbors", "node_id": cheng["id"], "depth": 2},
             rpc_id=4,
         )
     )

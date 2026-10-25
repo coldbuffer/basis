@@ -53,6 +53,14 @@ class ListTypedFactsResponse(ExtraAllowedModel):
 class ProposeRememberInput(ExtraAllowedModel):
     content: str = Field(min_length=1)
     source: str | None = None
+    chunk_id: str | None = Field(
+        default=None,
+        description="Optional evidence chunk from search_chunks/get_chunk; omit for agent anchor.",
+    )
+    quote: str | None = Field(
+        default=None,
+        description="Optional excerpt; defaults to chunk text or proposal content.",
+    )
 
 class SearchChunksInput(ExtraAllowedModel):
     query: str = Field(min_length=1)

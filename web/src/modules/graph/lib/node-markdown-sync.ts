@@ -1,7 +1,7 @@
 import { fmt } from "@/i18n/format.js";
 import { errorFromApiResponse } from "@/lib/errors/api-error.js";
 
-import { buildWorkspaceGraphApiPath, workspaceFetch } from '@/lib/workspace/ws-http';
+import { workspaceOpenApiResponse } from '@/lib/openapi/client.js';
 import { graphCopy, type GraphScreenLocale } from '../i18n/screen-copy.js';
 
 export interface NodeMarkdownAttributeUpdate {
@@ -63,8 +63,11 @@ export async function readNodeMarkdownAttributeUpdate(
   workspaceId: string,
   locale: GraphScreenLocale = "en",
 ): Promise<SavedNodeMarkdownAttributeUpdate> {
-  const url = buildWorkspaceGraphApiPath(`nodes/${encodeURIComponent(nodeId)}`, workspaceId);
-  const response = await workspaceFetch(url);
+  const response = await workspaceOpenApiResponse(
+    'GET',
+    workspaceId,
+    `graph/nodes/${encodeURIComponent(nodeId)}`,
+  );
   const payload = (await response.json().catch(() => ({}))) as
     | GraphNodeMarkdownSnapshot
     | { node: GraphNodeMarkdownSnapshot };

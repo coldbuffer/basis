@@ -71,10 +71,16 @@ export default {
       interval_minutes: "{minutes} min",
       confidence_label: "Confidence threshold",
       last_run_label: "Last run",
+      ontology_uri_label: "SHACL ontology URI",
+      ontology_uri_hint: "Ontology Hub URI for full SHACL during conflict scans. Leave empty to use the first registered ontology.",
       manual_hint: "Run a pass anytime from the",
-      review_link: "Review queue",
-      manual_hint_suffix: ".",
-      edit_title: "Governor settings",
+      review_link: "Smart review",
+      manual_hint_suffix: " and use Start check.",
+      data_quality_link: "Manage rules and SHACL under Data quality → Scan settings.",
+      settings_redirect_body:
+        "Scheduled governor scans, confidence thresholds, and SHACL ontology URI live under Data quality → Scan settings.",
+      settings_redirect_button: "Open data quality",
+      edit_title: "Scheduled check settings",
       edit_desc: "Enable background passes and set thresholds for this workspace.",
       toast_saved: "Governor settings saved."
     }

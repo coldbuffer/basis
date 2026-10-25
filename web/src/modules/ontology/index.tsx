@@ -1,11 +1,10 @@
 import { PublicIcon } from '@/components/app/shared/primitives/public-icon.js';
 import { useCallback, useMemo, useState } from 'react';
-import { Navigate, useParams, useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { ConsolePageLayout } from '@/components/app/shared/console/index.js';
 import {
   OntologyAlignmentsPanel,
   OntologyRegistryPanel,
-  OntologyShaclPanel,
   OntologyVersionsPanel,
   type OntologyHubPageActions,
 } from '@/modules/ontology/components/ontology-hub-panels.js';
@@ -14,33 +13,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs.j
 import { useI18n } from '@/i18n/context.js';
 import { useWorkspaceCatalog } from '@/lib/workspace/context.js';
 import type { OntologyHubTab } from '@/modules/analyze/lib/hub-route.js';
-import { workspaceAnalyzeHubPath } from '@/modules/analyze/lib/hub-route.js';
-import {
-  normalizeOntologyHubTabId,
-  ontologyHubTabEnabled,
-  resolveOntologyHubTab,
-} from '@/modules/analyze/lib/hub-tabs.js';
+import { ontologyHubTabEnabled, resolveOntologyHubTab } from '@/modules/analyze/lib/hub-tabs.js';
 import { useWorkspaceCapabilities } from '@/lib/workspace/capabilities.js';
 import { workspacePath } from '@/lib/nav/nav-config.js';
 
 const WORKSPACE_CLASS = 'min-h-0 flex-1 rounded-lg border border-border';
 const INTERIOR_WORKSPACE_CLASS = 'h-[calc(100svh-14rem)] min-h-[28rem] flex-1 rounded-lg border border-border';
-
-function ontologyHubSearchRedirect(
-  workspaceId: string,
-  searchParams: URLSearchParams,
-  tab: OntologyHubTab,
-): string {
-  const params = new URLSearchParams(searchParams);
-  params.delete('ontologyTab');
-  if (tab === 'registry') {
-    params.delete('tab');
-  } else {
-    params.set('tab', tab);
-  }
-  const q = params.toString();
-  return `${workspacePath(workspaceId, 'ontology')}${q ? `?${q}` : ''}`;
-}
 
 export function OntologyPage() {
   const { id } = useParams();
@@ -53,41 +31,21 @@ export function OntologyPage() {
     setPageActions(actions);
   }, []);
 
-  const legacyOntologyTab = searchParams.get('ontologyTab');
   const rawTabParam = searchParams.get('tab');
 
   const tab = useMemo(
     () =>
       resolveOntologyHubTab(
         rawTabParam,
-        legacyOntologyTab,
         searchParams.has('ontologyProposal'),
         searchParams.has('ontologyEntity'),
         caps,
       ),
-    [caps, legacyOntologyTab, rawTabParam, searchParams],
+    [caps, rawTabParam, searchParams],
   );
 
   if (!id) {
     return null;
-  }
-
-  if (legacyOntologyTab === 'sparql') {
-    return <Navigate to={workspaceAnalyzeHubPath(id, 'sparql')} replace />;
-  }
-  if (legacyOntologyTab === 'reasoning') {
-    return <Navigate to={workspaceAnalyzeHubPath(id, 'reasoning')} replace />;
-  }
-
-  if (legacyOntologyTab) {
-    const legacyMapped = normalizeOntologyHubTabId(legacyOntologyTab);
-    if (legacyMapped) {
-      return <Navigate to={ontologyHubSearchRedirect(id, searchParams, legacyMapped)} replace />;
-    }
-  }
-
-  if (rawTabParam === 'model') {
-    return <Navigate to={ontologyHubSearchRedirect(id, searchParams, 'registry')} replace />;
   }
 
   const kbName = getWorkspace(id)?.name ?? id;
@@ -97,7 +55,6 @@ export function OntologyPage() {
   function onTabChange(value: string) {
     const next = value as OntologyHubTab;
     const params = new URLSearchParams(searchParams);
-    params.delete('ontologyTab');
     if (next === 'registry') {
       params.delete('tab');
     } else {
@@ -109,7 +66,6 @@ export function OntologyPage() {
   const onFixInEditor = useCallback(
     (entityUri: string) => {
       const params = new URLSearchParams(searchParams);
-      params.delete('ontologyTab');
       params.set('tab', 'editor');
       params.set('ontologyEntity', entityUri);
       setSearchParams(params, { replace: true });
@@ -149,9 +105,6 @@ export function OntologyPage() {
           <TabsTrigger value="versions" disabled={!ontologyHubTabEnabled('versions', caps)}>
             {hubTabs.versions}
           </TabsTrigger>
-          <TabsTrigger value="shacl" disabled={!ontologyHubTabEnabled('shacl', caps)}>
-            {hubTabs.shacl}
-          </TabsTrigger>
           <TabsTrigger value="alignments" disabled={!ontologyHubTabEnabled('alignments', caps)}>
             {hubTabs.alignments}
           </TabsTrigger>
@@ -190,12 +143,6 @@ export function OntologyPage() {
           className="mt-4 flex min-h-0 flex-1 flex-col data-[state=inactive]:hidden"
         >
           <OntologyVersionsPanel workspaceId={id} className={WORKSPACE_CLASS} />
-        </TabsContent>
-        <TabsContent
-          value="shacl"
-          className="mt-4 flex min-h-0 flex-1 flex-col data-[state=inactive]:hidden"
-        >
-          <OntologyShaclPanel workspaceId={id} className={WORKSPACE_CLASS} />
         </TabsContent>
         <TabsContent
           value="alignments"

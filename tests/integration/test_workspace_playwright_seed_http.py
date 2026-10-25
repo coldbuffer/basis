@@ -50,7 +50,7 @@ def test_playwright_governance_trip_records_alert_and_decision(tmp_path) -> None
     assert tripped[0]["detail"].get("decision_id") == decision_id
 
 
-def test_playwright_statement_conflict_disabled_outside_data_dir(tmp_path) -> None:
+def test_playwright_shacl_violation_disabled_outside_data_dir(tmp_path) -> None:
     client = TestClient(create_app(Settings(data_dir=tmp_path)))
     admin = client.post(
         "/api/v1/auth/register",
@@ -58,11 +58,11 @@ def test_playwright_statement_conflict_disabled_outside_data_dir(tmp_path) -> No
     ).json()
     headers = {"Authorization": f"Bearer {admin['token']}"}
     workspace_id = client.get("/api/v1/workspaces", headers=headers).json()["workspaces"][0]["id"]
-    res = client.post(f"/api/v1/workspaces/{workspace_id}/_e2e/statement-conflict", headers=headers)
+    res = client.post(f"/api/v1/workspaces/{workspace_id}/_e2e/shacl-violation", headers=headers)
     assert res.status_code == 404
 
 
-def test_playwright_statement_conflict_creates_review_and_alert(tmp_path) -> None:
+def test_playwright_shacl_violation_creates_review_item(tmp_path) -> None:
     e2e_dir = tmp_path / "data" / "e2e"
     e2e_dir.mkdir(parents=True)
     client = TestClient(create_app(Settings(data_dir=e2e_dir)))
@@ -73,17 +73,19 @@ def test_playwright_statement_conflict_creates_review_and_alert(tmp_path) -> Non
     headers = {"Authorization": f"Bearer {admin['token']}"}
     workspace_id = client.get("/api/v1/workspaces", headers=headers).json()["workspaces"][0]["id"]
 
-    seeded = client.post(f"/api/v1/workspaces/{workspace_id}/_e2e/statement-conflict", headers=headers)
+    seeded = client.post(f"/api/v1/workspaces/{workspace_id}/_e2e/shacl-violation", headers=headers)
     assert seeded.status_code == 200
     body = seeded.json()
     assert body.get("review_item_id")
     surface = body.get("surface_phrase")
     assert isinstance(surface, str) and surface
 
-    alerts = client.get(f"/api/v1/workspaces/{workspace_id}/alerts", headers=headers).json()["alerts"]
-    conflict_alerts = [a for a in alerts if a["kind"] == "governance.statement_conflict"]
-    assert conflict_alerts
-    assert conflict_alerts[0]["detail"].get("item_id") == body["review_item_id"]
+    items = client.get(
+        f"/api/v1/workspaces/{workspace_id}/review/items",
+        headers=headers,
+        params={"kind": "shacl_violation"},
+    ).json()["items"]
+    assert any(i["id"] == body["review_item_id"] for i in items)
 
 
 def test_playwright_ontology_proposal_disabled_outside_data_dir(tmp_path) -> None:
