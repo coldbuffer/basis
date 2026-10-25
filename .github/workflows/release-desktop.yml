@@ -51,7 +51,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: desktop-macos
-          path: desktop/release/*
+          path: |
+            desktop/release/*.dmg
+            desktop/release/*.zip
           if-no-files-found: error
 
   build-win:
@@ -91,7 +93,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: desktop-windows
-          path: desktop/release/*
+          path: |
+            desktop/release/*.exe
           if-no-files-found: error
 
   github-release:
@@ -129,5 +132,14 @@ jobs:
           Installers are not code-signed; macOS may require Gatekeeper override, Windows SmartScreen may warn.
 
           Tag format: \`desktop-v*\` (separate from container releases \`v*\`)."
-          shopt -s nullglob
-          gh release upload "$tag" dist/desktop/macos/* dist/desktop/windows/* --clobber
+          mapfile -t assets < <(
+            find dist/desktop/macos dist/desktop/windows -type f \( \
+              -iname '*.dmg' -o -iname '*.zip' -o -iname '*.exe' -o -iname '*.blockmap' \
+            \) | sort
+          )
+          if ((${#assets[@]} == 0)); then
+            echo "No installer files under dist/desktop (expected .dmg/.zip/.exe)" >&2
+            find dist/desktop -print >&2
+            exit 1
+          fi
+          gh release upload "$tag" "${assets[@]}" --clobber
