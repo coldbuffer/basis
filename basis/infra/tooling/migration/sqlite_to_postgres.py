@@ -6,7 +6,7 @@ import hashlib
 from pathlib import Path
 from typing import Any
 
-from sqlalchemy import MetaData, create_engine, func, select, text
+from sqlalchemy import MetaData, create_engine, select, text
 from sqlalchemy.engine import Engine
 
 from basis.infra.tooling.db.alembic_upgrade import upgrade_postgres_engine

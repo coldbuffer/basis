@@ -10,9 +10,7 @@ from urllib.parse import quote_plus
 from sqlalchemy import (
     MetaData,
     Table,
-    and_,
     create_engine,
-    func,
     inspect,
     insert,
     select,
