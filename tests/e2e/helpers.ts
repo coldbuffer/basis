@@ -507,3 +507,93 @@ export async function ingestPasteText(page: Page, workspaceId: string, text: str
   const stats = await fetchGraphStats(page, workspaceId);
   expect(stats.node_count).toBeGreaterThan(0);
 }
+
+export async function waitForLedgerSurfacePhrases(
+  page: Page,
+  workspaceId: string,
+  minCount = 1,
+): Promise<string[]> {
+  const token = await bearerToken(page);
+  let phrases: string[] = [];
+  await expect
+    .poll(
+      async () => {
+        const response = await page.request.get(
+          e2eWorkspaceApiPath(workspaceId, 'ledger/surface-phrases'),
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
+        if (!response.ok()) {
+          return false;
+        }
+        const body = (await response.json()) as { phrases?: string[] };
+        phrases = body.phrases ?? [];
+        return phrases.length >= minCount;
+      },
+      { timeout: 120_000 },
+    )
+    .toBe(true);
+  return phrases;
+}
+
+export async function createProposedRelationMappingViaUi(
+  page: Page,
+  workspaceId: string,
+  signature: string,
+  targetUri: string,
+): Promise<void> {
+  await page.goto(`/workspaces/${workspaceId}/mappings`);
+  await page.getByRole('button', { name: /New mapping|新建映射/i }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toBeVisible();
+
+  const phraseInput = dialog.getByPlaceholder(/Search relation words|搜索关系词/i);
+  await phraseInput.click();
+  await phraseInput.fill(signature);
+  await dialog.getByRole('option', { name: signature, exact: true }).click();
+
+  const uriInput = dialog.getByPlaceholder(/Search properties|搜索属性/i);
+  await uriInput.fill(targetUri);
+
+  await dialog.getByRole('button', { name: /Submit proposal|提交提案/i }).click();
+  await expect(dialog).toBeHidden({ timeout: 30_000 });
+  await expect(page.locator('tr').filter({ hasText: signature })).toBeVisible({ timeout: 30_000 });
+}
+
+export async function waitForOntologyMappingReviewItemId(
+  page: Page,
+  workspaceId: string,
+  signature: string,
+): Promise<string> {
+  const token = await bearerToken(page);
+  let itemId = '';
+  await expect
+    .poll(
+      async () => {
+        const response = await page.request.get(e2eWorkspaceApiPath(workspaceId, 'review/items'), {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { kind: 'ontology_mapping' },
+        });
+        if (!response.ok()) {
+          return false;
+        }
+        const body = (await response.json()) as {
+          items?: Array<{ id: string; payload?: { signature?: string } }>;
+        };
+        const hit = (body.items ?? []).find((item) => item.payload?.signature === signature);
+        itemId = hit?.id ?? '';
+        return Boolean(itemId);
+      },
+      { timeout: 60_000 },
+    )
+    .toBe(true);
+  return itemId;
+}
+
+export async function skipIfReviewWorkspaceUnavailable(page: Page): Promise<void> {
+  const unavailable = page.getByRole('heading', {
+    name: /工作区不可用|Workspace unavailable/i,
+  });
+  if ((await unavailable.count()) > 0) {
+    test.skip(true, 'review workspace requires graph_runtime');
+  }
+}

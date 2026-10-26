@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from basis.application.kernel import WorkspaceCoreContext
+from basis.application.kernel import WorkspaceCoreContext, require_workspace_owner
 
 
 def op_describe_workspace(ctx: WorkspaceCoreContext, _args: dict[str, Any]) -> dict[str, Any]:
@@ -45,6 +45,99 @@ def op_get_capabilities(ctx: WorkspaceCoreContext, _args: dict[str, Any]) -> dic
             }
         )
     return payload
+
+
+def op_preview_workspace_reset(ctx: WorkspaceCoreContext, args: dict[str, Any]) -> dict[str, Any]:
+    from basis.domain.knowledge.services.workspace_reset_scopes import (
+        ALL_RESET_SCOPES,
+        DEFAULT_RESET_SCOPES,
+        normalize_reset_scopes,
+        scopes_for_api,
+    )
+
+    require_workspace_owner(ctx)
+    wid = ctx.workspace.id
+    if "scopes" in args and args.get("scopes") is not None:
+        scopes = normalize_reset_scopes(args.get("scopes"))
+        if scopes is None:
+            return {"error": "invalid_scopes", "message": "Unknown or empty reset scope."}
+    else:
+        scopes = DEFAULT_RESET_SCOPES
+    counts = ctx.knowledge.preview_workspace_reset(wid)
+    return {
+        "preview": True,
+        "workspace_id": wid,
+        "workspace_name": ctx.workspace.name,
+        "counts": counts,
+        "scopes": scopes_for_api(scopes),
+        "default_scopes": scopes_for_api(DEFAULT_RESET_SCOPES),
+        "available_scopes": scopes_for_api(ALL_RESET_SCOPES),
+        "export_pack_path": f"/workspaces/{wid}/graph?export=1",
+    }
+
+
+def _reset_wants_async(args: dict[str, Any]) -> bool:
+    if "async" in args:
+        return bool(args["async"])
+    if "async_mode" in args:
+        return bool(args["async_mode"])
+    return True
+
+
+def _validate_reset_confirmation(ctx: WorkspaceCoreContext, args: dict[str, Any]) -> str | None:
+    confirmation = str(args.get("confirmation") or "").strip()
+    if confirmation != ctx.workspace.name:
+        return "confirmation must match the workspace name exactly"
+    return None
+
+
+def op_reset_workspace(ctx: WorkspaceCoreContext, args: dict[str, Any]) -> dict[str, Any]:
+    require_workspace_owner(ctx)
+    if bool(args.get("preview")):
+        return op_preview_workspace_reset(ctx, args)
+    message = _validate_reset_confirmation(ctx, args)
+    if message is not None:
+        return {"error": "confirmation_required", "message": message}
+    from basis.domain.knowledge.services.workspace_reset_run import (
+        enqueue_workspace_reset_job,
+        run_workspace_reset_job,
+        schedule_workspace_reset_job,
+        _apply_reset_body,
+    )
+    from basis.domain.knowledge.services.workspace_reset_scopes import normalize_reset_scopes
+
+    wid = ctx.workspace.id
+    if "scopes" in args and args.get("scopes") is not None:
+        scopes = normalize_reset_scopes(args.get("scopes"))
+        if scopes is None:
+            return {"error": "invalid_scopes", "message": "Unknown or empty reset scope."}
+    else:
+        scopes = normalize_reset_scopes(None)
+        assert scopes is not None
+    if _reset_wants_async(args):
+        queued = enqueue_workspace_reset_job(ctx, scopes)
+        if not queued.get("duplicate"):
+            schedule_workspace_reset_job(ctx, str(queued["job_id"]))
+        return {
+            "accepted": True,
+            "workspace_id": wid,
+            "scopes": list(sorted(scopes)),
+            **queued,
+        }
+    job_id = str(args.get("job_id") or "").strip()
+    if job_id:
+        return run_workspace_reset_job(ctx, job_id)
+    outcome = _apply_reset_body(ctx, wid, scopes, retain_job_id=None)
+    with ctx.store._lock:
+        ctx.store._audit(
+            ctx.user.id,
+            "workspace.reset",
+            "workspace",
+            wid,
+            {"cleared": outcome["cleared"], "scopes": outcome.get("scopes")},
+        )
+        ctx.store._conn.commit()
+    return {"ok": True, "workspace_id": wid, **outcome}
 
 
 def op_list_processing_jobs(ctx: WorkspaceCoreContext, args: dict[str, Any]) -> dict[str, Any]:

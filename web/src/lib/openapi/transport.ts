@@ -235,10 +235,19 @@ export function createBasisClient(options: BasisClientOptions) {
           });
           return request<LedgerEntitiesListResponse>(`${prefix}/ledger/entities?${params}`);
         },
-        searchGraph: (query: string, limit = 20, at?: string) =>
+        searchGraph: (
+          query: string,
+          limit = 20,
+          options?: { at?: string; include_archived?: boolean },
+        ) =>
           request<GraphSearchResponse>(`${prefix}/graph/search`, {
             method: "POST",
-            body: JSON.stringify({ query, limit, ...(at ? { at } : {}) }),
+            body: JSON.stringify({
+              query,
+              limit,
+              ...(options?.at ? { at: options.at } : {}),
+              ...(options?.include_archived ? { include_archived: true } : {}),
+            }),
           }),
       };
     },

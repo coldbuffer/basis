@@ -8,6 +8,7 @@ pytest.importorskip("semantica")
 
 from fastapi.testclient import TestClient
 
+from basis.infra.runtime.capabilities import graph_runtime_available
 from basis.infra.runtime.config import Settings
 from basis.interface.http.app import create_app
 
@@ -63,6 +64,58 @@ def test_api_token_allowed_operations_mcp_and_http(tmp_path) -> None:
     )
     assert denied_call.status_code == 200
     payload = json.loads(denied_call.json()["result"]["content"][0]["text"])
+    assert payload.get("code") == "forbidden"
+
+
+def test_api_token_ontology_read_without_write_mcp(tmp_path) -> None:
+    if not graph_runtime_available():
+        pytest.skip("explorer extra not installed")
+
+    client = TestClient(create_app(Settings(data_dir=tmp_path, ingest_inline=True)))
+    admin = client.post(
+        "/api/v1/auth/register",
+        json={"email": "ont-grant@example.com", "password": "password1", "display_name": "OG"},
+    ).json()
+    session = {"Authorization": f"Bearer {admin['token']}"}
+    workspace_id = client.get("/api/v1/workspaces", headers=session).json()["workspaces"][0]["id"]
+
+    created = client.post(
+        f"/api/v1/workspaces/{workspace_id}/tokens",
+        headers=session,
+        json={
+            "name": "ontology-read",
+            "scope": "read",
+            "mcp_allowed_operations": ["list_ontology_registry", "list_mappings"],
+        },
+    )
+    assert created.status_code == 200
+    api_headers = {"Authorization": f"Bearer {created.json()['secret']}"}
+
+    allowed = client.post(
+        f"/api/v1/workspaces/{workspace_id}/mcp",
+        headers=api_headers,
+        json={
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "tools/call",
+            "params": {"name": "list_ontology_registry", "arguments": {}},
+        },
+    )
+    assert allowed.status_code == 200
+    assert allowed.json()["result"]["isError"] is False
+
+    denied = client.post(
+        f"/api/v1/workspaces/{workspace_id}/mcp",
+        headers=api_headers,
+        json={
+            "jsonrpc": "2.0",
+            "id": 2,
+            "method": "tools/call",
+            "params": {"name": "propose_mapping", "arguments": {"signature": "surface:x", "status": "proposed"}},
+        },
+    )
+    assert denied.status_code == 200
+    payload = json.loads(denied.json()["result"]["content"][0]["text"])
     assert payload.get("code") == "forbidden"
 
 

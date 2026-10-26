@@ -11,6 +11,7 @@ from typing import Any, Callable, NotRequired, TypedDict
 from basis.application.connectors import operations as connector_ops
 from basis.application.graph import operations as graph_ops
 from basis.application.knowledge import operations as knowledge_ops
+from basis.application.ontology import operations as ontology_ops
 from basis.application.reasoning import operations as reasoning_ops
 from basis.application.review import operations as review_ops
 from basis.application.kernel import WorkspaceCoreContext
@@ -27,12 +28,39 @@ class OperationSpec(TypedDict):
 
 OPERATIONS: dict[str, OperationSpec] = {
     "list_processing_jobs": {"handler": workspace_ops.op_list_processing_jobs},
+    "reset_workspace": {"handler": workspace_ops.op_reset_workspace},
     "search_chunks": {"handler": knowledge_ops.op_search_chunks},
     "get_chunk": {"handler": knowledge_ops.op_get_chunk},
     "entity_facts": {"handler": knowledge_ops.op_entity_facts},
     "list_derived_facts": {"handler": knowledge_ops.op_list_derived_facts},
     "list_typed_facts": {"handler": knowledge_ops.op_list_typed_facts},
     "list_mappings": {"handler": knowledge_ops.op_list_mappings},
+    "list_surface_phrases": {"handler": knowledge_ops.op_list_surface_phrases},
+    "list_entity_type_object_labels": {"handler": knowledge_ops.op_list_entity_type_object_labels},
+    "assign_entity_types": {"handler": knowledge_ops.op_assign_entity_types},
+    "clear_entity_types": {"handler": knowledge_ops.op_clear_entity_types},
+    "invalidate_entities": {"handler": knowledge_ops.op_invalidate_entities},
+    "delete_document": {"handler": knowledge_ops.op_delete_document},
+    "delete_entity": {"handler": knowledge_ops.op_delete_entity},
+    "propose_mapping": {"handler": knowledge_ops.op_propose_mapping},
+    "update_mapping_status": {"handler": knowledge_ops.op_update_mapping_status},
+    "list_ontology_registry": {"handler": ontology_ops.op_list_ontology_registry},
+    "get_ontology_graph": {"handler": ontology_ops.op_get_ontology_graph},
+    "search_ontology_entities": {"handler": ontology_ops.op_search_ontology_entities},
+    "save_ontology_draft": {"handler": ontology_ops.op_save_ontology_draft},
+    "list_ontology_drafts": {"handler": ontology_ops.op_list_ontology_drafts},
+    "get_ontology_draft": {"handler": ontology_ops.op_get_ontology_draft},
+    "submit_ontology_proposal": {"handler": ontology_ops.op_submit_ontology_proposal},
+    "list_ontology_proposals": {"handler": ontology_ops.op_list_ontology_proposals},
+    "get_ontology_proposal": {"handler": ontology_ops.op_get_ontology_proposal},
+    "approve_ontology_proposal": {"handler": ontology_ops.op_approve_ontology_proposal},
+    "reject_ontology_proposal": {"handler": ontology_ops.op_reject_ontology_proposal},
+    "publish_ontology_proposal": {"handler": ontology_ops.op_publish_ontology_proposal},
+    "comment_ontology_proposal": {"handler": ontology_ops.op_comment_ontology_proposal},
+    "list_ontology_versions": {"handler": ontology_ops.op_list_ontology_versions},
+    "compare_ontology_versions": {"handler": ontology_ops.op_compare_ontology_versions},
+    "restore_ontology_version_draft": {"handler": ontology_ops.op_restore_ontology_version_draft},
+    "toggle_ontology": {"handler": ontology_ops.op_toggle_ontology},
     "get_statement": {"handler": knowledge_ops.op_get_statement},
     "propose_remember": {"handler": knowledge_ops.op_propose_remember},
     "paths": {"handler": graph_ops.op_paths},

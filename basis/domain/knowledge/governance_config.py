@@ -6,6 +6,10 @@ from dataclasses import asdict, dataclass
 from typing import Any
 
 from basis.domain.errors import AdminError
+from basis.domain.ontology.mappings.entity_type import (
+    entity_type_surface_phrases_from_config,
+    filter_type_phrases,
+)
 
 DEFAULT_GOVERNOR_CONFIDENCE_MIN = 0.75
 DEFAULT_GOVERNOR_INTERVAL_MINUTES = 1440
@@ -23,8 +27,14 @@ class GovernanceConfig:
     governance_shacl_turtle: str | None = None
     entity_type_surface_phrases_json: str | None = None
 
+    def entity_type_surface_phrases(self) -> list[str]:
+        return filter_type_phrases(entity_type_surface_phrases_from_config(self))
+
     def public_dict(self) -> dict[str, Any]:
-        return asdict(self)
+        data = asdict(self)
+        data.pop("entity_type_surface_phrases_json", None)
+        data["entity_type_surface_phrases"] = self.entity_type_surface_phrases()
+        return data
 
 
 def validate_governance_config(config: GovernanceConfig) -> None:

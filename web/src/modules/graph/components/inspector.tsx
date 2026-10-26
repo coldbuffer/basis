@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button.js";
 import { Input } from "@/components/ui/input.js";
 import { Separator } from "@/components/ui/separator.js";
 import { useI18n } from "@/i18n/context.js";
-import { formatLocaleFixedDecimals, formatLocalePercent } from "@/i18n/format.js";
+import { fmt, formatLocaleFixedDecimals, formatLocalePercent } from "@/i18n/format.js";
 import { workspacePath } from "@/lib/nav/nav-config.js";
 import { useWorkspaceCapabilitiesOptional } from "@/lib/workspace/capabilities.js";
 import type { GraphScreenLocale } from '../i18n/screen-copy.js';
@@ -94,6 +94,8 @@ export interface GraphInspectorPanelProps {
   onFocusNode?: (nodeId: string) => void;
   onMarkdownApplied?: (result: MarkdownApplyResult) => void;
   onMarkdownDirtyChange?: (dirty: boolean) => void;
+  onArchiveNode?: (nodeId: string) => void | Promise<void>;
+  isArchivingNode?: boolean;
 }
 
 const PROVENANCE_KEYS = ["source", "source_url", "pmid", "pmids", "evidence", "provenance", "confidence"] as const;
@@ -347,6 +349,8 @@ export function GraphInspectorPanel({
   onFocusNode,
   onMarkdownApplied,
   onMarkdownDirtyChange,
+  onArchiveNode,
+  isArchivingNode = false,
   graphWriteEnabled = true,
   decisionsEnabled = false,
 }: GraphInspectorPanelProps) {
@@ -416,6 +420,9 @@ export function GraphInspectorPanel({
     properties?: Record<string, unknown>;
   };
   const properties = attributes?.properties ?? {};
+  const isArchived =
+    String(properties.status ?? "").toLowerCase() === "archived"
+    || String((attributes as { status?: string }).status ?? "").toLowerCase() === "archived";
   const attribution = sourceAttribution(properties);
   const accentColor = attributes?.color || "#58a6ff";
   const propertyEntries = Object.entries(properties).filter(
@@ -498,6 +505,11 @@ export function GraphInspectorPanel({
             {predictions.length ? (
               <Badge variant="outline">{inspectorBadgeCount(loc, predictions.length, "candidateLinks")}</Badge>
             ) : null}
+            {isArchived ? (
+              <Badge variant="outline" className="badge-status-warning">
+                {inspectorCopy(loc, "archivedBadge")}
+              </Badge>
+            ) : null}
           </div>
         ) : null}
       </header>
@@ -579,6 +591,26 @@ export function GraphInspectorPanel({
               {isRunningPredictions
                 ? inspectorCopy(loc, "running")
                 : inspectorCopy(loc, "runPrediction")}
+            </Button>
+          ) : null}
+          {graphWriteEnabled && onArchiveNode && actionNodeId && !groupedDisplaySelection ? (
+            <Button
+              type="button"
+              variant="destructive"
+              className="w-full"
+              disabled={isArchivingNode || isArchived}
+              onClick={() => {
+                const label = String(attributes?.label ?? effectiveNodeId);
+                if (!window.confirm(fmt(inspectorCopy(loc, "archiveNodeConfirm"), { label }))) {
+                  return;
+                }
+                void onArchiveNode(actionNodeId);
+              }}
+            >
+              {isArchivingNode ? <PublicIcon name="loader-01" size={14} className="animate-spin" /> : null}
+              {isArchivingNode
+                ? inspectorCopy(loc, "archiveNodeRunning")
+                : inspectorCopy(loc, "archiveNode")}
             </Button>
           ) : null}
           <div className="flex flex-wrap gap-2">

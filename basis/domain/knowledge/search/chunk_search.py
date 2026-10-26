@@ -152,6 +152,11 @@ class ChunkSearchService:
         self._backend(workspace_id).reset(workspace_id)
         return self.index_chunks(workspace_id, chunk_ids=None)
 
+    def clear_workspace_vectors(self, workspace_id: str) -> None:
+        """Drop all chunk vectors for a workspace (ledger rows may already be gone)."""
+        self._knowledge.delete_all_embedding_records(workspace_id)
+        self._backend(workspace_id).reset(workspace_id)
+
     def status(self, workspace_id: str) -> dict[str, Any]:
         config = self._knowledge.get_search_config(workspace_id)
         manifest = self._backend(workspace_id).manifest(workspace_id)

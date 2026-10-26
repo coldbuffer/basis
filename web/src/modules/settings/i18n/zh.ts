@@ -81,7 +81,11 @@ export default {
       settings_redirect_button: "打开数据质量",
       edit_title: "定时检查设置",
       edit_desc: "为本工作区开启后台扫描并设置阈值。",
-      toast_saved: "治理设置已保存"
+      toast_saved: "治理设置已保存",
+      type_phrases_label: "实体类型关系词",
+      type_phrases_hint:
+        "每行一个表面关系词；用于类映射扫描（如「是」「is_a」），与「映射」页类型映射一致。",
+      type_phrases_placeholder: "是\nis_a\nrdf:type"
     }
   },
   org_sso: {
@@ -175,6 +179,21 @@ export default {
     danger: "危险操作",
     my_role: "我的角色",
     delete_workspace: "删除工作区",
-    delete_confirm: "确定删除此工作区？此操作不可恢复。"
+    delete_confirm: "确定删除此工作区？此操作不可恢复。",
+    reset_workspace: "重置工作区",
+    reset_workspace_desc:
+      "清空所有文档、账本、图投影与本体 Hub。保留工作区 ID、成员与设置。",
+    reset_workspace_confirm_label: "输入工作区名称以确认",
+    reset_workspace_preview_loading: "正在加载统计…",
+    reset_workspace_preview:
+      "将移除 {documents} 个文档、{entities} 个实体、{statements} 条陈述、{chunks} 个片段。",
+    reset_workspace_scopes_label: "清除范围",
+    reset_workspace_scope_knowledge: "文档、实体、账本与搜索索引",
+    reset_workspace_scope_graph: "图投影（清除知识库后会重建）",
+    reset_workspace_scope_connectors: "连接器与摄取来源",
+    reset_workspace_scope_reasoning: "推理规则",
+    reset_workspace_scope_governance: "治理配置（本体 Hub 设置）",
+    reset_workspace_export_before: "如需备份，可在重置前先导出图数据包。",
+    reset_workspace_export_link: "打开图导出"
   }
 } as const;

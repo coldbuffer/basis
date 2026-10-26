@@ -8,6 +8,7 @@ from typing import Any, Optional
 from fastapi import APIRouter, Depends, Query, Request
 from pydantic_core import PydanticUndefined
 
+from basis.application.ontology import operations as ontology_ops
 from basis.domain.tenancy.admin.store import AdminStore, User
 from basis.domain.knowledge.services.workspace_shacl import saved_shacl_turtle_for_ontology
 from basis.domain.knowledge.store import KnowledgeStore
@@ -20,11 +21,7 @@ from basis.interface.http.shared.deps import (
 )
 from basis.domain.ontology.hub.scoped_state import OntologyHubState
 from basis.domain.ontology.hub.create_write import create_ontology as create_ontology_write
-from basis.domain.ontology.browse.graph_read import (
-    get_entity_detail as get_entity_detail_read,
-    get_ontology_graph as get_ontology_graph_read,
-    search_entities as search_entities_read,
-)
+from basis.domain.ontology.browse.graph_read import get_entity_detail as get_entity_detail_read
 from basis.domain.ontology.hub.load_write import load_ontology as load_ontology_write
 from basis.domain.ontology.browse.preview_read import preview_ontology as preview_ontology_read
 from basis.domain.ontology.browse.health_read import ontology_health as ontology_health_read
@@ -57,6 +54,7 @@ from basis.domain.ontology.rdf_io import (
     fetch_ontology_url_bytes,
     parse_rdf_sync_for_basis,
 )
+from basis.interface.http.workspace.ontology.ontology_application_http import run_ontology_operation
 from basis.interface.http.workspace.ontology.ontology_hub_support import (
     audit_ontology_graph_write,
     min_role,
@@ -169,16 +167,19 @@ Create Ontology. Ontology hub (SKOS, alignments) via workspace graph session. Re
         """
 Search Entities. Ontology hub (SKOS, alignments) via workspace graph session. Requires workspace membership (session) or workspace API token with read/write scope. All paths are scoped to `{workspace_id}`.
         """
-        get_workspace_for_role(request, user, workspace_id, store, min_role("GET"))
-        session = ontology_session(request, workspace_id)
-        with OntologyHubState(request, workspace_id):
-            return await asyncio.to_thread(
-                search_entities_read,
-                session,
-                q=q,
-                entity_type=entity_type,
-                limit=limit,
-            )
+        args: dict[str, Any] = {"q": q, "limit": limit}
+        if entity_type:
+            args["entity_type"] = entity_type
+        payload = await run_ontology_operation(
+            request,
+            workspace_id,
+            user,
+            store,
+            ontology_ops.op_search_ontology_entities,
+            args,
+            http_method="GET",
+        )
+        return payload.get("results", [])
 
     router.add_api_route("/{workspace_id}/ontology/search", _ont_4_search_entities, methods=["GET"], name="_ont_4_search_entities")
 
@@ -192,16 +193,16 @@ Search Entities. Ontology hub (SKOS, alignments) via workspace graph session. Re
         """
 Get Ontology Graph. Ontology hub (SKOS, alignments) via workspace graph session. Requires workspace membership (session) or workspace API token with read/write scope. All paths are scoped to `{workspace_id}`.
         """
-        get_workspace_for_role(request, user, workspace_id, store, min_role("GET"))
-        session = ontology_session(request, workspace_id)
-        with OntologyHubState(request, workspace_id):
-            registry = request.app.state.ontology_registries[workspace_id]
-            return await asyncio.to_thread(
-                get_ontology_graph_read,
-                session,
-                registry,
-                uri=uri,
-            )
+        payload = await run_ontology_operation(
+            request,
+            workspace_id,
+            user,
+            store,
+            ontology_ops.op_get_ontology_graph,
+            {"uri": uri},
+            http_method="GET",
+        )
+        return payload.get("graph", payload)
 
     router.add_api_route("/{workspace_id}/ontology/graph", _ont_5_get_ontology_graph, methods=["GET"], name="_ont_5_get_ontology_graph")
 
@@ -393,7 +394,9 @@ Remove Ontology. Ontology hub (SKOS, alignments) via workspace graph session. Re
         with OntologyHubState(request, workspace_id):
             registry = request.app.state.ontology_registries[workspace_id]
             result = await asyncio.to_thread(remove_ontology_write, registry, ontology_uri)
-            save_graph(request, workspace_id, sync_ledger=False)
+            from basis.interface.http.shared.deps import rebuild_graph_projection
+
+            rebuild_graph_projection(request, workspace_id)
             audit_ontology_graph_write(
                 store, user, workspace_id, "workspace.graph.ontology_remove", {"ontology_uri": ontology_uri}
             )
@@ -415,7 +418,9 @@ Toggle Ontology. Ontology hub (SKOS, alignments) via workspace graph session. Re
         with OntologyHubState(request, workspace_id):
             registry = request.app.state.ontology_registries[workspace_id]
             result = await asyncio.to_thread(toggle_ontology_write, registry, ontology_uri)
-            save_graph(request, workspace_id, sync_ledger=False)
+            from basis.interface.http.shared.deps import rebuild_graph_projection
+
+            rebuild_graph_projection(request, workspace_id)
             return result
 
     router.add_api_route("/{workspace_id}/ontology/{ontology_uri:path}/toggle", _ont_15_toggle_ontology, methods=["PATCH"], name="_ont_15_toggle_ontology")

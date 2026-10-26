@@ -5607,6 +5607,152 @@
         "x-basis-auth": "session-or-workspace-api-token"
       }
     },
+    "/api/v1/workspaces/{workspace_id}/entity-types/assign": {
+      "post": {
+        "tags": [
+          "workspaces"
+        ],
+        "summary": "Assign Entity Types",
+        "description": "Assign rdf:type to subjects (ledger entity or graph node id). Editor only.",
+        "operationId": "assign_entity_types_api_v1_workspaces__workspace_id__entity_types_assign_post",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Workspace Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignEntityTypesRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Assign Entity Types Api V1 Workspaces  Workspace Id  Entity Types Assign Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-basis-surface": "workspaces",
+        "x-basis-auth": "session-or-workspace-api-token"
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/entity-types/clear": {
+      "post": {
+        "tags": [
+          "workspaces"
+        ],
+        "summary": "Clear Entity Types",
+        "description": "Clear rdf:type typed_facts for subjects. Editor only.",
+        "operationId": "clear_entity_types_api_v1_workspaces__workspace_id__entity_types_clear_post",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Workspace Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClearEntityTypesRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Clear Entity Types Api V1 Workspaces  Workspace Id  Entity Types Clear Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-basis-surface": "workspaces",
+        "x-basis-auth": "session-or-workspace-api-token"
+      }
+    },
     "/api/v1/workspaces/{workspace_id}/export": {
       "post": {
         "tags": [
@@ -6426,6 +6572,77 @@
         },
         "x-basis-surface": "workspaces",
         "x-basis-auth": "session-or-workspace-api-token"
+      },
+      "delete": {
+        "tags": [
+          "workspaces",
+          "workspaces"
+        ],
+        "summary": "Archive Graph Node",
+        "description": "Archive Graph Node. Soft-delete (status=archived) on the projected graph session. Editor only.",
+        "operationId": "archive_graph_node_api_v1_workspaces__workspace_id__graph_nodes__node_id__delete",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Workspace Id"
+            }
+          },
+          {
+            "name": "node_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Node Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Archive Graph Node Api V1 Workspaces  Workspace Id  Graph Nodes  Node Id  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-basis-surface": "workspaces",
+        "x-basis-auth": "session-or-workspace-api-token"
       }
     },
     "/api/v1/workspaces/{workspace_id}/graph/nodes/{node_id}/neighbors": {
@@ -6464,6 +6681,16 @@
               "type": "integer",
               "default": 1,
               "title": "Depth"
+            }
+          },
+          {
+            "name": "include_archived",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Include Archived"
             }
           },
           {
@@ -7982,6 +8209,80 @@
                   "type": "object",
                   "additionalProperties": true,
                   "title": "Response Search Ledger Entities Api V1 Workspaces  Workspace Id  Ledger Entities Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-basis-surface": "workspaces",
+        "x-basis-auth": "session-or-workspace-api-token"
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/ledger/entities/invalidate": {
+      "post": {
+        "tags": [
+          "workspaces",
+          "workspaces"
+        ],
+        "summary": "Invalidate Ledger Entities",
+        "description": "Invalidate Ledger Entities. Soft-delete entities and related ledger rows (temporal invalidated_at). Editor only.",
+        "operationId": "invalidate_ledger_entities_api_v1_workspaces__workspace_id__ledger_entities_invalidate_post",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Workspace Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InvalidateEntitiesRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Invalidate Ledger Entities Api V1 Workspaces  Workspace Id  Ledger Entities Invalidate Post"
                 }
               }
             }
@@ -11329,6 +11630,86 @@
         "x-basis-auth": "session-or-workspace-api-token"
       }
     },
+    "/api/v1/workspaces/{workspace_id}/ontology/versions/{ontology_uri}/restore-draft": {
+      "post": {
+        "tags": [
+          "workspaces"
+        ],
+        "summary": " Ont 29 Restore Version Draft",
+        "description": "Restore Version Draft. Build an editor draft that moves the published head back toward ``target_version`` (governance review required to publish). Requires workspace editor.",
+        "operationId": "_ont_29_restore_version_draft_api_v1_workspaces__workspace_id__ontology_versions__ontology_uri__restore_draft_post",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Workspace Id"
+            }
+          },
+          {
+            "name": "ontology_uri",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ontology Uri"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VersionRestoreRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response  Ont 29 Restore Version Draft Api V1 Workspaces  Workspace Id  Ontology Versions  Ontology Uri  Restore Draft Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-basis-surface": "workspaces",
+        "x-basis-auth": "session-or-workspace-api-token"
+      }
+    },
     "/api/v1/workspaces/{workspace_id}/ontology/{ontology_uri}": {
       "delete": {
         "tags": [
@@ -12412,6 +12793,159 @@
                   "type": "object",
                   "additionalProperties": true,
                   "title": "Response Create Remember Proposal Api V1 Workspaces  Workspace Id  Remember Proposals Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-basis-surface": "workspaces",
+        "x-basis-auth": "session-or-workspace-api-token"
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/reset": {
+      "get": {
+        "tags": [
+          "workspaces"
+        ],
+        "summary": "Preview Workspace Reset",
+        "description": "Preview counts before a workspace reset (owner or system admin).",
+        "operationId": "preview_workspace_reset_api_v1_workspaces__workspace_id__reset_get",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Workspace Id"
+            }
+          },
+          {
+            "name": "scopes",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Scopes"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Preview Workspace Reset Api V1 Workspaces  Workspace Id  Reset Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-basis-surface": "workspaces",
+        "x-basis-auth": "session-or-workspace-api-token"
+      },
+      "post": {
+        "tags": [
+          "workspaces"
+        ],
+        "summary": "Reset Workspace",
+        "description": "Reset workspace ledger and projections; keeps workspace id, members, and settings.",
+        "operationId": "reset_workspace_api_v1_workspaces__workspace_id__reset_post",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Workspace Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkspaceResetRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Reset Workspace Api V1 Workspaces  Workspace Id  Reset Post"
                 }
               }
             }
@@ -15175,6 +15709,30 @@
         "title": "ApproveReviewItemResponse",
         "description": "Approve review item (merge, import, remember, …) including optional governance decision id."
       },
+      "AssignEntityTypesRequest": {
+        "properties": {
+          "assignments": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "maxItems": 200,
+            "minItems": 1,
+            "title": "Assignments"
+          },
+          "replace_existing": {
+            "type": "boolean",
+            "title": "Replace Existing",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "assignments"
+        ],
+        "title": "AssignEntityTypesRequest"
+      },
       "BatchCreateTableMappingsRequest": {
         "properties": {
           "mappings": {
@@ -15451,6 +16009,24 @@
         "type": "object",
         "title": "BuildOAuthAuthorizeUrlRequest"
       },
+      "ClearEntityTypesRequest": {
+        "properties": {
+          "subject_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 200,
+            "minItems": 1,
+            "title": "Subject Ids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "subject_ids"
+        ],
+        "title": "ClearEntityTypesRequest"
+      },
       "ColumnMappingSpec": {
         "properties": {
           "column": {
@@ -15619,10 +16195,28 @@
       "CreateMappingRequest": {
         "properties": {
           "signature": {
-            "type": "string",
-            "maxLength": 512,
-            "minLength": 1,
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 512
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Signature"
+          },
+          "subject_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2048
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subject Id"
           },
           "target_uri": {
             "anyOf": [
@@ -15679,9 +16273,6 @@
           }
         },
         "type": "object",
-        "required": [
-          "signature"
-        ],
         "title": "CreateMappingRequest"
       },
       "CreateModelRequest": {
@@ -16547,6 +17138,21 @@
             ],
             "title": "Governance Ontology Uri",
             "description": "Ontology URI for Hub SHACL during conflict scans (empty clears)."
+          },
+          "entity_type_surface_phrases": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entity Type Surface Phrases",
+            "description": "Relation phrases treated as rdf:type for class mapping scans (e.g. 是, is_a). Omit to keep stored value; empty list clears override."
           }
         },
         "type": "object",
@@ -16655,6 +17261,12 @@
             ],
             "title": "At",
             "description": "Optional temporal instant (ISO). When set, results are limited to nodes active at that instant."
+          },
+          "include_archived": {
+            "type": "boolean",
+            "title": "Include Archived",
+            "description": "When true, include projection nodes with status=archived in search results.",
+            "default": false
           }
         },
         "type": "object",
@@ -16803,6 +17415,24 @@
           "doc_id"
         ],
         "title": "IngestTextRequest"
+      },
+      "InvalidateEntitiesRequest": {
+        "properties": {
+          "entity_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 200,
+            "minItems": 1,
+            "title": "Entity Ids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "entity_ids"
+        ],
+        "title": "InvalidateEntitiesRequest"
       },
       "InvokeConnectorPrimitiveRequest": {
         "properties": {
@@ -18766,6 +19396,30 @@
         ],
         "title": "VersionCompareRequest"
       },
+      "VersionRestoreRequest": {
+        "properties": {
+          "target_version": {
+            "type": "string",
+            "title": "Target Version"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary"
+          }
+        },
+        "type": "object",
+        "required": [
+          "target_version"
+        ],
+        "title": "VersionRestoreRequest"
+      },
       "WebhookIngestRequest": {
         "properties": {
           "title": {
@@ -18808,6 +19462,41 @@
           "text"
         ],
         "title": "WebhookIngestRequest"
+      },
+      "WorkspaceResetRequest": {
+        "properties": {
+          "confirmation": {
+            "type": "string",
+            "title": "Confirmation",
+            "description": "Must match the workspace display name exactly."
+          },
+          "async": {
+            "type": "boolean",
+            "title": "Async",
+            "description": "Run reset in background; poll GET …/ingest/jobs/{job_id}.",
+            "default": true
+          },
+          "scopes": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scopes",
+            "description": "Subset to clear: knowledge, graph, connectors, reasoning, governance."
+          }
+        },
+        "type": "object",
+        "required": [
+          "confirmation"
+        ],
+        "title": "WorkspaceResetRequest"
       },
       "basis__domain__ontology__hub__hub_models__CreateOntologyRequest": {
         "properties": {

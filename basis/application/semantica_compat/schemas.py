@@ -98,6 +98,7 @@ class QueryGraphInput(ExtraAllowedModel):
     query: str | None = None
     node_type: str | None = None
     limit: int | None = Field(default=None, ge=0, le=500)
+    include_archived: bool = False
 
 
 class UpdateNodeInput(ExtraAllowedModel):

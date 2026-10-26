@@ -296,3 +296,20 @@ def test_temporal_graph_projection_valid_until_filters_invalidated_edges_and_nod
     diff_ent = diff_graph_states(state_after_stmt, state_after_entity)
     assert beta in diff_ent["removed_nodes"]
     store.close()
+
+
+def test_rdf_type_projects_to_existing_class_node_not_literal(tmp_path: Path) -> None:
+    workspace_id, store = _workspace_store(tmp_path)
+    class_uri = "http://example.org/trellis#Artifact"
+    entity_id = store.create_entity(workspace_id, canonical_label="prd-md")
+    preserve = GraphSession()
+    preserve.add_node(class_uri, "owl:Class", content="Artifact")
+
+    from basis.domain.knowledge.services.entity_type_assign import assign_entity_type
+
+    assign_entity_type(store, workspace_id, subject_id=entity_id, class_uri=class_uri)
+    session = rebuild_graph_from_ledger(store, workspace_id, preserve_from=preserve)
+    edges = graph_projection_signature(session)["edges"]
+    assert any(src == entity_id and tgt == class_uri for src, tgt, _label in edges)
+    assert not any(node_id.startswith("typed:") for node_id in session.graph.nodes)
+    store.close()

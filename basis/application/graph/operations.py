@@ -7,6 +7,7 @@ from typing import Any
 from basis.application.kernel import WorkspaceCoreContext
 from basis.application.kernel import graph_search_max_limit
 from basis.domain.graph.reads.derived_neighbors import merge_derived_fact_neighbors
+from basis.domain.graph.reads.graph_neighbors_merge import merge_session_edge_neighbors
 from basis.domain.graph.reads.read import find_path, list_neighbors, search_nodes
 
 
@@ -17,6 +18,7 @@ def op_graph_search(ctx: WorkspaceCoreContext, args: dict[str, Any]) -> dict[str
     limit = int(args.get("limit", 20))
     max_limit = graph_search_max_limit(ctx, args, limit)
     at = str(args.get("at") or "").strip() or None
+    include_archived = bool(args.get("include_archived"))
     runtime = ctx.graph_runtime()
     results = search_nodes(
         runtime,
@@ -24,6 +26,7 @@ def op_graph_search(ctx: WorkspaceCoreContext, args: dict[str, Any]) -> dict[str
         limit=limit,
         max_limit=max_limit,
         at=at,
+        include_archived=include_archived,
     )
     engine = "explorer" if runtime.adapter is not None else "snapshot"
     payload: dict[str, Any] = {"results": results, "engine": engine}
@@ -52,7 +55,15 @@ def op_neighbors(ctx: WorkspaceCoreContext, args: dict[str, Any]) -> dict[str, A
     if not node_id:
         return {"error": "node_id is required"}
     depth = int(args.get("depth", 1))
-    neighbors = list_neighbors(ctx.graph_runtime(), node_id, depth=depth)
+    include_archived = bool(args.get("include_archived"))
+    runtime = ctx.graph_runtime()
+    neighbors = list_neighbors(
+        runtime,
+        node_id,
+        depth=depth,
+        include_archived=include_archived,
+    )
+    neighbors = merge_session_edge_neighbors(runtime, node_id, neighbors)
     neighbors = merge_derived_fact_neighbors(
         ctx.knowledge,
         ctx.workspace.id,

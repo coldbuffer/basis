@@ -82,7 +82,11 @@ export default {
       settings_redirect_button: "Open data quality",
       edit_title: "Scheduled check settings",
       edit_desc: "Enable background passes and set thresholds for this workspace.",
-      toast_saved: "Governor settings saved."
+      toast_saved: "Governor settings saved.",
+      type_phrases_label: "Entity type relation phrases",
+      type_phrases_hint:
+        "Statements using these surface phrases (one per line) are candidates for class mapping scans, e.g. 是 or is_a. Also used on the Mappings page.",
+      type_phrases_placeholder: "是\nis_a\nrdf:type"
     }
   },
   org_sso: {
@@ -176,6 +180,22 @@ export default {
     danger: "Danger zone",
     my_role: "My role",
     delete_workspace: "Delete workspace",
-    delete_confirm: "Delete this workspace? This cannot be undone."
+    delete_confirm: "Delete this workspace? This cannot be undone.",
+    reset_workspace: "Reset workspace",
+    reset_workspace_desc:
+      "Clear all documents, ledger data, graph projection, and ontology hub. Workspace ID, members, and settings are kept.",
+    reset_workspace_confirm_label: "Type the workspace name to confirm",
+    reset_workspace_preview_loading: "Loading counts…",
+    reset_workspace_preview:
+      "Will remove {documents} documents, {entities} entities, {statements} statements, {chunks} chunks.",
+    reset_workspace_scopes_label: "What to clear",
+    reset_workspace_scope_knowledge: "Documents, entities, ledger, search index",
+    reset_workspace_scope_graph: "Graph projection (rebuild after knowledge clear)",
+    reset_workspace_scope_connectors: "Connectors and ingest sources",
+    reset_workspace_scope_reasoning: "Reasoning rules",
+    reset_workspace_scope_governance: "Governance config (ontology hub settings)",
+    reset_workspace_export_before:
+      "Export a graph pack before resetting if you need a backup.",
+    reset_workspace_export_link: "Open graph export"
   }
 } as const;

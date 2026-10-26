@@ -312,16 +312,21 @@ def op_export_graph(ctx: WorkspaceCoreContext, args: dict[str, Any]) -> dict[str
 
 
 def op_get_graph_summary(ctx: WorkspaceCoreContext, _args: dict[str, Any]) -> dict[str, Any]:
+    from basis.domain.graph.reads.projection_visibility import count_projection_nodes
+
     workspace_summary = workspace_ops.op_describe_workspace(ctx, {})
     graph = context_graph(ctx)
     try:
-        node_count = len(list(graph.find_nodes()))
+        runtime = ctx.graph_runtime()
+        total_nodes, active_nodes, archived_nodes = count_projection_nodes(runtime)
         decisions = graph.find_nodes(node_type="decision")
         decision_count = len(list(decisions))
-        stats = ctx.graph_runtime().basis.stats()
+        stats = runtime.basis.stats()
         return {
             **workspace_summary,
-            "node_count": node_count,
+            "node_count": total_nodes,
+            "node_count_active": active_nodes,
+            "node_count_archived": archived_nodes,
             "edge_count": stats.get("edge_count", 0),
             "decision_count": decision_count,
             "graph_ready": True,
@@ -346,7 +351,14 @@ def op_query_graph(ctx: WorkspaceCoreContext, args: dict[str, Any]) -> dict[str,
             if not node_id:
                 return {"error": "node_id is required"}
             depth = min(max(int(args.get("depth", 1)), 1), 5)
-            payload = graph_ops.op_neighbors(ctx, {"node_id": node_id, "depth": depth})
+            payload = graph_ops.op_neighbors(
+                ctx,
+                {
+                    "node_id": node_id,
+                    "depth": depth,
+                    "include_archived": bool(args.get("include_archived")),
+                },
+            )
             if "error" in payload:
                 return payload
             return {
@@ -362,7 +374,11 @@ def op_query_graph(ctx: WorkspaceCoreContext, args: dict[str, Any]) -> dict[str,
             limit = int(args.get("limit", 50))
             payload = graph_ops.op_graph_search(
                 ctx,
-                {"query": query, "limit": limit},
+                {
+                    "query": query,
+                    "limit": limit,
+                    "include_archived": bool(args.get("include_archived")),
+                },
             )
             if "error" in payload:
                 return payload

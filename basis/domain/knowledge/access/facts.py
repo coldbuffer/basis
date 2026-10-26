@@ -30,6 +30,23 @@ class FactsAccess:
                 self._store._conn, workspace_id, limit
             )
 
+    def list_typed_facts_for_subject(
+        self,
+        workspace_id: str,
+        subject_id: str,
+        *,
+        limit: int = 50,
+    ) -> list[dict[str, Any]]:
+        limit = min(max(1, limit), 100)
+        subject = str(subject_id or "").strip()
+        if not subject:
+            return []
+        with self._store._lock:
+            self._store._assert_workspace_exists(workspace_id)
+            return typed_persist.list_typed_facts_for_subject(
+                self._store._conn, workspace_id, subject, limit=limit
+            )
+
     def insert_derived_fact(
         self,
         workspace_id: str,

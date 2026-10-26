@@ -34,6 +34,7 @@ import {
 import type { GraphLoadProgress, GraphLoadSummary } from '../lib/types.js';
 import { throwIfWsNotOk } from '@/lib/workspace/ws-api-error';
 import { workspaceOpenApiResponse } from '@/lib/openapi/client.js';
+import { isArchivedProjectionNode } from '../lib/graph-include-archived-pref.js';
 
 const SEMANTIC_COLOR_FIELDS = [
   "community",
@@ -371,6 +372,7 @@ async function fetchAllNodes(
   onProgress?: (progress: GraphLoadProgress) => void,
   locale: GraphScreenLocale = "en",
   loadMaxNodes?: number | null,
+  includeArchivedProjection = false,
 ): Promise<{ nodes: ApiNode[]; truncated: boolean; total: number | null }> {
   let cursor: string | null = null;
   const collected: ApiNode[] = [];
@@ -398,8 +400,11 @@ async function fetchAllNodes(
     }
 
     total = data.total ?? total;
-    const remaining = maxNodes === null ? data.nodes.length : Math.max(0, maxNodes - collected.length);
-    collected.push(...data.nodes.slice(0, remaining));
+    const pageNodes = data.nodes.filter(
+      (node) => includeArchivedProjection || !isArchivedProjectionNode(node.properties),
+    );
+    const remaining = maxNodes === null ? pageNodes.length : Math.max(0, maxNodes - collected.length);
+    collected.push(...pageNodes.slice(0, remaining));
     if (maxNodes !== null && collected.length >= maxNodes) {
       if (data.next_cursor || (total !== null && total > collected.length)) {
         truncated = true;
@@ -528,6 +533,7 @@ interface UseLoadGraphOptions {
   copyLocale?: GraphScreenLocale;
   loadMaxNodes?: number | null;
   loadMaxEdges?: number | null;
+  includeArchivedProjection?: boolean;
   onGraphReady?: (summary: GraphLoadSummary) => void;
   onProgress?: (progress: GraphLoadProgress) => void;
 }
@@ -539,12 +545,20 @@ export function useLoadGraph(options: UseLoadGraphOptions = {}) {
     copyLocale = "en",
     loadMaxNodes = null,
     loadMaxEdges = null,
+    includeArchivedProjection = false,
     onGraphReady,
     onProgress,
   } = options;
 
   return useQuery<GraphLoadSummary>({
-    queryKey: ["graph", "full-load", workspaceId ?? "standalone", loadMaxNodes, loadMaxEdges],
+    queryKey: [
+      "graph",
+      "full-load",
+      workspaceId ?? "standalone",
+      loadMaxNodes,
+      loadMaxEdges,
+      includeArchivedProjection,
+    ],
     enabled,
     staleTime: Infinity,
     retry: 0,
@@ -561,7 +575,14 @@ export function useLoadGraph(options: UseLoadGraphOptions = {}) {
         message: graphLoadPhaseTitle(copyLocale, "bootstrapping"),
       }));
 
-      const nodeFetch = await fetchAllNodes(signal, workspaceId, onProgress, copyLocale, loadMaxNodes);
+      const nodeFetch = await fetchAllNodes(
+        signal,
+        workspaceId,
+        onProgress,
+        copyLocale,
+        loadMaxNodes,
+        includeArchivedProjection,
+      );
       const fetchedNodes = nodeFetch.nodes;
       const nodeIds = new Set(fetchedNodes.map((node) => node.id));
       const edgeFetch = await fetchAllEdges(
@@ -823,6 +844,9 @@ export function useLoadGraph(options: UseLoadGraphOptions = {}) {
 export function useReloadGraph() {
   const queryClient = useQueryClient();
   return useCallback(() => {
-    void queryClient.invalidateQueries({ queryKey: ["graph", "full-load"] });
+    void queryClient.invalidateQueries({
+      queryKey: ["graph", "full-load"],
+      refetchType: "active",
+    });
   }, [queryClient]);
 }

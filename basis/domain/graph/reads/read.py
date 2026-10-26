@@ -28,6 +28,18 @@ def get_node(runtime: GraphRuntime, node_id: str) -> dict[str, Any] | None:
     node = runtime.basis.graph.find_node(node_id)
     if node is None:
         return None
+    if isinstance(node, dict):
+        props: dict[str, Any] = {}
+        if isinstance(node.get("properties"), dict):
+            props.update(node["properties"])
+        if isinstance(node.get("metadata"), dict):
+            props.update(node["metadata"])
+        return {
+            "id": str(node.get("id", node_id)),
+            "type": str(node.get("type", "")),
+            "content": str(node.get("content") or ""),
+            "properties": props,
+        }
     content = node.content or ""
     return {
         "id": node.node_id,
@@ -42,13 +54,18 @@ def list_neighbors(
     node_id: str,
     *,
     depth: int = 1,
+    include_archived: bool = False,
 ) -> list[dict[str, Any]]:
+    from basis.domain.graph.reads.projection_visibility import filter_neighbor_rows
+
     depth = min(max(1, depth), 5)
     if runtime.adapter is not None:
         raw = runtime.adapter.get_neighbors(node_id, depth)
-        return [_normalize_neighbor(item) for item in raw]
-    raw = runtime.basis.graph.get_neighbors(node_id, hops=depth)
-    return [_normalize_neighbor(item) for item in raw]
+        rows = [_normalize_neighbor(item) for item in raw]
+    else:
+        raw = runtime.basis.graph.get_neighbors(node_id, hops=depth)
+        rows = [_normalize_neighbor(item) for item in raw]
+    return filter_neighbor_rows(runtime, rows, include_archived=include_archived)
 
 
 def _build_adjacency(session: Any, *, directed: bool) -> dict[str, list[str]]:
@@ -130,6 +147,7 @@ def search_nodes(
     limit: int = 20,
     max_limit: int = GRAPH_NODE_SEARCH_MAX_LIMIT,
     at: str | None = None,
+    include_archived: bool = False,
 ) -> list[dict[str, Any]]:
     query = query.strip()
     if not query:
@@ -149,8 +167,12 @@ def search_nodes(
     if results is None:
         q = query.lower()
         results = []
+        from basis.domain.graph.reads.projection_visibility import properties_archived
+
         for node in runtime.basis.graph.nodes.values():
             if active_ids is not None and node.node_id not in active_ids:
+                continue
+            if not include_archived and properties_archived(node.properties):
                 continue
             label = (node.content or "") + str(node.properties)
             if q in node.node_id.lower() or q in label.lower():
@@ -166,10 +188,14 @@ def search_nodes(
                 )
             if len(results) >= limit:
                 break
+    from basis.domain.graph.reads.projection_visibility import filter_search_results
+
     if active_ids is not None:
         filtered = [r for r in results if r.get("node", {}).get("id") in active_ids]
-        return filtered[:limit]
-    return results[:limit]
+        results = filtered[:limit]
+    else:
+        results = results[:limit]
+    return filter_search_results(runtime, results, include_archived=include_archived)
 
 
 def paginate_edges(

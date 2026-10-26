@@ -23,6 +23,12 @@ export default {
     col_description: "描述",
     col_actions: "操作",
     view_facts: "查看事实",
+    invalidate_entity: "失效实体",
+    invalidate_entity_title: "失效实体（软删除）",
+    invalidate_entity_description:
+      "实体「{label}」及其陈述、类型事实与派生事实将在账本上标记为已失效，并重建图投影。这不是硬删除，无法像删除那样彻底清除记录。",
+    invalidate_entity_confirm: "确认失效",
+    invalidate_entity_success: "实体已失效，投影已重建。",
     delete_entity: "删除实体",
     delete_entity_title: "删除实体",
     delete_entity_description: "将删除实体「{label}」。下列陈述会一并删除，且不可恢复。",

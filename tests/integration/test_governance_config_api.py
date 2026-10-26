@@ -35,3 +35,19 @@ def test_governance_config_get_put(tmp_path: Path) -> None:
     assert body["governor_enabled"] is True
     assert body["governor_interval_minutes"] == 120
     assert body["governor_confidence_min"] == 0.6
+    assert "entity_type_surface_phrases" in body
+    assert "是" in body["entity_type_surface_phrases"]
+
+    put_phrases = client.put(
+        f"/api/v1/workspaces/{workspace_id}/governance/config",
+        headers=headers,
+        json={
+            "governor_enabled": True,
+            "governor_interval_minutes": 120,
+            "governor_confidence_min": 0.6,
+            "entity_type_surface_phrases": ["typed_as", "是"],
+        },
+    )
+    assert put_phrases.status_code == 200
+    phrases = put_phrases.json()["config"]["entity_type_surface_phrases"]
+    assert phrases == ["typed_as", "是"]

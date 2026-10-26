@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 from fastapi import FastAPI
 
 from basis.domain.graph.projection.projector import apply_rebuild_to_session
+from basis.domain.ontology.hub.hub_persistence import read_registry_snapshot
 from basis.domain.knowledge.schedulers.connector_mapping_poll_due import is_connector_mapping_poll_due
 from basis.infra.runtime.observability.log_context import correlation_log_extra
 
@@ -27,7 +28,12 @@ def _rebuild_graph_projection_for_app(app: FastAPI, workspace_id: str) -> dict:
         stale = meta is None or meta.projection_revision < ledger["revision"]
         has_ledger_docs = bool(knowledge.list_ready_documents_for_projection(workspace_id))
         if stale and (ledger["revision"] > 0 or has_ledger_docs):
-            apply_rebuild_to_session(knowledge, workspace_id, session)
+            apply_rebuild_to_session(
+                knowledge,
+                workspace_id,
+                session,
+                ontology_registry=read_registry_snapshot(persistence, workspace_id),
+            )
             ledger = knowledge.get_projection_state(workspace_id)
             persistence.save(
                 workspace_id,
@@ -36,7 +42,12 @@ def _rebuild_graph_projection_for_app(app: FastAPI, workspace_id: str) -> dict:
                 schema_version=ledger["schema_version"],
             )
         graphs[workspace_id] = session
-    meta = apply_rebuild_to_session(knowledge, workspace_id, session)
+    meta = apply_rebuild_to_session(
+        knowledge,
+        workspace_id,
+        session,
+        ontology_registry=read_registry_snapshot(persistence, workspace_id),
+    )
     ledger = knowledge.get_projection_state(workspace_id)
     persistence.save(
         workspace_id,

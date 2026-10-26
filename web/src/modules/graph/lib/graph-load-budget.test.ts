@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   alignLoadBudgetWithLoaded,
   clampLoadBudget,
+  defaultLoadBudget,
   loadBudgetSliderBounds,
   mergeCatalogTotals,
 } from "./graph-load-budget";
@@ -48,6 +49,15 @@ describe("alignLoadBudgetWithLoaded", () => {
       { nodes: 200, edges: 400 },
       true,
     )).toEqual({ maxNodes: 200, maxEdges: 400 });
+  });
+});
+
+describe("defaultLoadBudget", () => {
+  it("uses the full catalog ceiling when totals are known", () => {
+    expect(defaultLoadBudget({ nodeTotal: 434, edgeTotal: 800 })).toEqual({
+      maxNodes: 434,
+      maxEdges: 800,
+    });
   });
 });
 

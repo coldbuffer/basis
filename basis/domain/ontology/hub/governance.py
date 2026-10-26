@@ -73,6 +73,7 @@ async def publish_proposal(
     drafts: dict[str, Any],
     versions: dict[str, list[Any]],
     proposal_id: str,
+    registry: dict[str, Any] | None = None,
 ) -> Any:
     return await asyncio.to_thread(
         publish_proposal_sync,
@@ -81,6 +82,7 @@ async def publish_proposal(
         drafts,
         versions,
         proposal_id,
+        registry,
     )
 
 

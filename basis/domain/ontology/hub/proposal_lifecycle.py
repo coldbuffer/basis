@@ -7,12 +7,11 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any
 
-from basis.domain.ontology.hub.draft_apply import (
-    apply_removals,
-    as_draft_mapping,
-    materialize_restrictions,
-)
+from basis.domain.ontology.hub.draft_structure import structure_change_summary
 from basis.domain.ontology.hub.proposal_store import _get_field, _set_field
+from basis.domain.ontology.hub.proposal_shacl import validate_proposal_shacl
+from basis.domain.ontology.hub.registry_ensure import ensure_ontology_registry_on_publish
+from basis.domain.ontology.hub.schema_sync import apply_ontology_diff_to_session
 from basis.domain.errors import AdminError
 
 logger = logging.getLogger(__name__)
@@ -53,21 +52,8 @@ def _diff_dict(diff: Any, key: str) -> dict[str, Any]:
     return {}
 
 
-def _label_for_uri(diff: Any, uri: str, modified_key: str) -> str:
-    modified = _diff_dict(diff, modified_key)
-    entry = modified.get(uri) or {}
-    label = entry.get("label")
-    if label is not None and str(label).strip():
-        return str(label).strip()
-    return _label_from_uri(uri)
-
-
 def _session_store(session: Any) -> Any:
     return session.graph.store if hasattr(session.graph, "store") else None
-
-
-def _label_from_uri(uri: str) -> str:
-    return uri.rsplit("/", 1)[-1].rsplit("#", 1)[-1]
 
 
 def submit_proposal(
@@ -75,6 +61,7 @@ def submit_proposal(
     drafts: dict[str, Any],
     proposals: dict[str, Any],
     body: Any,
+    registry: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     if body.draft_id not in drafts:
         raise AdminError(404, "not_found", "Draft not found.")
@@ -143,8 +130,13 @@ def submit_proposal(
                 logger.warning("SHACL pre-validation failed: %s", shacl_exc)
                 shacl_validation = {"status": "error", "error": str(shacl_exc)}
         else:
-            shacl_validation = {"status": "skipped", "reason": "No store configured"}
+            shacl_validation = validate_proposal_shacl(
+                session,
+                registry,
+                str(body.ontology_uri),
+            )
 
+        structure_summary = structure_change_summary(diff)
         impact_analysis = {
             "diff": diff_result,
             "validation_results": validation_results,
@@ -154,6 +146,7 @@ def submit_proposal(
             + len(_diff_list(diff, "removed_properties")),
             "restriction_changes": len(_diff_list(diff, "added_restrictions"))
             + len(_diff_list(diff, "removed_restrictions")),
+            **structure_summary,
         }
     except Exception as exc:
         logger.warning("Impact analysis failed: %s", exc)
@@ -192,6 +185,7 @@ def publish_proposal(
     drafts: dict[str, Any],
     versions: dict[str, list[Any]],
     proposal_id: str,
+    registry: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     if proposal_id not in proposals:
         raise AdminError(404, "not_found", "Proposal not found.")
@@ -248,133 +242,34 @@ def publish_proposal(
         logger.warning("VersionManager.create_version failed: %s", exc)
         raise AdminError(500, "internal_error", f"Version creation failed: {exc}") from exc
 
-    nodes_removed, edges_removed = apply_removals(session, diff, diff_list=_diff_list)
-
-    nodes_added = 0
-    edges_added = 0
-
-    class_nodes = []
-    for class_uri in _diff_list(diff, "added_classes"):
-        label = _label_for_uri(diff, class_uri, "modified_classes")
-        class_nodes.append(
-            {
-                "id": class_uri,
-                "type": "owl:Class",
-                "content": label,
-                "properties": {"rdfs:label": label},
-            }
-        )
-    modified_classes = _diff_dict(diff, "modified_classes")
-    added_class_set = set(_diff_list(diff, "added_classes"))
-    for class_uri, changes in modified_classes.items():
-        if class_uri in added_class_set:
-            continue
-        label = changes.get("label")
-        if label is None or not str(label).strip():
-            continue
-        label_str = str(label).strip()
-        class_nodes.append(
-            {
-                "id": class_uri,
-                "type": "owl:Class",
-                "content": label_str,
-                "properties": {"rdfs:label": label_str},
-            }
-        )
-    if class_nodes:
-        nodes_added += session.add_nodes(class_nodes)
-
-    property_nodes = []
-    for prop_uri in _diff_list(diff, "added_properties"):
-        label = _label_for_uri(diff, prop_uri, "modified_properties")
-        property_nodes.append(
-            {
-                "id": prop_uri,
-                "type": "owl:ObjectProperty",
-                "content": label,
-                "properties": {"rdfs:label": label},
-            }
-        )
-    modified_properties = _diff_dict(diff, "modified_properties")
-    added_property_set = set(_diff_list(diff, "added_properties"))
-    for prop_uri, changes in modified_properties.items():
-        if prop_uri in added_property_set:
-            continue
-        label = changes.get("label")
-        if label is None or not str(label).strip():
-            continue
-        label_str = str(label).strip()
-        property_nodes.append(
-            {
-                "id": prop_uri,
-                "type": "owl:ObjectProperty",
-                "content": label_str,
-                "properties": {"rdfs:label": label_str},
-            }
-        )
-    if property_nodes:
-        nodes_added += session.add_nodes(property_nodes)
-
-    individual_nodes = []
-    for ind_uri in _diff_list(diff, "added_individuals"):
-        label = _label_from_uri(ind_uri)
-        individual_nodes.append(
-            {
-                "id": ind_uri,
-                "type": "owl:NamedIndividual",
-                "content": label,
-                "properties": {"rdfs:label": label},
-            }
-        )
-    if individual_nodes:
-        nodes_added += session.add_nodes(individual_nodes)
-
-    restriction_nodes, restriction_edges = materialize_restrictions(
-        ontology_uri,
-        _diff_list(diff, "added_restrictions"),
-    )
-    if restriction_nodes:
-        nodes_added += session.add_nodes(restriction_nodes)
-
-    edges_to_add: list[dict[str, Any]] = list(restriction_edges)
-    for raw_edge in _diff_list(diff, "added_edges"):
-        edge_map = as_draft_mapping(raw_edge)
-        source = str(edge_map.get("source", "")).strip()
-        target = str(edge_map.get("target", "")).strip()
-        edge_type = str(edge_map.get("type", "")).strip()
-        if not source or not target or not edge_type:
-            continue
-        edges_to_add.append(
-            {
-                "source": source,
-                "target": target,
-                "type": edge_type,
-                "weight": float(edge_map.get("weight", 1.0) or 1.0),
-            }
-        )
-
-    for raw_axiom in _diff_list(diff, "added_axioms"):
-        axiom_map = as_draft_mapping(raw_axiom)
-        axiom_type = str(axiom_map.get("type", "")).strip()
-        subject = str(axiom_map.get("subject") or axiom_map.get("source") or "").strip()
-        object_uri = str(axiom_map.get("object") or axiom_map.get("value") or "").strip()
-        if axiom_type == "subClassOf" and subject and object_uri:
-            edges_to_add.append(
-                {
-                    "source": subject,
-                    "target": object_uri,
-                    "type": "rdfs:subClassOf",
-                    "weight": 1.0,
-                }
-            )
-
-    if edges_to_add:
-        _, edges_added = session.add_nodes_and_edges([], edges_to_add)
+    applied = apply_ontology_diff_to_session(session, ontology_uri, diff)
+    nodes_added = int(applied.get("nodes_added", 0))
+    edges_added = int(applied.get("edges_added", 0))
+    nodes_removed = int(applied.get("nodes_removed", 0))
+    edges_removed = int(applied.get("edges_removed", 0))
 
     _set_field(proposal, "state", "published")
     _set_field(proposal, "updated_at", datetime.now(timezone.utc).isoformat())
 
-    return {
+    registry_meta: dict[str, Any] | None = None
+    if registry is not None:
+        from basis.domain.ontology.hub.registry_ensure import _registry_key
+
+        reg_key = _registry_key(registry, ontology_uri) or ontology_uri
+        entry = registry.get(reg_key)
+        if isinstance(entry, dict):
+            entry["version"] = version_str
+        elif entry is not None:
+            _set_field(entry, "version", version_str)
+        registry_meta = ensure_ontology_registry_on_publish(
+            session,
+            registry,
+            ontology_uri,
+            proposal=proposal,
+            draft=draft,
+        )
+
+    payload: dict[str, Any] = {
         "status": "published",
         "proposal_id": proposal_id,
         "version": version_str,
@@ -383,3 +278,6 @@ def publish_proposal(
         "nodes_removed": nodes_removed,
         "edges_removed": edges_removed,
     }
+    if registry_meta is not None:
+        payload["registry"] = registry_meta
+    return payload

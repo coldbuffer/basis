@@ -4,6 +4,7 @@ export default {
     search: "Search",
     chunk_placeholder: "Search document chunks…",
     graph_placeholder: "Search graph nodes…",
+    include_archived_graph: "Include archived projection nodes",
     entity_placeholder: "Search ledger entities…",
     scope_label: "Search in",
     scope_documents: "Documents",

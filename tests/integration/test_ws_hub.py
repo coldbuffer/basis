@@ -1,4 +1,5 @@
 import asyncio
+import threading
 
 from basis.domain.tenancy.realtime.hub import GraphWsHub
 
@@ -70,5 +71,37 @@ def test_broadcast_only_reaches_target_workspace_room() -> None:
         assert len(a.sent) == 1
         assert a.sent[0]["workspace_id"] == "kb-a"
         assert b.sent == []
+
+    asyncio.run(run())
+
+
+def test_try_broadcast_without_event_loop_is_noop() -> None:
+    hub = GraphWsHub()
+    hub.try_broadcast("kb-1", {"type": "projection_updated", "workspace_id": "kb-1"})
+
+
+def test_try_broadcast_from_worker_thread() -> None:
+    async def run() -> None:
+        hub = GraphWsHub()
+        socket = _FakeWebSocket()
+        await hub.connect("kb-1", socket, "user-a")
+
+        done = threading.Event()
+
+        def worker() -> None:
+            hub.try_broadcast(
+                "kb-1",
+                {"type": "projection_updated", "workspace_id": "kb-1", "projection_revision": 9},
+            )
+            done.set()
+
+        threading.Thread(target=worker).start()
+        for _ in range(50):
+            if socket.sent:
+                break
+            await asyncio.sleep(0.02)
+        assert done.is_set()
+        assert socket.sent[-1]["type"] == "projection_updated"
+        assert socket.sent[-1]["projection_revision"] == 9
 
     asyncio.run(run())

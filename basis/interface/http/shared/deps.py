@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from fastapi import Header, HTTPException, Request
 
 from basis.domain.errors import AdminError
@@ -62,6 +64,16 @@ def graph_projection_bindings(request: Request) -> GraphProjectionBindings:
             },
         )
 
+    def _load_ontology_registry(workspace_id: str) -> dict[str, Any] | None:
+        from basis.domain.ontology.hub.hub_persistence import read_registry_snapshot
+        from basis.domain.ontology.hub.scoped_state import OntologyHubState
+
+        persistence = get_graph_persistence(request)
+        if read_registry_snapshot(persistence, workspace_id) is None:
+            return None
+        with OntologyHubState(request, workspace_id):
+            return dict(request.app.state.ontology_registries.get(workspace_id) or {})
+
     return GraphProjectionBindings(
         graphs=request.app.state.graphs,
         persistence=get_graph_persistence(request),
@@ -69,6 +81,7 @@ def graph_projection_bindings(request: Request) -> GraphProjectionBindings:
         graph_session_registry=get_graph_session_registry(request),
         persist_ontology_hub=lambda workspace_id: persist_ontology_hub(request, workspace_id),
         broadcast_projection=_broadcast,
+        load_ontology_registry=_load_ontology_registry,
     )
 
 

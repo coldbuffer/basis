@@ -13,64 +13,21 @@ def _null_workspace_supersedes(conn: Any, table: str, workspace_id: str) -> None
     conn.execute(f"UPDATE {table} SET supersedes_id = NULL WHERE workspace_id = ?", (workspace_id,))
 
 
-def purge_workspace_ledger_data(conn: Any, workspace_id: str) -> None:
+def purge_workspace_ledger_data(
+    conn: Any,
+    workspace_id: str,
+    *,
+    retain_job_ids: tuple[str, ...] = (),
+) -> None:
     """Remove workspace-scoped ledger rows so ``workspaces`` can be deleted."""
-    conn.execute(
-        """
-        DELETE FROM chat_citations
-        WHERE message_id IN (SELECT id FROM chat_messages WHERE workspace_id = ?)
-        """,
-        (workspace_id,),
+    from basis.domain.knowledge.persistence.sql_workspace_reset_purge import (
+        purge_workspace_reset_data,
     )
-    _delete_workspace_rows(conn, "chat_messages", workspace_id)
-    _delete_workspace_rows(conn, "chat_sessions", workspace_id)
+    from basis.domain.knowledge.services.workspace_reset_scopes import ALL_RESET_SCOPES
 
-    _delete_workspace_rows(conn, "entity_sync_outbox", workspace_id)
-    _delete_workspace_rows(conn, "entity_external_refs", workspace_id)
-
-    conn.execute(
-        """
-        DELETE FROM fact_derivations
-        WHERE derived_fact_id IN (SELECT id FROM derived_facts WHERE workspace_id = ?)
-           OR (
-                premise_kind = 'statement'
-                AND premise_id IN (SELECT id FROM statements WHERE workspace_id = ?)
-           )
-        """,
-        (workspace_id, workspace_id),
+    purge_workspace_reset_data(
+        conn,
+        workspace_id,
+        ALL_RESET_SCOPES,
+        retain_job_ids=retain_job_ids,
     )
-    _delete_workspace_rows(conn, "derived_facts", workspace_id)
-
-    for table in ("agent_decisions", "statements", "mappings", "typed_facts"):
-        _null_workspace_supersedes(conn, table, workspace_id)
-
-    _delete_workspace_rows(conn, "review_items", workspace_id)
-    _delete_workspace_rows(conn, "agent_decisions", workspace_id)
-    _delete_workspace_rows(conn, "entity_merges", workspace_id)
-    _delete_workspace_rows(conn, "statement_evidence", workspace_id)
-    _delete_workspace_rows(conn, "statement_qualifiers", workspace_id)
-    _delete_workspace_rows(conn, "time_mentions", workspace_id)
-    _delete_workspace_rows(conn, "typed_facts", workspace_id)
-    _delete_workspace_rows(conn, "statements", workspace_id)
-    _delete_workspace_rows(conn, "mappings", workspace_id)
-    _delete_workspace_rows(conn, "entity_names", workspace_id)
-    _delete_workspace_rows(conn, "entities", workspace_id)
-
-    _delete_workspace_rows(conn, "embedding_records", workspace_id)
-    _delete_workspace_rows(conn, "extraction_drops", workspace_id)
-    _delete_workspace_rows(conn, "chunks", workspace_id)
-
-    conn.execute(
-        "UPDATE documents SET current_version_id = NULL WHERE workspace_id = ?",
-        (workspace_id,),
-    )
-    _delete_workspace_rows(conn, "document_versions", workspace_id)
-    _delete_workspace_rows(conn, "documents", workspace_id)
-
-    _delete_workspace_rows(conn, "source_table_mappings", workspace_id)
-    _delete_workspace_rows(conn, "connector_runs", workspace_id)
-    _delete_workspace_rows(conn, "ingest_sources", workspace_id)
-    _delete_workspace_rows(conn, "jobs", workspace_id)
-    _delete_workspace_rows(conn, "projection_state", workspace_id)
-    _delete_workspace_rows(conn, "alerts", workspace_id)
-    _delete_workspace_rows(conn, "reasoning_rules", workspace_id)

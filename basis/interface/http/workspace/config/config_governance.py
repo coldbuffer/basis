@@ -39,6 +39,13 @@ class GovernanceConfigRequest(BaseModel):
         default=None,
         description="Ontology URI for Hub SHACL during conflict scans (empty clears).",
     )
+    entity_type_surface_phrases: list[str] | None = Field(
+        default=None,
+        description=(
+            "Relation phrases treated as rdf:type for class mapping scans "
+            "(e.g. 是, is_a). Omit to keep stored value; empty list clears override."
+        ),
+    )
 
 
 class GovernanceShaclRequest(BaseModel):
@@ -163,14 +170,18 @@ async def update_governance_config(
 Governance Config Update. Enable scheduled governor passes (requires BASIS_GOVERNOR_TICK_SECONDS). Requires workspace admin.
     """
     get_workspace_for_editor(request, user, workspace_id, store)
-    config = knowledge.update_governance_config(
-        workspace_id,
-        governor_enabled=body.governor_enabled,
-        governor_interval_minutes=body.governor_interval_minutes,
-        governor_confidence_min=body.governor_confidence_min,
-        governance_ontology_uri=body.governance_ontology_uri,
-        clear_governance_ontology_uri=body.governance_ontology_uri == "",
-    )
+    try:
+        config = knowledge.update_governance_config(
+            workspace_id,
+            governor_enabled=body.governor_enabled,
+            governor_interval_minutes=body.governor_interval_minutes,
+            governor_confidence_min=body.governor_confidence_min,
+            governance_ontology_uri=body.governance_ontology_uri,
+            clear_governance_ontology_uri=body.governance_ontology_uri == "",
+            entity_type_surface_phrases=body.entity_type_surface_phrases,
+        )
+    except ValueError as exc:
+        raise AdminError(422, "validation_error", str(exc)) from exc
     return {"config": config.public_dict()}
 
 

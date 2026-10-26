@@ -81,7 +81,7 @@ EVIDENCE_AGENT_GUIDE: dict[str, Any] = {
 ## Two ways to write knowledge
 
 1. **Ledger (canonical)** — `propose_remember` → review → approved statements. Use **`chunk_id`** (and optional **`quote`**) to cite an ingested document chunk.
-2. **Graph (projection)** — `add_entity`, `add_relationship`, `update_node`, `delete_node`, `record_decision`, or `run_reasoning` with **`apply_to_graph: true`**. Optional **`chunk_id`** stores **`basis_evidence`** on the mutation; this does **not** create a remember proposal.
+2. **Graph (projection)** — `add_entity`, `add_relationship`, `update_node`, `delete_node` (projection archive only—not ledger delete), `record_decision`, or `run_reasoning` with **`apply_to_graph: true`**. Optional **`chunk_id`** stores **`basis_evidence`** on the mutation; this does **not** create a remember proposal.
 
 ## Get a chunk_id
 
@@ -91,8 +91,10 @@ EVIDENCE_AGENT_GUIDE: dict[str, Any] = {
 ## Defaults
 
 - No `chunk_id`: Semantica-like behavior; remember proposals use the agent anchor chunk.
-- **`get_graph_summary`**: workspace + graph counts.
-- **`query_graph`**: `mode` `node` | `neighbors` | `search` | `entities`.
+- **`get_graph_summary`**: workspace + `node_count` / `node_count_active` / `node_count_archived` (projection).
+- **`query_graph`**: `mode` `node` | `neighbors` | `search` | `entities`; set `include_archived` to include archived projection nodes in neighbors/search.
+- **Clear business knowledge**: per-entity `invalidate_entities`, `delete_entity`, `delete_document`, `clear_entity_types`, or review—not repeated `delete_node`.
+- **Reset entire workspace** (keep id/members/settings): `reset_workspace` with `preview` then `confirmation` = workspace name; optional `scopes[]`; default `async=true` (poll job)—or HTTP `GET|POST …/workspaces/{id}/reset`. Owner only.
 
 Read **`semantica://guide/evidence`** or **`semantica://schema/info`** (`evidence_guide`) for the machine-readable version.
 """,

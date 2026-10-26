@@ -41,11 +41,14 @@ import { useApiErrorMessage } from '@/lib/errors/use-api-error-message.js';
 import { useWorkspaceCatalog } from '@/lib/workspace/context.js';
 import { EntityRefLine } from '@/components/app/shared/workspace/entity-ref-line.js';
 import { useWorkspaceNodeLabels } from '@/lib/workspace/node-labels.js';
-import { workspacePath, workspaceReviewPath } from '@/lib/nav/nav-config.js';
+import { workspacePath, workspaceQualityPath, workspaceReviewPath } from '@/lib/nav/nav-config.js';
 import { cn } from '@/lib/utils.js';
 import type { LocaleMessages } from '@/i18n/en.js';
+import { AssignEntityTypeDialog } from '@/modules/mappings/components/assign-entity-type-dialog.js';
 import { OntologyUriPicker } from '@/modules/mappings/components/ontology-uri-picker.js';
 import { SurfacePhraseCombobox } from '@/modules/mappings/components/surface-phrase-combobox.js';
+import { isRdfTypePredicate } from '@/modules/mappings/lib/rdf-type.js';
+import { fmt } from '@/i18n/format.js';
 
 type MappingRow = {
   id: string;
@@ -123,6 +126,11 @@ export function MappingsPage() {
   const [phrases, setPhrases] = useState<string[]>([]);
   const [entityObjectLabels, setEntityObjectLabels] = useState<string[]>([]);
   const [typedFacts, setTypedFacts] = useState<TypedFactRow[]>([]);
+  const [mappingStatusBusy, setMappingStatusBusy] = useState<string | null>(null);
+  const [assignOpen, setAssignOpen] = useState(false);
+  const [assignInitialSubject, setAssignInitialSubject] = useState<string | undefined>();
+  const [clearTypeBusy, setClearTypeBusy] = useState<string | null>(null);
+  const [typeSurfacePhrases, setTypeSurfacePhrases] = useState<string[]>([]);
 
   const entityIdsForLabels = typedFacts.flatMap((fact) =>
     [fact.subject_id, fact.object_entity_id].filter((value): value is string => Boolean(value)),
@@ -156,16 +164,21 @@ export function MappingsPage() {
     setLoading(true);
     setError(null);
     try {
-      const [mappingData, phraseData, entityLabelData, factData] = await Promise.all([
+      const [mappingData, phraseData, entityLabelData, factData, governanceData] = await Promise.all([
         workspaceOpenApiGET<{ mappings: MappingRow[] }>(id, 'mappings'),
         workspaceOpenApiGET<{ phrases: string[] }>(id, 'ledger/surface-phrases'),
         workspaceOpenApiGET<{ labels: string[] }>(id, 'ledger/entity-type-object-labels'),
         workspaceOpenApiGET<{ facts: TypedFactRow[] }>(id, 'ledger/typed-facts'),
+        workspaceOpenApiGET<{ config: { entity_type_surface_phrases?: string[] } }>(
+          id,
+          'governance/config',
+        ),
       ]);
       setRows(mappingData.mappings);
       setPhrases(phraseData.phrases);
       setEntityObjectLabels(entityLabelData.labels);
       setTypedFacts(factData.facts);
+      setTypeSurfacePhrases(governanceData.config.entity_type_surface_phrases ?? []);
     } catch (err) {
       setError(apiError(err));
     } finally {
@@ -176,6 +189,68 @@ export function MappingsPage() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  const updateMappingStatus = useCallback(
+    async (mappingId: string, status: 'confirmed' | 'rejected' | 'superseded') => {
+      if (!id) return;
+      setMappingStatusBusy(mappingId);
+      setError(null);
+      try {
+        await workspaceOpenApiPOST(id, `mappings/${encodeURIComponent(mappingId)}/status`, {
+          body: { status },
+        });
+        await load();
+        toast.success(m.toast_mapping_status);
+      } catch (err) {
+        setError(apiError(err));
+      } finally {
+        setMappingStatusBusy(null);
+      }
+    },
+    [apiError, id, load, m.toast_mapping_status],
+  );
+
+  const onAssignEntityType = useCallback(
+    async (values: { subjectId: string; classUri: string }) => {
+      if (!id) return;
+      setError(null);
+      try {
+        await workspaceOpenApiPOST(id, 'entity-types/assign', {
+          body: {
+            assignments: [{ subject_id: values.subjectId.trim(), class_uri: values.classUri.trim() }],
+            replace_existing: true,
+          },
+        });
+        await load();
+        toast.success(m.toast_type_assigned);
+      } catch (err) {
+        setError(apiError(err));
+        throw err;
+      }
+    },
+    [apiError, id, load, m.toast_type_assigned],
+  );
+
+  const clearEntityType = useCallback(
+    async (subjectId: string) => {
+      if (!id) return;
+      if (!window.confirm(fmt(m.clear_type_confirm, { subject: subjectId }))) return;
+      setClearTypeBusy(subjectId);
+      setError(null);
+      try {
+        await workspaceOpenApiPOST(id, 'entity-types/clear', {
+          body: { subject_ids: [subjectId] },
+        });
+        await load();
+        toast.success(m.toast_type_cleared);
+      } catch (err) {
+        setError(apiError(err));
+      } finally {
+        setClearTypeBusy(null);
+      }
+    },
+    [apiError, id, load, m.clear_type_confirm, m.toast_type_cleared],
+  );
 
   async function onCreateMapping(values: CreateMappingValues) {
     if (!id) return;
@@ -206,6 +281,13 @@ export function MappingsPage() {
   }
 
   const name = workspaceMeta?.name ?? id ?? t.core.common.ellipsis;
+
+  const typePhraseSummary = useMemo(() => {
+    if (typeSurfacePhrases.length === 0) return '';
+    const max = 12;
+    const head = typeSurfacePhrases.slice(0, max).join(', ');
+    return typeSurfacePhrases.length > max ? `${head}${t.core.common.ellipsis}` : head;
+  }, [t.core.common.ellipsis, typeSurfacePhrases]);
 
   const mappingColumns = useMemo<DataTableColumn<MappingRow>[]>(
     () => [
@@ -259,17 +341,56 @@ export function MappingsPage() {
         key: 'actions',
         header: m.col_actions,
         align: 'right',
-        render: (row) =>
-          row.status === 'proposed' && id ? (
-            <Button type="button" variant="outline" size="sm" className="h-7 px-2 text-xs" asChild>
-              <Link to={workspaceReviewPath(id)}>{m.review}</Link>
-            </Button>
-          ) : (
-            <span className="text-xs text-muted-foreground">{emptyCell}</span>
-          ),
+        render: (row) => {
+          const busy = mappingStatusBusy === row.id;
+          if (row.status === 'proposed' && id) {
+            return (
+              <div className="flex flex-wrap justify-end gap-1">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-7 px-2 text-xs"
+                  disabled={busy}
+                  onClick={() => void updateMappingStatus(row.id, 'confirmed')}
+                >
+                  {m.action_confirm}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-7 px-2 text-xs"
+                  disabled={busy}
+                  onClick={() => void updateMappingStatus(row.id, 'rejected')}
+                >
+                  {m.action_reject}
+                </Button>
+                <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs" asChild>
+                  <Link to={workspaceReviewPath(id)}>{m.review}</Link>
+                </Button>
+              </div>
+            );
+          }
+          if (row.status === 'confirmed') {
+            return (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-7 px-2 text-xs"
+                disabled={busy}
+                onClick={() => void updateMappingStatus(row.id, 'superseded')}
+              >
+                {m.action_supersede}
+              </Button>
+            );
+          }
+          return <span className="text-xs text-muted-foreground">{emptyCell}</span>;
+        },
       },
     ],
-    [emptyCell, id, loc, m],
+    [clearEntityType, emptyCell, id, loc, m, mappingStatusBusy, updateMappingStatus],
   );
 
   const factColumns = useMemo<DataTableColumn<TypedFactRow>[]>(
@@ -296,8 +417,46 @@ export function MappingsPage() {
             <span className="font-mono text-xs">{fact.object_value ?? emptyCell}</span>
           ),
       },
+      {
+        key: 'actions',
+        header: m.col_actions,
+        align: 'right',
+        render: (fact) => {
+          if (!isRdfTypePredicate(fact.predicate_uri)) {
+            return <span className="text-xs text-muted-foreground">{emptyCell}</span>;
+          }
+          const busy = clearTypeBusy === fact.subject_id;
+          return (
+            <div className="flex flex-wrap justify-end gap-1">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-7 px-2 text-xs"
+                disabled={busy}
+                onClick={() => {
+                  setAssignInitialSubject(fact.subject_id);
+                  setAssignOpen(true);
+                }}
+              >
+                {m.assign_type}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs text-destructive"
+                disabled={busy}
+                onClick={() => void clearEntityType(fact.subject_id)}
+              >
+                {m.action_clear_type}
+              </Button>
+            </div>
+          );
+        },
+      },
     ],
-    [emptyCell, entityLabels, m],
+    [clearEntityType, clearTypeBusy, emptyCell, entityLabels, m],
   );
 
   return (
@@ -315,6 +474,19 @@ export function MappingsPage() {
             {loading ? <PublicIcon name="loader-01" size={14} className="animate-spin" /> : <PublicIcon name="arrow-rotate-left-01" size={14} />}
             {m.refresh}
           </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-8"
+            onClick={() => {
+              setAssignInitialSubject(undefined);
+              setAssignOpen(true);
+            }}
+          >
+            <PublicIcon name="tag" size={14} />
+            {m.assign_type}
+          </Button>
           <Button type="button" size="sm" className="h-8" onClick={() => setCreateOpen(true)}>
             <PublicIcon name="plus-01" size={14} />
             {m.new_mapping}
@@ -323,6 +495,17 @@ export function MappingsPage() {
       }
     >
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
+      {id && typePhraseSummary ? (
+        <p className="text-sm text-muted-foreground" data-testid="mappings-type-phrases-banner">
+          {fmt(m.type_phrases_banner, { phrases: typePhraseSummary })}{' '}
+          <Link
+            to={workspaceQualityPath(id, 'scan')}
+            className="text-foreground underline underline-offset-4"
+          >
+            {m.type_phrases_banner_link}
+          </Link>
+        </p>
+      ) : null}
       <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden">
         <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border">
           <div className="flex h-12 shrink-0 items-center gap-2 border-b border-border px-4">
@@ -384,6 +567,16 @@ export function MappingsPage() {
           </div>
         </section>
       </div>
+
+      {id ? (
+        <AssignEntityTypeDialog
+          open={assignOpen}
+          onOpenChange={setAssignOpen}
+          workspaceId={id}
+          initialSubjectId={assignInitialSubject}
+          onSubmit={onAssignEntityType}
+        />
+      ) : null}
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent
@@ -594,7 +787,9 @@ function MappingStatus({ status, copy }: { status: string; copy: MappingsPageCop
               ? copy.status_rejected
               : status === 'dismissed'
                 ? copy.status_dismissed
-                : status;
+                : status === 'superseded'
+                  ? copy.status_superseded
+                  : status;
   return (
     <Badge variant={variant} className={cn('text-[11px] font-normal', statusClass)}>
       {label}

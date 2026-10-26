@@ -4,6 +4,7 @@ export default {
     search: "搜索",
     chunk_placeholder: "搜索文档片段…",
     graph_placeholder: "搜索图谱节点…",
+    include_archived_graph: "包含已归档投影节点",
     entity_placeholder: "搜索账本实体…",
     scope_label: "搜索范围",
     scope_documents: "文档",

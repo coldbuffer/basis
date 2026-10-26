@@ -6,17 +6,77 @@ from typing import Any
 
 from basis.domain.graph.projection.session import GraphSession
 from basis.domain.knowledge.store import KnowledgeStore
+from basis.domain.ontology.hub.registry_scope import should_preserve_schema_node
 
 PROJECTION_SCHEMA_VERSION = 1
 _LEDGER_NODE_TYPES = frozenset({"document", "literal", "entity", "projection_meta"})
+RDF_TYPE_URI = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+
+
+def _node_type_value(node: Any) -> str:
+    if isinstance(node, dict):
+        return str(node.get("type") or node.get("node_type") or "")
+    return str(getattr(node, "node_type", "") or "")
 
 
 def _is_schema_projection_node(node: Any) -> bool:
     """OWL/RDF/SKOS nodes live in the graph snapshot, not the evidence ledger."""
-    node_type = str(getattr(node, "node_type", "") or "")
+    node_type = _node_type_value(node)
     if node_type in _LEDGER_NODE_TYPES:
         return False
     return ":" in node_type
+
+
+def _is_rdf_type_predicate(predicate_uri: str) -> bool:
+    probe = str(predicate_uri or "").strip()
+    return probe == RDF_TYPE_URI or _predicate_edge_label(probe) == "type"
+
+
+def _resolve_schema_object_node_id(session: GraphSession, predicate_uri: str, object_value: str) -> str | None:
+    """Link typed/derived facts to existing OWL/SKOS nodes when object_value is that node id."""
+    if not _is_rdf_type_predicate(predicate_uri):
+        return None
+    uri = str(object_value or "").strip()
+    if not uri:
+        return None
+    raw = session.graph.find_node(uri)
+    if raw is None or not _is_schema_projection_node(raw):
+        return None
+    return uri
+
+
+def _object_target_id_for_fact(
+    session: GraphSession,
+    *,
+    fact_id: str,
+    predicate_uri: str,
+    object_entity_id: str | None,
+    object_value: str | None,
+    merge_redirect: dict[str, str],
+    projection_layer: str,
+    node_id_prefix: str,
+    recorded_at: str | None,
+    invalidated_at: str | None = None,
+    extra_node_props: dict[str, Any],
+) -> str | None:
+    if object_entity_id:
+        return _canon_entity_id(object_entity_id, merge_redirect)
+    if not object_value:
+        return None
+    linked = _resolve_schema_object_node_id(session, predicate_uri, str(object_value))
+    if linked:
+        return linked
+    target_id = f"{node_id_prefix}:{fact_id}"
+    session.add_node(
+        target_id,
+        "literal",
+        content=str(object_value),
+        projection_layer=projection_layer,
+        **extra_node_props,
+        **({"valid_from": recorded_at} if recorded_at else {}),
+        **({"valid_until": invalidated_at} if invalidated_at else {}),
+    )
+    return target_id
 
 
 def _predicate_edge_label(predicate_uri: str) -> str:
@@ -30,10 +90,24 @@ def _predicate_edge_label(predicate_uri: str) -> str:
     return cleaned
 
 
-def _copy_preserved_nodes(source: GraphSession, target: GraphSession) -> None:
+def _copy_preserved_nodes(
+    source: GraphSession,
+    target: GraphSession,
+    *,
+    ontology_registry: dict[str, Any] | None = None,
+    ontology_published_entity_uris: set[str] | None = None,
+) -> None:
     preserved_ids: set[str] = set()
     for node in source.graph.nodes.values():
         if not _is_schema_projection_node(node):
+            continue
+        node_type = _node_type_value(node)
+        if not should_preserve_schema_node(
+            node,
+            node_type,
+            ontology_registry,
+            published_entity_uris=ontology_published_entity_uris,
+        ):
             continue
         props = dict(node.properties) if isinstance(node.properties, dict) else {}
         props.pop("content", None)
@@ -274,20 +348,20 @@ def build_temporal_graph_from_ledger(
         subject_id = _canon_entity_id(fact["subject_id"], merge_redirect)
         recorded_at = fact.get("recorded_at")
         invalidated_at = fact.get("invalidated_at")
-        if fact["object_entity_id"]:
-            target_id = _canon_entity_id(fact["object_entity_id"], merge_redirect)
-        elif fact["object_value"]:
-            target_id = f"typed:{fact['id']}"
-            session.add_node(
-                target_id,
-                "literal",
-                content=fact["object_value"],
-                projection_layer="typed",
-                typed_fact_id=fact["id"],
-                **({"valid_from": recorded_at} if recorded_at else {}),
-                **({"valid_until": invalidated_at} if invalidated_at else {}),
-            )
-        else:
+        target_id = _object_target_id_for_fact(
+            session,
+            fact_id=str(fact["id"]),
+            predicate_uri=str(fact["predicate_uri"]),
+            object_entity_id=fact.get("object_entity_id"),
+            object_value=fact.get("object_value"),
+            merge_redirect=merge_redirect,
+            projection_layer="typed",
+            node_id_prefix="typed",
+            recorded_at=recorded_at,
+            invalidated_at=invalidated_at,
+            extra_node_props={"typed_fact_id": fact["id"]},
+        )
+        if not target_id:
             continue
         edge_label = _predicate_edge_label(fact["predicate_uri"])
         edge_props: dict[str, Any] = {
@@ -309,20 +383,20 @@ def build_temporal_graph_from_ledger(
         subject_id = _canon_entity_id(fact["subject_id"], merge_redirect)
         recorded_at = fact.get("recorded_at")
         invalidated_at = fact.get("invalidated_at")
-        if fact["object_entity_id"]:
-            target_id = _canon_entity_id(fact["object_entity_id"], merge_redirect)
-        elif fact["object_value"]:
-            target_id = f"derived:{fact['id']}"
-            session.add_node(
-                target_id,
-                "literal",
-                content=fact["object_value"],
-                projection_layer="derived",
-                derived_fact_id=fact["id"],
-                **({"valid_from": recorded_at} if recorded_at else {}),
-                **({"valid_until": invalidated_at} if invalidated_at else {}),
-            )
-        else:
+        target_id = _object_target_id_for_fact(
+            session,
+            fact_id=str(fact["id"]),
+            predicate_uri=str(fact["predicate_uri"]),
+            object_entity_id=fact.get("object_entity_id"),
+            object_value=fact.get("object_value"),
+            merge_redirect=merge_redirect,
+            projection_layer="derived",
+            node_id_prefix="derived",
+            recorded_at=recorded_at,
+            invalidated_at=invalidated_at,
+            extra_node_props={"derived_fact_id": fact["id"]},
+        )
+        if not target_id:
             continue
         edge_label = _predicate_edge_label(fact["predicate_uri"])
         edge_props: dict[str, Any] = {
@@ -347,6 +421,8 @@ def rebuild_graph_from_ledger(
     *,
     preserve_from: GraphSession | None = None,
     include_version_ids: tuple[str, ...] | None = None,
+    ontology_registry: dict[str, Any] | None = None,
+    ontology_published_entity_uris: set[str] | None = None,
 ) -> GraphSession:
     """Full rebuild of workspace graph content from ledger rows (ontology nodes may be preserved)."""
     knowledge.ensure_projection_state(workspace_id)
@@ -355,7 +431,12 @@ def rebuild_graph_from_ledger(
     try:
         session = GraphSession()
         if preserve_from is not None:
-            _copy_preserved_nodes(preserve_from, session)
+            _copy_preserved_nodes(
+                preserve_from,
+                session,
+                ontology_registry=ontology_registry,
+                ontology_published_entity_uris=ontology_published_entity_uris,
+            )
 
         entity_first_seen = _build_entity_first_seen(knowledge, workspace_id, merge_redirect)
 
@@ -475,19 +556,19 @@ def rebuild_graph_from_ledger(
         for fact in knowledge.list_typed_facts_for_projection(workspace_id):
             subject_id = _canon_entity_id(fact["subject_id"], merge_redirect)
             recorded_at = fact.get("recorded_at")
-            if fact["object_entity_id"]:
-                target_id = _canon_entity_id(fact["object_entity_id"], merge_redirect)
-            elif fact["object_value"]:
-                target_id = f"typed:{fact['id']}"
-                session.add_node(
-                    target_id,
-                    "literal",
-                    content=fact["object_value"],
-                    projection_layer="typed",
-                    typed_fact_id=fact["id"],
-                    **({"valid_from": recorded_at} if recorded_at else {}),
-                )
-            else:
+            target_id = _object_target_id_for_fact(
+                session,
+                fact_id=str(fact["id"]),
+                predicate_uri=str(fact["predicate_uri"]),
+                object_entity_id=fact.get("object_entity_id"),
+                object_value=fact.get("object_value"),
+                merge_redirect=merge_redirect,
+                projection_layer="typed",
+                node_id_prefix="typed",
+                recorded_at=recorded_at,
+                extra_node_props={"typed_fact_id": fact["id"]},
+            )
+            if not target_id:
                 continue
             edge_label = _predicate_edge_label(fact["predicate_uri"])
             edge_props: dict[str, Any] = {
@@ -506,19 +587,19 @@ def rebuild_graph_from_ledger(
         for fact in knowledge.list_derived_facts_for_projection(workspace_id):
             subject_id = _canon_entity_id(fact["subject_id"], merge_redirect)
             recorded_at = fact.get("recorded_at")
-            if fact["object_entity_id"]:
-                target_id = _canon_entity_id(fact["object_entity_id"], merge_redirect)
-            elif fact["object_value"]:
-                target_id = f"derived:{fact['id']}"
-                session.add_node(
-                    target_id,
-                    "literal",
-                    content=fact["object_value"],
-                    projection_layer="derived",
-                    derived_fact_id=fact["id"],
-                    **({"valid_from": recorded_at} if recorded_at else {}),
-                )
-            else:
+            target_id = _object_target_id_for_fact(
+                session,
+                fact_id=str(fact["id"]),
+                predicate_uri=str(fact["predicate_uri"]),
+                object_entity_id=fact.get("object_entity_id"),
+                object_value=fact.get("object_value"),
+                merge_redirect=merge_redirect,
+                projection_layer="derived",
+                node_id_prefix="derived",
+                recorded_at=recorded_at,
+                extra_node_props={"derived_fact_id": fact["id"]},
+            )
+            if not target_id:
                 continue
             edge_label = _predicate_edge_label(fact["predicate_uri"])
             edge_props: dict[str, Any] = {
@@ -545,6 +626,8 @@ def apply_rebuild_to_session(
     session: GraphSession,
     *,
     include_version_ids: tuple[str, ...] | None = None,
+    ontology_registry: dict[str, Any] | None = None,
+    ontology_published_entity_uris: set[str] | None = None,
 ) -> dict[str, Any]:
     """Replace session graph from ledger; returns build metadata."""
     rebuilt = rebuild_graph_from_ledger(
@@ -552,6 +635,8 @@ def apply_rebuild_to_session(
         workspace_id,
         preserve_from=session,
         include_version_ids=include_version_ids,
+        ontology_registry=ontology_registry,
+        ontology_published_entity_uris=ontology_published_entity_uris,
     )
     session.graph = rebuilt.graph
     state = knowledge.get_projection_state(workspace_id)

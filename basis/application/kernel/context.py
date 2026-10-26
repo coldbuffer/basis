@@ -26,11 +26,14 @@ class WorkspaceCoreContext:
     runtime_loader: Callable[[], GraphRuntime] | None = None
     assert_workspace_editor: Callable[[], None] | None = None
     rebuild_projection: Callable[[], Any] | None = None
+    clear_projection: Callable[[], None] | None = None
     persist_graph: Callable[[str], None] | None = None
     blob_store: BlobStore | None = None
     projection_bindings: GraphProjectionBindings | None = None
     runtime_limits: RuntimeLimits | None = None
     api_token: ApiTokenRecord | None = None
+    # Callable[[fn(access)] -> result]; set from HTTP/MCP when OntologyHubState is available.
+    ontology_hub: Callable[[Callable[..., Any]], Any] | None = None
 
     def graph_runtime(self) -> GraphRuntime:
         if self.runtime is not None:

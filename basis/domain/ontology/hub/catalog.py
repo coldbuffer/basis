@@ -169,12 +169,38 @@ def _node_source_ontology(node: dict[str, Any]) -> str | None:
     )
 
 
+def published_entity_uris_for_ontology(
+    versions: dict[str, Any] | None,
+    ontology_uri: str,
+) -> set[str]:
+    """Entity IRIs recorded in published version diffs (editor may use urn: vs https:)."""
+    if not versions:
+        return set()
+    uris: set[str] = set()
+    for entry in versions.get(ontology_uri) or []:
+        diff = _entry_field(entry, "diff_summary") or {}
+        if not isinstance(diff, dict):
+            continue
+        for key in (
+            "added_classes",
+            "added_properties",
+            "added_individuals",
+            "added_concepts",
+        ):
+            uris.update(str(u).strip() for u in (diff.get(key) or []) if str(u).strip())
+    return uris
+
+
 def _node_belongs_to_ontology(
     node: dict[str, Any],
     ontology_uri: str,
     known_ontology_uris: set[str] | None = None,
+    *,
+    published_entity_uris: set[str] | None = None,
 ) -> bool:
     nid = node.get("id", "")
+    if published_entity_uris and nid in published_entity_uris:
+        return True
     if nid == ontology_uri:
         return True
     owner = _node_source_ontology(node)
@@ -332,6 +358,7 @@ def list_registry(
     registry: dict[str, Any],
     session: Any,
     *,
+    versions: dict[str, Any] | None = None,
     q: str | None = None,
     status: str | None = None,
     format: str | None = None,
@@ -342,23 +369,54 @@ def list_registry(
     concept_counts: dict[str, int] = {}
     prop_counts: dict[str, int] = {}
     implicit: dict[str, dict[str, Any]] = {}
+    known_ontology_uris = {
+        str(_entry_field(entry, "uri", "")).strip()
+        for entry in registry.values()
+        if str(_entry_field(entry, "uri", "")).strip()
+    }
+    published_by_ontology = {
+        ouri: published_entity_uris_for_ontology(versions, ouri) for ouri in known_ontology_uris
+    }
+
+    def _count_entity(etype: str, bucket: str) -> None:
+        if etype == "class":
+            class_counts[bucket] = class_counts.get(bucket, 0) + 1
+        elif etype == "concept":
+            concept_counts[bucket] = concept_counts.get(bucket, 0) + 1
+        elif etype == "property":
+            prop_counts[bucket] = prop_counts.get(bucket, 0) + 1
 
     for node in all_nodes:
         ntype = node.get("type", "")
         nid = node.get("id", "")
         etype = _classify_node_type(ntype)
-        scheme_uri = node.get("properties", {}).get("scheme_uri") or node.get("properties", {}).get("uri")
 
         if etype == "ontology" or etype == "scheme":
             if nid and nid not in registry:
                 implicit[nid] = node
-        elif scheme_uri:
-            if etype == "class":
-                class_counts[scheme_uri] = class_counts.get(scheme_uri, 0) + 1
-            elif etype == "concept":
-                concept_counts[scheme_uri] = concept_counts.get(scheme_uri, 0) + 1
-            elif etype == "property":
-                prop_counts[scheme_uri] = prop_counts.get(scheme_uri, 0) + 1
+            continue
+
+        if etype not in {"class", "concept", "property"}:
+            continue
+
+        owner = _node_source_ontology(node)
+        props = node.get("properties", {}) or {}
+        if not owner:
+            owner = props.get("uri") if isinstance(props.get("uri"), str) else None
+
+        bucket: str | None = str(owner).strip() if owner else None
+        if not bucket and known_ontology_uris:
+            for ontology_uri in sorted(known_ontology_uris, key=len, reverse=True):
+                if _node_belongs_to_ontology(
+                    node,
+                    ontology_uri,
+                    known_ontology_uris,
+                    published_entity_uris=published_by_ontology.get(ontology_uri),
+                ):
+                    bucket = ontology_uri
+                    break
+        if bucket:
+            _count_entity(etype, bucket)
 
     result: list[dict[str, Any]] = []
 

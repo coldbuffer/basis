@@ -22,10 +22,6 @@ def _version_field(record: Any, key: str, default: Any = None) -> Any:
     return getattr(record, key, default)
 
 
-def _session_store(session: Any) -> Any:
-    return session.graph.store if hasattr(session.graph, "store") else None
-
-
 def list_versions(versions: dict[str, Any], ontology_uri: str) -> list[dict[str, Any]]:
     entries = versions.get(ontology_uri, [])
     return [_dump(entry) for entry in entries]
@@ -37,83 +33,71 @@ def compare_versions(
     ontology_uri: str,
     body: Any,
 ) -> dict[str, Any]:
+    from basis.domain.ontology.hub.version_cumulative import compare_published_versions
+
+    ontology_versions = versions.get(ontology_uri, [])
+    v1_record = next(
+        (v for v in ontology_versions if _version_field(v, "version_id") == body.version1),
+        None,
+    )
+    v2_record = next(
+        (v for v in ontology_versions if _version_field(v, "version_id") == body.version2),
+        None,
+    )
+    if not v1_record or not v2_record:
+        raise AdminError(404, "not_found", "One or both versions not found.")
+
     try:
-        from semantica.change_management.ontology_version_manager import VersionManager
-
-        version_manager = VersionManager(store=_session_store(session))
-        ontology_versions = versions.get(ontology_uri, [])
-
-        v1_record = next(
-            (v for v in ontology_versions if _version_field(v, "version_id") == body.version1),
-            None,
+        snapshot_diff = compare_published_versions(
+            ontology_versions,
+            str(body.version1),
+            str(body.version2),
         )
-        v2_record = next(
-            (v for v in ontology_versions if _version_field(v, "version_id") == body.version2),
-            None,
-        )
-        if not v1_record or not v2_record:
-            raise AdminError(404, "not_found", "One or both versions not found.")
-
-        v1_dict = {
-            "uri": ontology_uri,
-            "version": body.version1,
-            "classes": [],
-            "properties": [],
-            "diff": _version_field(v1_record, "diff_summary", {}),
-        }
-        v2_dict = {
-            "uri": ontology_uri,
-            "version": body.version2,
-            "classes": [],
-            "properties": [],
-            "diff": _version_field(v2_record, "diff_summary", {}),
-        }
-
-        diff_result = version_manager.diff_ontologies(v1_dict, v2_dict)
-
-        metadata_changes = {
-            "version_id": {"from": body.version1, "to": body.version2},
-            "author": {
-                "from": _version_field(v1_record, "author"),
-                "to": _version_field(v2_record, "author"),
-            },
-            "date": {
-                "from": _version_field(v1_record, "date"),
-                "to": _version_field(v2_record, "date"),
-            },
-            "state": {
-                "from": _version_field(v1_record, "state"),
-                "to": _version_field(v2_record, "state"),
-            },
-        }
-
-        return {
-            "version1": body.version1,
-            "version2": body.version2,
-            "metadata_changes": metadata_changes,
-            "class_changes": {
-                "added": diff_result.get("added_classes", []),
-                "removed": diff_result.get("removed_classes", []),
-                "changed": diff_result.get("changed_classes", []),
-            },
-            "property_changes": {
-                "added": diff_result.get("added_properties", []),
-                "removed": diff_result.get("removed_properties", []),
-                "changed": diff_result.get("changed_properties", []),
-            },
-            "restriction_changes": {
-                "added": diff_result.get("added_axioms", []),
-                "removed": diff_result.get("removed_axioms", []),
-                "changed": diff_result.get("changed_axioms", []),
-            },
-            "axiom_changes": {
-                "added": diff_result.get("added_axioms", []),
-                "removed": diff_result.get("removed_axioms", []),
-                "changed": diff_result.get("changed_axioms", []),
-            },
-        }
-    except AdminError:
-        raise
+    except KeyError:
+        raise AdminError(404, "not_found", "One or both versions not found.") from None
     except Exception as exc:
         logger.error("Version comparison failed: %s", exc)
         raise AdminError(500, "internal_error", f"Version comparison failed: {exc}") from exc
+
+    metadata_changes = {
+        "version_id": {"from": body.version1, "to": body.version2},
+        "author": {
+            "from": _version_field(v1_record, "author"),
+            "to": _version_field(v2_record, "author"),
+        },
+        "date": {
+            "from": _version_field(v1_record, "date"),
+            "to": _version_field(v2_record, "date"),
+        },
+        "state": {
+            "from": _version_field(v1_record, "state"),
+            "to": _version_field(v2_record, "state"),
+        },
+    }
+
+    edge_changes = snapshot_diff.get("edge_changes") or {}
+    individual_changes = snapshot_diff.get("individual_changes") or {}
+    axiom_summary = snapshot_diff.get("axiom_changes") or {}
+
+    return {
+        "version1": body.version1,
+        "version2": body.version2,
+        "comparison_mode": snapshot_diff.get("comparison_mode", "cumulative_snapshot"),
+        "metadata_changes": metadata_changes,
+        "class_changes": snapshot_diff.get("class_changes") or {},
+        "property_changes": snapshot_diff.get("property_changes") or {},
+        "individual_changes": individual_changes,
+        "edge_changes": edge_changes,
+        "restriction_changes": {
+            "added": [],
+            "removed": [],
+            "changed": [],
+        },
+        "axiom_changes": {
+            "added": [],
+            "removed": [],
+            "changed": [],
+            "added_count": axiom_summary.get("added_count", 0),
+            "removed_count": axiom_summary.get("removed_count", 0),
+        },
+    }

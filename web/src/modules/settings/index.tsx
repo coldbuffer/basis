@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { type FormEvent, useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ConfirmAlertDialog } from '@/components/app/shared/console/ConfirmAlertDialog.js';
 import { ConsolePageLayout } from '@/components/app/shared/console/index.js';
@@ -160,6 +160,40 @@ export function WorkspaceSettingsPage() {
   const [searchEditOpen, setSearchEditOpen] = useState(false);
   const [memberAddOpen, setMemberAddOpen] = useState(false);
   const [addingMember, setAddingMember] = useState(false);
+  const [resetOpen, setResetOpen] = useState(false);
+  const [resetConfirm, setResetConfirm] = useState('');
+  const [resetPreview, setResetPreview] = useState<Record<string, number> | null>(null);
+  const [resetPreviewLoading, setResetPreviewLoading] = useState(false);
+  const [resetScopes, setResetScopes] = useState<string[]>([]);
+  const [resetExportPath, setResetExportPath] = useState<string | null>(null);
+
+  const RESET_SCOPE_ORDER = [
+    'knowledge',
+    'graph',
+    'connectors',
+    'reasoning',
+    'governance',
+  ] as const;
+
+  const resetScopeLabel = (scope: string) => {
+    const key = `reset_workspace_scope_${scope}` as keyof typeof t.settings.tabs;
+    const label = t.settings.tabs[key];
+    return typeof label === 'string' ? label : scope;
+  };
+
+  function toggleResetScope(scope: string, checked: boolean) {
+    setResetScopes((current) => {
+      const next = new Set(current);
+      if (checked) {
+        next.add(scope);
+        if (scope === 'knowledge') next.add('graph');
+      } else {
+        next.delete(scope);
+      }
+      return RESET_SCOPE_ORDER.filter((s) => next.has(s));
+    });
+  }
+  const [resetting, setResetting] = useState(false);
 
   const catalogWorkspace = id ? getWorkspace(id) : undefined;
   const name = catalogWorkspace?.name ?? workspace?.name ?? id ?? t.core.common.ellipsis;
@@ -238,6 +272,80 @@ export function WorkspaceSettingsPage() {
       navigate('/workspaces');
     } catch (err) {
       toast.error(apiError(err));
+    }
+  }
+
+  const loadResetPreview = useCallback(async () => {
+    if (!id) return;
+    setResetPreviewLoading(true);
+    setResetPreview(null);
+    try {
+      const body = await workspaceOpenApiGET<{
+        counts: Record<string, number>;
+        default_scopes?: string[];
+        export_pack_path?: string;
+      }>(id, 'reset');
+      setResetPreview(body.counts);
+      setResetScopes(body.default_scopes ?? ['connectors', 'graph', 'knowledge', 'reasoning']);
+      setResetExportPath(body.export_pack_path ?? null);
+    } catch (err) {
+      toast.error(apiError(err));
+      setResetOpen(false);
+    } finally {
+      setResetPreviewLoading(false);
+    }
+  }, [apiError, id]);
+
+  useEffect(() => {
+    if (!resetOpen) {
+      setResetConfirm('');
+      setResetPreview(null);
+      setResetScopes([]);
+      setResetExportPath(null);
+      return;
+    }
+    void loadResetPreview();
+  }, [loadResetPreview, resetOpen]);
+
+  async function resetWorkspace() {
+    if (!id || !workspace) return;
+    if (resetScopes.length === 0) {
+      toast.error(t.settings.tabs.reset_workspace_scopes_label);
+      return;
+    }
+    if (resetConfirm !== workspace.name) {
+      toast.error(t.settings.tabs.reset_workspace_confirm_label);
+      return;
+    }
+    setResetting(true);
+    setError(null);
+    try {
+      const accepted = await workspaceOpenApiPOST<{
+        accepted?: boolean;
+        job_id?: string;
+        ok?: boolean;
+      }>(id, 'reset', {
+        body: { confirmation: resetConfirm, async: true, scopes: resetScopes },
+      });
+      if (accepted.accepted && accepted.job_id) {
+        for (let i = 0; i < 120; i += 1) {
+          const job = await workspaceOpenApiGET<{ job: { status: string } }>(
+            id,
+            `ingest/jobs/${accepted.job_id}`,
+          );
+          const status = job.job.status;
+          if (status === 'succeeded' || status === 'failed') break;
+          await new Promise((r) => setTimeout(r, 500));
+        }
+      }
+      const body = await workspaceOpenApiGET<WorkspaceRecord>(id, '');
+      setWorkspace(body);
+      setResetOpen(false);
+      toast.success(t.settings.tabs.reset_workspace);
+    } catch (err) {
+      toast.error(apiError(err));
+    } finally {
+      setResetting(false);
     }
   }
 
@@ -465,7 +573,15 @@ export function WorkspaceSettingsPage() {
             <CardHeader>
               <CardTitle className="text-base">{t.settings.tabs.danger}</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex flex-col gap-4">
+              {workspace.my_role === 'owner' && (
+                <>
+                  <p className="text-sm text-muted-foreground">{t.settings.tabs.reset_workspace_desc}</p>
+                  <Button type="button" variant="outline" onClick={() => setResetOpen(true)}>
+                    {t.settings.tabs.reset_workspace}
+                  </Button>
+                </>
+              )}
               {(workspace.my_role === 'owner' || workspace.my_role === 'admin') && (
                 <ConfirmAlertDialog
                   title={t.settings.tabs.delete_workspace}
@@ -548,6 +664,83 @@ export function WorkspaceSettingsPage() {
               </DialogFooter>
             </form>
           </Form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={resetOpen} onOpenChange={setResetOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t.settings.tabs.reset_workspace}</DialogTitle>
+            <DialogDescription>{t.settings.tabs.reset_workspace_desc}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            {resetPreviewLoading ? (
+              <p className="text-sm text-muted-foreground">
+                {t.settings.tabs.reset_workspace_preview_loading}
+              </p>
+            ) : resetPreview ? (
+              <p className="text-sm text-muted-foreground">
+                {fmt(t.settings.tabs.reset_workspace_preview, {
+                  documents: String(resetPreview.document_count ?? 0),
+                  entities: String(resetPreview.entity_count ?? 0),
+                  statements: String(resetPreview.statement_count ?? 0),
+                  chunks: String(resetPreview.chunk_count ?? 0),
+                })}
+              </p>
+            ) : null}
+            {resetExportPath ? (
+              <p className="text-sm text-muted-foreground">
+                {t.settings.tabs.reset_workspace_export_before}{' '}
+                <Link
+                  to={resetExportPath}
+                  className="text-foreground underline underline-offset-4"
+                  onClick={() => setResetOpen(false)}
+                >
+                  {t.settings.tabs.reset_workspace_export_link}
+                </Link>
+              </p>
+            ) : null}
+            <div className="space-y-2">
+              <Label>{t.settings.tabs.reset_workspace_scopes_label}</Label>
+              <div className="space-y-2 rounded-md border p-3">
+                {RESET_SCOPE_ORDER.map((scope) => (
+                  <label key={scope} className="flex items-start gap-2 text-sm">
+                    <Checkbox
+                      checked={resetScopes.includes(scope)}
+                      onCheckedChange={(value) => toggleResetScope(scope, value === true)}
+                    />
+                    <span>{resetScopeLabel(scope)}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="workspace-reset-confirm">
+                {t.settings.tabs.reset_workspace_confirm_label}
+              </Label>
+              <Input
+                id="workspace-reset-confirm"
+                value={resetConfirm}
+                onChange={(event) => setResetConfirm(event.target.value)}
+                autoComplete="off"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setResetOpen(false)}>
+              {t.core.common.cancel}
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={
+                resetting || resetConfirm !== workspace?.name || resetScopes.length === 0
+              }
+              onClick={() => void resetWorkspace()}
+            >
+              {t.settings.tabs.reset_workspace}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

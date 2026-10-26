@@ -23,6 +23,12 @@ export default {
     col_description: "Description",
     col_actions: "Actions",
     view_facts: "View facts",
+    invalidate_entity: "Invalidate entity",
+    invalidate_entity_title: "Invalidate entity (soft delete)",
+    invalidate_entity_description:
+      "Entity “{label}” and its statements, typed facts, and derived facts will be marked invalidated on the ledger. The graph projection will rebuild. This is reversible only by re-ingesting knowledge—not a hard delete.",
+    invalidate_entity_confirm: "Invalidate",
+    invalidate_entity_success: "Entity invalidated; projection rebuilt.",
     delete_entity: "Delete entity",
     delete_entity_title: "Delete entity",
     delete_entity_description: "Entity “{label}” will be deleted. The statements below are removed with it and cannot be restored.",

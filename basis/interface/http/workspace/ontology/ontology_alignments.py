@@ -7,6 +7,7 @@ from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, Query, Request
 
+from basis.application.ontology import operations as ontology_ops
 from basis.domain.errors import AdminError
 from basis.domain.tenancy.admin.store import AdminStore, User
 from basis.interface.http.shared.deps import (
@@ -16,6 +17,7 @@ from basis.interface.http.shared.deps import (
     get_store,
 )
 from basis.domain.ontology.hub.scoped_state import OntologyHubState
+from basis.interface.http.workspace.ontology.ontology_application_http import run_ontology_operation
 from basis.interface.http.workspace.ontology.ontology_session import graph_session
 
 router = APIRouter(tags=["workspaces"])
@@ -33,20 +35,23 @@ async def ontology_registry(
     """
 Ontology Registry. Ontology hub (SKOS, alignments) via workspace graph session. Requires workspace membership (session) or workspace API token with read/write scope. All paths are scoped to `{workspace_id}`.
     """
-    get_workspace_for_viewer(request, user, workspace_id, store)
-    from basis.domain.ontology.hub.catalog import list_registry
-
-    session = graph_session(request, workspace_id)
-    with OntologyHubState(request, workspace_id):
-        registry = request.app.state.ontology_registries[workspace_id]
-        return await asyncio.to_thread(
-            list_registry,
-            registry,
-            session,
-            q=q,
-            status=status,
-            format=format,
-        )
+    args: dict[str, Any] = {}
+    if q:
+        args["q"] = q
+    if status:
+        args["status"] = status
+    if format:
+        args["format"] = format
+    payload = await run_ontology_operation(
+        request,
+        workspace_id,
+        user,
+        store,
+        ontology_ops.op_list_ontology_registry,
+        args,
+        http_method="GET",
+    )
+    return payload.get("registry", [])
 
 
 @router.get("/{workspace_id}/ontology/alignments")

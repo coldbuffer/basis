@@ -482,6 +482,8 @@ export function LedgerEntityBrowser({
   const [deletePreviewError, setDeletePreviewError] = useState<string | null>(null);
   const [deletePreviewLoading, setDeletePreviewLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [invalidateTarget, setInvalidateTarget] = useState<LedgerEntityHit | null>(null);
+  const [invalidating, setInvalidating] = useState(false);
 
   const showLineage = Boolean(caps?.provenance && caps?.graph);
 
@@ -598,6 +600,26 @@ export function LedgerEntityBrowser({
     };
   }, [focusStatementId, workspaceId]);
 
+  async function confirmInvalidateEntity() {
+    if (!invalidateTarget || invalidating) return;
+    const entityId = ledgerEntityId(invalidateTarget);
+    setInvalidating(true);
+    setError(null);
+    try {
+      await workspaceOpenApiPOST(workspaceId, 'ledger/entities/invalidate', {
+        body: { entity_ids: [entityId] },
+      });
+      toast.success(l.invalidate_entity_success);
+      if (factsTarget && ledgerEntityId(factsTarget) === entityId) setFactsTarget(null);
+      setInvalidateTarget(null);
+      await fetchEntities(appliedQuery, safePage);
+    } catch (err) {
+      setError(apiError(err));
+    } finally {
+      setInvalidating(false);
+    }
+  }
+
   async function confirmDeleteEntity() {
     if (!deleteTarget || deleting) return;
     const entityId = ledgerEntityId(deleteTarget);
@@ -700,12 +722,17 @@ export function LedgerEntityBrowser({
                   </Link>
                 </DropdownMenuItem>
                 {canDeleteEntity ? (
-                  <DropdownMenuItem
-                    className="text-destructive focus:text-destructive"
-                    onClick={() => setDeleteTarget(hit)}
-                  >
-                    {l.delete_entity}
-                  </DropdownMenuItem>
+                  <>
+                    <DropdownMenuItem onClick={() => setInvalidateTarget(hit)}>
+                      {l.invalidate_entity}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-destructive focus:text-destructive"
+                      onClick={() => setDeleteTarget(hit)}
+                    >
+                      {l.delete_entity}
+                    </DropdownMenuItem>
+                  </>
                 ) : null}
               </DropdownMenuContent>
             </DropdownMenu>
@@ -787,6 +814,40 @@ export function LedgerEntityBrowser({
               highlightStatementId={highlightStatementId}
             />
           ) : null}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={invalidateTarget !== null}
+        onOpenChange={(open) => {
+          if (!open && !invalidating) setInvalidateTarget(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{l.invalidate_entity_title}</DialogTitle>
+            <DialogDescription>
+              {fmt(l.invalidate_entity_description, {
+                label:
+                  invalidateTarget?.canonical_label ||
+                  (invalidateTarget ? ledgerEntityId(invalidateTarget) : ''),
+              })}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={invalidating}
+              onClick={() => setInvalidateTarget(null)}
+            >
+              {t.core.common.cancel}
+            </Button>
+            <Button type="button" disabled={invalidating} onClick={() => void confirmInvalidateEntity()}>
+              {invalidating ? <Spinner className="size-4" /> : null}
+              {l.invalidate_entity_confirm}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

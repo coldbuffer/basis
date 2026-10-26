@@ -30,6 +30,11 @@ _ERROR_MAP: dict[str, tuple[int, str]] = {
     "rules is required (non-empty array of rule strings)": (422, "validation_error"),
     "rule_id is required": (422, "validation_error"),
     "rule not found": (404, "not_found"),
+    "not_found": (404, "not_found"),
+    "validation_error": (400, "validation_error"),
+    "confirmation_required": (422, "confirmation_required"),
+    "invalid_scopes": (422, "invalid_scopes"),
+    "ontology_hub_unavailable": (503, "service_unavailable"),
 }
 
 
@@ -46,10 +51,18 @@ def http_response_from_payload(payload: dict[str, Any]) -> dict[str, Any]:
             status_code=422,
             detail={"code": code, "message": err},
         )
+    message = payload.get("message")
+    if isinstance(message, str) and message.strip():
+        detail_message = message.strip()
+    else:
+        detail_message = err
     status, code = _ERROR_MAP.get(err, (400, "bad_request"))
     if status == 404:
-        raise AdminError(status, code, err)
-    raise HTTPException(status_code=status, detail={"code": code, "message": err})
+        raise AdminError(status, code, detail_message)
+    raise HTTPException(
+        status_code=status,
+        detail={"code": code, "message": detail_message},
+    )
 
 
 def http_exception_from_core(exc: CoreError) -> HTTPException:

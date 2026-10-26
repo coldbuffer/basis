@@ -75,6 +75,11 @@ class VersionCompareRequest(BaseModel):
     version2: str
 
 
+class VersionRestoreRequest(BaseModel):
+    target_version: str
+    summary: str | None = None
+
+
 class OntologyEdgeChange(BaseModel):
     source: str
     target: str

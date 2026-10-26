@@ -12,6 +12,8 @@ import type { Locale } from '@/i18n/locale.js';
 
 type GraphStats = {
   node_count?: number;
+  node_count_active?: number;
+  node_count_archived?: number;
   edge_count?: number;
   node_types?: Record<string, number>;
   edge_types?: Record<string, number>;
@@ -128,13 +130,29 @@ export function GraphOverviewStats({ workspaceId }: { workspaceId: string }) {
           <p className="text-sm text-destructive">{error}</p>
         ) : stats ? (
           <>
-            <dl className="grid gap-3 text-sm sm:grid-cols-2">
+            <dl className="grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
               <div>
                 <dt className="text-muted-foreground">{w.nodes_label}</dt>
                 <dd className="font-mono text-lg font-semibold">
                   {formatLocaleNumber(locale, stats.node_count ?? 0)}
                 </dd>
               </div>
+              {typeof stats.node_count_active === "number" ? (
+                <div>
+                  <dt className="text-muted-foreground">{w.nodes_active_label}</dt>
+                  <dd className="font-mono text-lg font-semibold">
+                    {formatLocaleNumber(locale, stats.node_count_active)}
+                  </dd>
+                </div>
+              ) : null}
+              {typeof stats.node_count_archived === "number" && stats.node_count_archived > 0 ? (
+                <div>
+                  <dt className="text-muted-foreground">{w.nodes_archived_label}</dt>
+                  <dd className="font-mono text-lg font-semibold">
+                    {formatLocaleNumber(locale, stats.node_count_archived)}
+                  </dd>
+                </div>
+              ) : null}
               <div>
                 <dt className="text-muted-foreground">{w.edges_label}</dt>
                 <dd className="font-mono text-lg font-semibold">

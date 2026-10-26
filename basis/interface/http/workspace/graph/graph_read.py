@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, Request
 from basis.domain.errors import AdminError
 from basis.domain.tenancy.admin.store import AdminStore, User
 from basis.interface.http.shared.deps import (
+    graph_for,
     graph_runtime_for,
     get_current_user,
     get_workspace_for_editor,
@@ -17,17 +18,16 @@ from basis.interface.http.shared.deps import (
     get_knowledge_store,
     get_runtime_limits,
     get_store,
-    graph_for,
-    save_graph,
+    rebuild_graph_projection,
 )
 from basis.interface.http.shared.core_context import build_workspace_core_context
 from basis.application.graph.operations import op_graph_search, op_neighbors, op_paths
 from basis.interface.http.shared.operation_http import http_response_from_payload
 from basis.infra.runtime.limits import RuntimeLimits
 from basis.domain.knowledge.store import KnowledgeStore
+from basis.domain.graph.reads.projection_visibility import count_projection_nodes
 from basis.domain.graph.reads.read import get_node, paginate_edges
 from basis.domain.graph.projection.export import graph_snapshot
-from basis.domain.graph.projection.projector import apply_rebuild_to_session
 from basis.domain.knowledge.services.graph_audit import audit_graph
 from basis.interface.http.workspace.graph.graph_models import (
     GraphSearchRequest,
@@ -48,14 +48,7 @@ async def rebuild_graph(
 Rebuild Graph. Projected graph read API (graph runtime). Requires workspace membership (session) or workspace API token with read/write scope. All paths are scoped to `{workspace_id}`.
     """
     get_workspace_for_editor(request, user, workspace_id, store)
-    session = graph_for(request, workspace_id)
-    meta = await asyncio.to_thread(
-        apply_rebuild_to_session,
-        get_knowledge_store(request),
-        workspace_id,
-        session,
-    )
-    save_graph(request, workspace_id)
+    meta = await asyncio.to_thread(rebuild_graph_projection, request, workspace_id)
     audit_graph(
         store,
         user,
@@ -104,7 +97,15 @@ async def graph_stats(
 Graph Stats. Projected graph read API (graph runtime). Requires workspace membership (session) or workspace API token with read/write scope. All paths are scoped to `{workspace_id}`.
     """
     get_workspace_for_viewer(request, user, workspace_id, store)
-    return graph_for(request, workspace_id).stats()
+    runtime = graph_runtime_for(request, workspace_id)
+    live = graph_for(request, workspace_id).stats()
+    _total, active, archived = count_projection_nodes(runtime)
+    return {
+        "node_count": int(live.get("node_count") or 0),
+        "node_count_active": active,
+        "node_count_archived": archived,
+        "edge_count": int(live.get("edge_count") or 0),
+    }
 
 
 @router.get("/{workspace_id}/graph/nodes")
@@ -202,6 +203,7 @@ async def graph_neighbors_route(
     node_id: str,
     request: Request,
     depth: int = 1,
+    include_archived: bool = False,
     user: User = Depends(get_current_user),
     store: AdminStore = Depends(get_store),
 ) -> dict[str, Any]:
@@ -212,7 +214,7 @@ Graph Neighbors Route. Projected graph read API (graph runtime). Requires worksp
     payload = await asyncio.to_thread(
         op_neighbors,
         ctx,
-        {"node_id": node_id, "depth": depth},
+        {"node_id": node_id, "depth": depth, "include_archived": include_archived},
     )
     return http_response_from_payload(payload)
 
@@ -298,6 +300,7 @@ Graph Search Route. Projected graph read API (graph runtime). Requires workspace
             "limit": body.limit,
             "max_limit": limits.graph_node_search_max_limit,
             "at": body.at,
+            "include_archived": body.include_archived,
         },
     )
     return http_response_from_payload(payload)

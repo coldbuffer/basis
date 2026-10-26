@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import os
 import re
+import shutil
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
@@ -89,6 +90,11 @@ class BlobStore:
         path = self._resolve_key(workspace_id, blob_key)
         if path.is_file():
             path.unlink()
+
+    def delete_workspace(self, workspace_id: str) -> None:
+        root = self._workspace_root(workspace_id)
+        if root.is_dir():
+            shutil.rmtree(root)
 
     def _resolve_key(self, workspace_id: str, blob_key: str) -> Path:
         safe_workspace = _safe_workspace_segment(workspace_id)

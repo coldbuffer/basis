@@ -218,7 +218,13 @@ export class WorkspaceWsClient {
   };
 
   graph = {
-    stats: () => this.request<{ node_count: number; edge_count: number }>('graph/stats'),
+    stats: () =>
+      this.request<{
+        node_count: number;
+        node_count_active?: number;
+        node_count_archived?: number;
+        edge_count: number;
+      }>('graph/stats'),
     snapshot: (params?: { limit_nodes?: number; limit_edges?: number }) => {
       const q = new URLSearchParams();
       if (params?.limit_nodes) q.set('limit_nodes', String(params.limit_nodes));
@@ -233,15 +239,18 @@ export class WorkspaceWsClient {
       if (params?.node_type) q.set('node_type', params.node_type);
       return this.request<{ nodes: unknown[]; total: number }>(`graph/nodes?${q}`);
     },
-    neighbors: (nodeId: string, depth = 1) =>
-      this.request<{ neighbors: unknown[] }>(
-        `graph/nodes/${encodeURIComponent(nodeId)}/neighbors?depth=${depth}`,
-      ),
+    neighbors: (nodeId: string, depth = 1, includeArchived = false) => {
+      const q = new URLSearchParams({ depth: String(depth) });
+      if (includeArchived) q.set('include_archived', 'true');
+      return this.request<{ neighbors: unknown[] }>(
+        `graph/nodes/${encodeURIComponent(nodeId)}/neighbors?${q}`,
+      );
+    },
     path: (source: string, target: string) => {
       const q = new URLSearchParams({ source, target });
       return this.request(`graph/path?${q}`);
     },
-    search: (body: { query: string; limit?: number; at?: string }) =>
+    search: (body: { query: string; limit?: number; at?: string; include_archived?: boolean }) =>
       this.request<{
         results: { node: { id: string; type: string; content: string }; score: number }[];
         temporal_filter?: boolean;

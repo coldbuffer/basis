@@ -40,6 +40,33 @@ def test_realtime_ticket_and_websocket_connect(tmp_path) -> None:
             reuse.receive_json()
 
 
+def test_rebuild_emits_projection_updated_when_http_handler_uses_thread_pool(tmp_path) -> None:
+    """Rebuild runs in asyncio.to_thread; broadcast must use the main event loop."""
+    from concurrent.futures import ThreadPoolExecutor
+
+    client = TestClient(create_app(Settings(data_dir=tmp_path)))
+    admin = client.post(
+        "/api/v1/auth/register",
+        json={"email": "wspool@example.com", "password": "password1", "display_name": "U"},
+    ).json()
+    headers = _auth(admin["token"])
+    workspace_id = client.get("/api/v1/workspaces", headers=headers).json()["workspaces"][0]["id"]
+    ticket = client.post(f"/api/v1/workspaces/{workspace_id}/realtime-ticket", headers=headers).json()["ticket"]
+
+    with client.websocket_connect(f"/api/v1/workspaces/{workspace_id}/ws/graph-updates?ticket={ticket}") as ws:
+        assert ws.receive_json()["type"] == "connected"
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            future = pool.submit(
+                client.post,
+                f"/api/v1/workspaces/{workspace_id}/graph/rebuild",
+                headers=headers,
+            )
+            assert future.result().status_code == 200
+        event = ws.receive_json()
+        assert event["type"] == "projection_updated"
+        assert event["workspace_id"] == workspace_id
+
+
 def test_rebuild_emits_projection_updated_on_websocket(tmp_path) -> None:
     client = TestClient(create_app(Settings(data_dir=tmp_path, ingest_inline=True)))
     admin = client.post(

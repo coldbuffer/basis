@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import json
 from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 
 from basis.domain.knowledge.governance_config import GovernanceConfig, validate_governance_config
+from basis.domain.ontology.mappings.entity_type import filter_type_phrases
 from basis.domain.knowledge.persistence import sql_governance_config as gov_persist
 
 if TYPE_CHECKING:
@@ -42,6 +44,7 @@ class GovernanceAccess:
         governor_confidence_min: float,
         governance_ontology_uri: str | None = None,
         clear_governance_ontology_uri: bool = False,
+        entity_type_surface_phrases: list[str] | None = None,
     ) -> GovernanceConfig:
         existing = self.get_governance_config(workspace_id)
         ontology_uri = existing.governance_ontology_uri
@@ -52,6 +55,15 @@ class GovernanceAccess:
         shacl_turtle = existing.governance_shacl_turtle
         if ontology_uri != existing.governance_ontology_uri:
             shacl_turtle = None
+        type_phrases_json = existing.entity_type_surface_phrases_json
+        if entity_type_surface_phrases is not None:
+            cleaned = filter_type_phrases(entity_type_surface_phrases)
+            if len(cleaned) > 64:
+                raise ValueError("entity_type_surface_phrases supports at most 64 entries")
+            for phrase in cleaned:
+                if len(phrase) > 128:
+                    raise ValueError("entity_type_surface_phrase entry too long")
+            type_phrases_json = json.dumps(cleaned, ensure_ascii=False) if cleaned else None
         config = GovernanceConfig(
             workspace_id=workspace_id,
             schema_version=existing.schema_version,
@@ -61,7 +73,7 @@ class GovernanceAccess:
             governor_last_run_at=existing.governor_last_run_at,
             governance_ontology_uri=ontology_uri,
             governance_shacl_turtle=shacl_turtle,
-            entity_type_surface_phrases_json=existing.entity_type_surface_phrases_json,
+            entity_type_surface_phrases_json=type_phrases_json,
         )
         validate_governance_config(config)
         with self._store._lock:

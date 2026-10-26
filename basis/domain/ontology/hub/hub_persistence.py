@@ -64,6 +64,7 @@ def ensure_ontology_hub_loaded(request: Any, workspace_id: str) -> None:
 
     persistence: GraphPersistence = app_state.graph_persistence
     path = _hub_path(persistence, workspace_id)
+    backfill_needed = False
     if path.is_file():
         try:
             payload = json.loads(path.read_text(encoding="utf-8"))
@@ -85,9 +86,16 @@ def ensure_ontology_hub_loaded(request: Any, workspace_id: str) -> None:
             app_state.ontology_versions[workspace_id] = _rehydrate_versions(
                 VersionEntry, payload.get("versions") or {}
             )
+            from basis.domain.ontology.hub.registry_ensure import backfill_registry_from_versions
+
+            reg = app_state.ontology_registries[workspace_id]
+            vers = app_state.ontology_versions[workspace_id]
+            backfill_needed = bool(backfill_registry_from_versions(reg, vers))
 
     loaded.add(workspace_id)
     app_state._ontology_hub_loaded = loaded
+    if backfill_needed:
+        persist_ontology_hub(request, workspace_id)
 
 
 def persist_ontology_hub(request: Any, workspace_id: str) -> None:
@@ -112,6 +120,23 @@ def persist_ontology_hub(request: Any, workspace_id: str) -> None:
         tmp.parent.mkdir(parents=True, exist_ok=True)
         tmp.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
         _atomic_replace(tmp, path)
+
+
+def read_registry_snapshot(
+    persistence: GraphPersistence,
+    workspace_id: str,
+) -> dict[str, Any] | None:
+    """Return registry from the hub sidecar, or None if the sidecar file does not exist."""
+    path = _hub_path(persistence, workspace_id)
+    if not path.is_file():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return {}
+    if int(payload.get("schema_version", 0)) != _HUB_SCHEMA_VERSION:
+        return {}
+    return dict(payload.get("registry") or {})
 
 
 def delete_ontology_hub(persistence: GraphPersistence, workspace_id: str) -> None:

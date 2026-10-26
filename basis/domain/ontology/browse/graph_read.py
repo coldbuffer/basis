@@ -70,6 +70,7 @@ def get_ontology_graph(
     registry: dict[str, Any],
     *,
     uri: str,
+    versions: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     if not uri or not str(uri).strip():
         raise AdminError(422, "validation_error", "Query parameter uri is required.")
@@ -79,7 +80,7 @@ def get_ontology_graph(
         raise AdminError(404, "not_found", "Ontology not found in registry.")
 
     try:
-        core_nodes_by_id = collect_core_nodes(session, uri, known)
+        core_nodes_by_id = collect_core_nodes(session, uri, known, versions=versions)
         if not core_nodes_by_id:
             raise AdminError(404, "not_found", "Ontology graph not found.")
         core_node_ids = set(core_nodes_by_id)

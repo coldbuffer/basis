@@ -14,6 +14,10 @@ class GraphSearchRequest(BaseModel):
         default=None,
         description="Optional temporal instant (ISO). When set, results are limited to nodes active at that instant.",
     )
+    include_archived: bool = Field(
+        default=False,
+        description="When true, include projection nodes with status=archived in search results.",
+    )
 
 
 class SearchConfigRequest(BaseModel):

@@ -6,8 +6,11 @@ import asyncio
 from typing import Any
 
 from fastapi import APIRouter, Depends, Request
+from pydantic import BaseModel, Field
 
+from basis.application.knowledge.operations import op_invalidate_entities
 from basis.domain.tenancy.admin.store import AdminStore, User
+from basis.interface.http.shared.core_context import build_workspace_core_context
 from basis.interface.http.shared.deps import (
     get_current_user,
     get_workspace_for_editor,
@@ -19,6 +22,27 @@ from basis.domain.knowledge.services.graph_audit import audit_graph
 from basis.domain.knowledge.store import KnowledgeStore
 
 router = APIRouter(tags=["workspaces"])
+
+
+class InvalidateEntitiesRequest(BaseModel):
+    entity_ids: list[str] = Field(min_length=1, max_length=200)
+
+
+@router.post("/{workspace_id}/ledger/entities/invalidate")
+async def invalidate_ledger_entities(
+    workspace_id: str,
+    body: InvalidateEntitiesRequest,
+    request: Request,
+    user: User = Depends(get_current_user),
+    store: AdminStore = Depends(get_store),
+) -> dict[str, Any]:
+    """
+Invalidate Ledger Entities. Soft-delete entities and related ledger rows (temporal invalidated_at). Editor only.
+    """
+    get_workspace_for_editor(request, user, workspace_id, store)
+    ctx = build_workspace_core_context(request, workspace_id=workspace_id, user=user, store=store)
+    return await asyncio.to_thread(op_invalidate_entities, ctx, body.model_dump())
+
 
 @router.delete("/{workspace_id}/ledger/entities/{entity_id}")
 async def delete_ledger_entity(

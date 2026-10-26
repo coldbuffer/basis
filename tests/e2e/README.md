@@ -97,15 +97,15 @@ Routes follow [`web/src/routes/index.tsx`](../../web/src/routes/index.tsx) (`App
 | `/workspaces/:id/ontology` | P | `governance.e2e.spec.ts`, `ontology-proposal-url.e2e.spec.ts` | Versions tab; proposal deep link |
 | `/workspaces/:id/analyze` | P | `analyze-hub.e2e.spec.ts` | SPARQL + reasoning tabs |
 | `/workspaces/:id/vocabulary` | S | `schema-surfaces.e2e.spec.ts` | Hub loads |
-| `/workspaces/:id/mappings` (statement / extraction) | S | `schema-surfaces.e2e.spec.ts` | Title/subtitle vs connector mappings |
+| `/workspaces/:id/mappings` (statement / extraction) | D | `schema-surfaces.e2e.spec.ts`, `mappings-type-phrases.e2e.spec.ts`, `mappings-create-confirm.e2e.spec.ts`, `mappings-review-approve.e2e.spec.ts` | Ingest → UI mapping; list confirm or **Review** approve |
 | `/workspaces/:id/ontology?tab=alignments` | S | `schema-surfaces.e2e.spec.ts` | Alignments hub tab |
-| `/workspaces/:id/quality` | — | — | Data quality hub (structure / scan) |
+| `/workspaces/:id/quality` | P | `mappings-type-phrases.e2e.spec.ts` | Scan tab via mappings deep link |
 
 ### Workspace — Govern
 
 | Route | E2E | Spec(s) | Notes |
 |-------|-----|---------|-------|
-| `/workspaces/:id/review` | D | `governance.e2e.spec.ts`, `connectors.e2e.spec.ts` | Conflicts, approve narrative, writeback |
+| `/workspaces/:id/review` | D | `governance.e2e.spec.ts`, `connectors.e2e.spec.ts`, `mappings-review-approve.e2e.spec.ts` | Conflicts, approve narrative, ontology mapping approve |
 | `/workspaces/:id/log` | P | `decisions-deep-link.e2e.spec.ts`, `governance.e2e.spec.ts` | Activity log + `?graph_decision=` |
 | `/workspaces/:id/lineage` | P | `lineage.e2e.spec.ts` | `?node=` deep link |
 | `/workspaces/:id/graph-diff` | P | `graph-diff.e2e.spec.ts` | `from` / `to` query |
@@ -157,6 +157,9 @@ Routes follow [`web/src/routes/index.tsx`](../../web/src/routes/index.tsx) (`App
 | `processing-job.e2e.spec.ts` | Processing job detail / failed flows |
 | `reasoning-derived.e2e.spec.ts` | Reasoning → entities derived facts UI |
 | `schema-surfaces.e2e.spec.ts` | Statement mappings, vocabulary, ontology alignments tab |
+| `mappings-type-phrases.e2e.spec.ts` | Mappings type-phrase banner + data quality scan deep link |
+| `mappings-create-confirm.e2e.spec.ts` | Paste ingest → create relation mapping → confirm → typed facts |
+| `mappings-review-approve.e2e.spec.ts` | Ingest → UI mapping → Smart review approve → typed facts |
 | `search-graph-at.e2e.spec.ts` | Search graph tab URL |
 | `search-temporal-url.e2e.spec.ts` | Search chunk `as_of` URL |
 | `settings-graph-audit.e2e.spec.ts` | Workspace settings graph audit tab |

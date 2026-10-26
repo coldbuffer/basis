@@ -179,6 +179,13 @@ def test_mcp_tools_with_api_token(tmp_path) -> None:
     assert "list_rules" in names
     assert "get_rule" in names
     assert "list_mappings" in names
+    from tests.contract.test_contract_mcp_ledger_ontology_schemas import (
+        LEDGER_MAPPING_TOOLS,
+        ONTOLOGY_HUB_TOOLS,
+    )
+
+    for tool_name in {**LEDGER_MAPPING_TOOLS, **ONTOLOGY_HUB_TOOLS}:
+        assert tool_name in names
     assert "get_statement" in names
     assert "run_reasoning" in names
     assert "approve_review_item" in names

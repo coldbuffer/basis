@@ -251,6 +251,8 @@ export default {
     versions: {
       title: "Versions & change proposals",
       set_uri: "Set ontology URI",
+      select_ontology: "Ontology",
+      registry_select_empty: "No ontologies in catalog",
       uri_prefix: "URI: {uri}",
       version_history: "Version history",
       no_versions: "No versions found",
@@ -278,6 +280,27 @@ export default {
       version1: "Version 1",
       version2: "Version 2",
       comparing: "Comparing…",
+      restore_draft: "Restore draft",
+      restoring: "Creating draft…",
+      restore_notice: "Editor draft created (draft {draftId}). Open Edit to review, then submit a proposal.",
+      restore_at_head: "Already at this published version.",
+      show_raw_json: "Show raw JSON",
+      compare_summary: {
+        no_changes: "No structural differences between these versions.",
+        mode: "Mode: {mode}",
+        classes_added: "Classes added: {count}",
+        classes_removed: "Classes removed: {count}",
+        classes_changed: "Classes changed: {count}",
+        properties_added: "Properties added: {count}",
+        properties_removed: "Properties removed: {count}",
+        properties_changed: "Properties changed: {count}",
+        individuals_added: "Individuals added: {count}",
+        individuals_removed: "Individuals removed: {count}",
+        edges_added: "Edges added: {count}",
+        edges_removed: "Edges removed: {count}",
+        axioms_added: "Axioms added (net): {count}",
+        axioms_removed: "Axioms removed (net): {count}"
+      },
       scope_title: "Ontology scope",
       scope_desc: "Version history loads for this ontology URI.",
       ontology_uri: "Ontology URI",
@@ -327,7 +350,9 @@ export default {
         publish_failed: "Failed to publish proposal",
         partial_publish: "Warning: Partial success publishing proposal.",
         compare_failed: "Failed to compare versions",
-        partial_compare: "Warning: Partial success comparing versions."
+        partial_compare: "Warning: Partial success comparing versions.",
+        restore_failed: "Failed to create restore draft",
+        partial_restore: "Warning: Partial success creating restore draft."
       }
     },
     skos: {

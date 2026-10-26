@@ -3,7 +3,7 @@
 import asyncio
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 
 from basis.domain.tenancy.admin.store import AdminStore, User
@@ -13,8 +13,15 @@ from basis.interface.http.shared.deps import (
     get_workspace_for_viewer,
     get_store,
 )
+from basis.application.kernel import CoreError
 from basis.interface.http.shared.core_context import build_workspace_core_context
-from basis.application.workspace.operations import op_describe_workspace, op_get_capabilities
+from basis.interface.http.shared.operation_http import http_exception_from_core, http_response_from_payload
+from basis.application.workspace.operations import (
+    op_describe_workspace,
+    op_get_capabilities,
+    op_preview_workspace_reset,
+    op_reset_workspace,
+)
 from basis.domain.tenancy.realtime.access import revoke_workspace_member_realtime
 
 router = APIRouter(tags=["workspaces"])
@@ -38,6 +45,22 @@ class UpdateWorkspaceRequest(BaseModel):
 
 class MemberRoleRequest(BaseModel):
     role: str
+
+
+class WorkspaceResetRequest(BaseModel):
+    confirmation: str = Field(
+        ...,
+        description="Must match the workspace display name exactly.",
+    )
+    async_mode: bool = Field(
+        default=True,
+        alias="async",
+        description="Run reset in background; poll GET …/ingest/jobs/{job_id}.",
+    )
+    scopes: list[str] | None = Field(
+        default=None,
+        description="Subset to clear: knowledge, graph, connectors, reasoning, governance.",
+    )
 
 
 @router.get("")
@@ -139,6 +162,51 @@ Update workspace metadata. Requires workspace membership (session) or workspace 
     item = workspace.public()
     item["my_role"] = role
     return item
+
+
+@router.get("/{workspace_id}/reset")
+async def preview_workspace_reset(
+    workspace_id: str,
+    request: Request,
+    scopes: list[str] | None = Query(default=None),
+    user: User = Depends(get_current_user),
+    store: AdminStore = Depends(get_store),
+) -> dict:
+    """Preview counts before a workspace reset (owner or system admin)."""
+    get_workspace_for_viewer(request, user, workspace_id, store)
+    ctx = build_workspace_core_context(request, workspace_id=workspace_id, user=user, store=store)
+    preview_args: dict[str, object] = {}
+    if scopes is not None:
+        preview_args["scopes"] = scopes
+    try:
+        payload = await asyncio.to_thread(op_preview_workspace_reset, ctx, preview_args)
+    except CoreError as exc:
+        raise http_exception_from_core(exc) from exc
+    return http_response_from_payload(payload)
+
+
+@router.post("/{workspace_id}/reset")
+async def reset_workspace(
+    workspace_id: str,
+    body: WorkspaceResetRequest,
+    request: Request,
+    user: User = Depends(get_current_user),
+    store: AdminStore = Depends(get_store),
+) -> dict:
+    """Reset workspace ledger and projections; keeps workspace id, members, and settings."""
+    get_workspace_for_viewer(request, user, workspace_id, store)
+    ctx = build_workspace_core_context(request, workspace_id=workspace_id, user=user, store=store)
+    args: dict[str, object] = {
+        "confirmation": body.confirmation,
+        "async": body.async_mode,
+    }
+    if body.scopes is not None:
+        args["scopes"] = body.scopes
+    try:
+        payload = await asyncio.to_thread(op_reset_workspace, ctx, args)
+    except CoreError as exc:
+        raise http_exception_from_core(exc) from exc
+    return http_response_from_payload(payload)
 
 
 @router.delete("/{workspace_id}")

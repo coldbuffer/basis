@@ -251,6 +251,8 @@ export default {
     versions: {
       title: "版本与变更提案",
       set_uri: "设置本体 URI",
+      select_ontology: "本体",
+      registry_select_empty: "目录中暂无本体",
       uri_prefix: "URI：{uri}",
       version_history: "版本历史",
       no_versions: "暂无版本",
@@ -278,6 +280,27 @@ export default {
       version1: "版本 1",
       version2: "版本 2",
       comparing: "对比中…",
+      restore_draft: "恢复草稿",
+      restoring: "正在创建草稿…",
+      restore_notice: "已创建编辑器草稿（{draftId}）。请在「编辑」中查看并提交提案。",
+      restore_at_head: "已处于该发布版本。",
+      show_raw_json: "显示原始 JSON",
+      compare_summary: {
+        no_changes: "两个版本之间无结构差异。",
+        mode: "模式：{mode}",
+        classes_added: "新增类：{count}",
+        classes_removed: "移除类：{count}",
+        classes_changed: "变更类：{count}",
+        properties_added: "新增属性：{count}",
+        properties_removed: "移除属性：{count}",
+        properties_changed: "变更属性：{count}",
+        individuals_added: "新增个体：{count}",
+        individuals_removed: "移除个体：{count}",
+        edges_added: "新增边：{count}",
+        edges_removed: "移除边：{count}",
+        axioms_added: "公理净增：{count}",
+        axioms_removed: "公理净减：{count}"
+      },
       scope_title: "本体范围",
       scope_desc: "版本历史将按此本体 URI 加载。",
       ontology_uri: "本体 URI",
@@ -327,7 +350,9 @@ export default {
         publish_failed: "发布提案失败",
         partial_publish: "警告：提案仅部分发布成功。",
         compare_failed: "对比版本失败",
-        partial_compare: "警告：版本对比仅部分成功。"
+        partial_compare: "警告：版本对比仅部分成功。",
+        restore_failed: "创建恢复草稿失败",
+        partial_restore: "警告：恢复草稿仅部分创建成功。"
       }
     },
     skos: {

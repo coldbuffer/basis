@@ -23,6 +23,14 @@ import {
 } from "@/components/ui/dialog.js";
 import { Input } from "@/components/ui/input.js";
 import { Label } from "@/components/ui/label.js";
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select.js";
+import { loadOntologyRegistry } from "../lib/api.js";
+import {
+  VersionCompareSummary,
+  type VersionComparePayload,
+} from "./version-compare-summary.js";
+import { sortVersionsNewestFirst } from "../lib/version-sort.js";
+import type { OntologyEntry } from "../lib/types.js";
 import { useI18n } from "@/i18n/context.js";
 import { fmt, formatLocaleDateTime, formatLocaleNumber } from "@/i18n/format.js";
 import type { Locale } from "@/i18n/locale.js";
@@ -107,21 +115,42 @@ export function VersionsPanel() {
   const v = t.ontology.hub.versions;
   const workspaceId = useOntologyWorkspaceId();
   const [ontologyUri, setOntologyUri] = useState<string>("");
+  const [registry, setRegistry] = useState<OntologyEntry[]>([]);
   const [versions, setVersions] = useState<VersionEntry[]>([]);
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [selectedProposal, setSelectedProposal] = useState<Proposal | null>(null);
   const [showProposalModal, setShowProposalModal] = useState(false);
   const [showCompareModal, setShowCompareModal] = useState(false);
   const [comparePair, setComparePair] = useState<{ v1: string; v2: string } | null>(null);
-  const [compareResult, setCompareResult] = useState<Record<string, any> | null>(null);
+  const [compareResult, setCompareResult] = useState<VersionComparePayload | null>(null);
+  const [showCompareRawJson, setShowCompareRawJson] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [restoreBusyVersion, setRestoreBusyVersion] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [modalNotice, setModalNotice] = useState("");
   const [proposalLinkCopied, setProposalLinkCopied] = useState(false);
   const urlProposalId = readOntologyUrlState().proposalId;
-  const [uriDialogOpen, setUriDialogOpen] = useState(false);
-  const [uriDraft, setUriDraft] = useState("");
   const openedProposalFromUrl = useRef<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    loadOntologyRegistry(workspaceId, { locale: locale as Locale })
+      .then((entries) => {
+        if (cancelled) return;
+        setRegistry(entries);
+        setOntologyUri((current) => {
+          if (current && entries.some((e) => e.uri === current)) return current;
+          return entries[0]?.uri ?? "";
+        });
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setError(wsApiErrorMessage(err, locale as Locale));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [workspaceId, locale]);
 
   useEffect(() => {
     const { proposalId } = readOntologyUrlState();
@@ -156,7 +185,7 @@ export function VersionsPanel() {
           locale: locale as Locale,
         },
       );
-      setVersions(data);
+      setVersions(sortVersionsNewestFirst(data));
       if (partialWarning) setError(partialWarning);
     } catch (err) {
       setError(wsApiErrorMessage(err, locale as Locale));
@@ -320,7 +349,8 @@ export function VersionsPanel() {
         v.api.partial_compare,
       );
       if (partial) setError(partial);
-      setCompareResult(data);
+      setCompareResult(data as VersionComparePayload);
+      setShowCompareRawJson(false);
     } catch (err) {
       setError(wsApiErrorMessage(err, locale as Locale));
     } finally {
@@ -328,12 +358,43 @@ export function VersionsPanel() {
     }
   }, [workspaceId, comparePair, ontologyUri, v.api, locale]);
 
-  const ontologyUriButtonLabel = ontologyUri
-    ? fmt(v.uri_prefix, {
-        uri:
-          ontologyUri.length > 40 ? `${ontologyUri.slice(0, 40)}…` : ontologyUri,
-      })
-    : v.set_uri;
+  const headVersionId = versions[0]?.version_id ?? "";
+
+  const restoreVersionDraft = useCallback(
+    async (targetVersion: string) => {
+      if (!ontologyUri || !targetVersion) return;
+      setRestoreBusyVersion(targetVersion);
+      setError("");
+      try {
+        const response = await workspaceOpenApiResponse(
+          "POST",
+          workspaceId,
+          ontologyApiSuffix(`versions/${encodeURIComponent(ontologyUri)}/restore-draft`),
+          { body: { target_version: targetVersion } },
+        );
+        const data = await parseWsJson<{
+          restore?: { already_at_target?: boolean };
+          draft?: { draft_id?: string } | null;
+        }>(response, v.api.restore_failed);
+        const partial = wsPartialSuccessWarning(response, data, v.api.partial_restore);
+        if (partial) setError(partial);
+        if (data.restore?.already_at_target) {
+          setModalNotice(v.restore_at_head);
+        } else if (data.draft?.draft_id) {
+          setModalNotice(fmt(v.restore_notice, { draftId: data.draft.draft_id }));
+        }
+      } catch (err) {
+        setError(wsApiErrorMessage(err, locale as Locale));
+      } finally {
+        setRestoreBusyVersion(null);
+      }
+    },
+    [workspaceId, ontologyUri, v.api, v.restore_at_head, v.restore_notice, locale],
+  );
+
+  const scopedProposals = ontologyUri
+    ? proposals.filter((p) => p.ontology_uri === ontologyUri)
+    : proposals;
 
   const getStateIcon = (state: string) => {
     switch (state) {
@@ -354,22 +415,37 @@ export function VersionsPanel() {
     <div className="flex h-full flex-col overflow-auto p-5">
       <div className="mb-5 flex items-center justify-between gap-3">
         <h1 className="m-0 text-xl font-bold text-foreground">{v.title}</h1>
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          onClick={() => {
-            setUriDraft(ontologyUri);
-            setUriDialogOpen(true);
-          }}
-        >
-          {ontologyUriButtonLabel}
-        </Button>
+        <label className="sr-only" htmlFor="versions-ontology-select">{v.select_ontology}</label>
+        <div className="native-select--full min-w-0 max-w-md flex-1">
+          <NativeSelect
+            id="versions-ontology-select"
+            size="sm"
+            className="text-xs"
+            value={ontologyUri}
+            disabled={registry.length === 0}
+            onChange={(event) => setOntologyUri(event.target.value)}
+          >
+            {registry.length === 0 ? (
+              <NativeSelectOption value="">{v.registry_select_empty}</NativeSelectOption>
+            ) : (
+              registry.map((entry) => (
+                <NativeSelectOption key={entry.uri} value={entry.uri}>
+                  {entry.name}
+                </NativeSelectOption>
+              ))
+            )}
+          </NativeSelect>
+        </div>
       </div>
 
       {error ? (
         <div className="mb-4 rounded-xl border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
           {error}
+        </div>
+      ) : null}
+      {modalNotice && !showProposalModal && !showCompareModal ? (
+        <div className="mb-4 rounded-xl border border-border bg-muted/40 p-3 text-sm text-foreground">
+          {modalNotice}
         </div>
       ) : null}
 
@@ -394,18 +470,33 @@ export function VersionsPanel() {
                     {version.author} • {formatLocaleDateTime(locale, version.date, { dateStyle: "medium" })}
                   </div>
                 </div>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    setComparePair({ v1: version.version_id, v2: versions[0]?.version_id || "" });
-                    setShowCompareModal(true);
-                  }}
-                >
-                  <PublicIcon name="arrow-right" size={12} />
-                  {v.compare}
-                </Button>
+                <div className="flex shrink-0 flex-wrap gap-1.5">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setComparePair({ v1: version.version_id, v2: headVersionId });
+                      setCompareResult(null);
+                      setShowCompareModal(true);
+                    }}
+                  >
+                    <PublicIcon name="arrow-right" size={12} />
+                    {v.compare}
+                  </Button>
+                  {headVersionId && version.version_id !== headVersionId ? (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      disabled={restoreBusyVersion === version.version_id}
+                      onClick={() => restoreVersionDraft(version.version_id)}
+                    >
+                      <PublicIcon name="history" size={12} />
+                      {restoreBusyVersion === version.version_id ? v.restoring : v.restore_draft}
+                    </Button>
+                  ) : null}
+                </div>
               </div>
             ))
           )}
@@ -418,10 +509,10 @@ export function VersionsPanel() {
           {v.change_proposals}
         </h2>
         <div className="flex flex-col gap-2">
-          {proposals.length === 0 ? (
+          {scopedProposals.length === 0 ? (
             <div className="text-sm text-muted-foreground">{v.no_proposals}</div>
           ) : (
-            proposals.map((proposal) => (
+            scopedProposals.map((proposal) => (
               <div
                 key={proposal.proposal_id}
                 data-testid={`ontology-proposal-list-item-${proposal.proposal_id}`}
@@ -637,46 +728,33 @@ export function VersionsPanel() {
                 </Button>
               </DialogFooter>
               {compareResult ? (
-                <pre className="mt-2 max-h-64 overflow-auto rounded-md border bg-muted/40 p-3 font-mono text-xs">
-                  {JSON.stringify(compareResult, null, 2)}
-                </pre>
+                <div className="mt-3 space-y-2 border-t border-border pt-3">
+                  <VersionCompareSummary
+                    data={compareResult}
+                    locale={locale}
+                    labels={v.compare_summary}
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    className="h-8 px-2 text-xs"
+                    onClick={() => setShowCompareRawJson((prev) => !prev)}
+                  >
+                    {v.show_raw_json}
+                  </Button>
+                  {showCompareRawJson ? (
+                    <pre className="max-h-64 overflow-auto rounded-md border bg-muted/40 p-3 font-mono text-xs">
+                      {JSON.stringify(compareResult, null, 2)}
+                    </pre>
+                  ) : null}
+                </div>
               ) : null}
             </>
           ) : null}
         </DialogContent>
       </Dialog>
 
-      <Dialog open={uriDialogOpen} onOpenChange={setUriDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>{v.scope_title}</DialogTitle>
-            <DialogDescription>{v.scope_desc}</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-2 py-2">
-            <Label htmlFor="ontology-uri-scope">{v.ontology_uri}</Label>
-            <Input
-              id="ontology-uri-scope"
-              value={uriDraft}
-              onChange={(e) => setUriDraft(e.target.value)}
-              placeholder={v.uri_placeholder}
-            />
-          </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setUriDialogOpen(false)}>
-              {t.core.common.cancel}
-            </Button>
-            <Button
-              type="button"
-              onClick={() => {
-                setOntologyUri(uriDraft.trim());
-                setUriDialogOpen(false);
-              }}
-            >
-              {v.apply}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

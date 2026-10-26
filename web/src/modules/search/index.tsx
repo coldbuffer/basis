@@ -17,6 +17,7 @@ import {
   type GraphSearchHit,
 } from '@/modules/search/pages/search-results.js';
 import { Button } from '@/components/ui/button.js';
+import { Checkbox } from '@/components/ui/checkbox.js';
 import { Input } from '@/components/ui/input.js';
 import { Label } from '@/components/ui/label.js';
 import {
@@ -71,6 +72,9 @@ export function SearchPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(() => Boolean(searchParams.get('q')?.trim()));
+  const [includeArchivedGraph, setIncludeArchivedGraph] = useState(
+    () => searchParams.get('include_archived') === '1',
+  );
 
   const ranUrlQueryKey = useRef<string | null>(null);
 
@@ -113,14 +117,13 @@ export function SearchPage() {
   );
 
   const fetchGraph = useCallback(
-    async (q: string, limit: number, atIso: string) => {
+    async (q: string, limit: number, atIso: string, includeArchived: boolean) => {
       if (!id) return [] as GraphSearchHit[];
       const trimmed = atIso.trim();
-      const data = await workspaceApiClient(id).searchGraph(
-        q,
-        limit,
-        trimmed || undefined,
-      );
+      const data = await workspaceApiClient(id).searchGraph(q, limit, {
+        ...(trimmed ? { at: trimmed } : {}),
+        ...(includeArchived ? { include_archived: true } : {}),
+      });
       return data.results as GraphSearchHit[];
     },
     [id],
@@ -170,7 +173,7 @@ export function SearchPage() {
             setEntityResults([]);
             return;
           }
-          const graph = await fetchGraph(trimmed, limit, temporal.at);
+          const graph = await fetchGraph(trimmed, limit, temporal.at, includeArchivedGraph);
           setGraphResults(graph);
           setChunkResults([]);
           setEntityResults([]);
@@ -189,7 +192,7 @@ export function SearchPage() {
         setLoading(false);
       }
     },
-    [id, fetchChunks, fetchGraph, fetchEntities, graphEnabled, locale],
+    [id, fetchChunks, fetchGraph, fetchEntities, graphEnabled, includeArchivedGraph, locale],
   );
 
   useEffect(() => {
@@ -424,6 +427,18 @@ export function SearchPage() {
               <div className="flex flex-wrap items-center gap-1.5">
                 {scope === 'graph' ? (
                   <>
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id="search-include-archived-graph"
+                        checked={includeArchivedGraph}
+                        onCheckedChange={(checked) => {
+                          setIncludeArchivedGraph(checked === true);
+                        }}
+                      />
+                      <Label htmlFor="search-include-archived-graph" className="text-xs font-normal">
+                        {s.include_archived_graph}
+                      </Label>
+                    </div>
                     <Button type="button" variant="outline" size="sm" asChild>
                       <Link
                         to={graphPath(id, { at: at.trim() || undefined })}

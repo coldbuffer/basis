@@ -36,6 +36,12 @@ import type { Locale } from '@/i18n/locale.js';
 import { GraphWsThemeSync } from '@/modules/graph/lib/graph/graph-ws-theme-sync.js';
 import { workspaceGraphDiffPath } from '@/lib/nav/nav-config.js';
 import { searchPath } from '@/modules/search/lib/search-url-state.js';
+import { Checkbox } from '@/components/ui/checkbox.js';
+import { Label } from '@/components/ui/label.js';
+import {
+  loadGraphIncludeArchived,
+  saveGraphIncludeArchived,
+} from '@/modules/graph/lib/graph-include-archived-pref.js';
 const GraphScreen = lazy(() =>
   import('@/modules/graph/pages/screen.js').then((module) => ({
     default: module.GraphScreen,
@@ -89,6 +95,13 @@ export function GraphHost({
   const [importExportOpen, setImportExportOpen] = useState(false);
   const [importExportFocus, setImportExportFocus] = useState<'import' | 'export'>('export');
   const [reloadToken, setReloadToken] = useState(0);
+  const [includeArchivedProjection, setIncludeArchivedProjection] = useState(() =>
+    loadGraphIncludeArchived(workspaceId),
+  );
+
+  useEffect(() => {
+    setIncludeArchivedProjection(loadGraphIncludeArchived(workspaceId));
+  }, [workspaceId]);
   const deepLinkDialogOpenedRef = useRef(false);
 
   useEffect(() => {
@@ -246,6 +259,21 @@ export function GraphHost({
           <SidebarIcon name="search-01" />
         </Link>
       </Button>
+      <div className="flex max-w-[11rem] items-center gap-2 rounded-md border border-border px-2 py-1">
+        <Checkbox
+          id="graph-include-archived"
+          checked={includeArchivedProjection}
+          onCheckedChange={(checked) => {
+            const enabled = checked === true;
+            setIncludeArchivedProjection(enabled);
+            saveGraphIncludeArchived(workspaceId, enabled);
+            setReloadToken((token) => token + 1);
+          }}
+        />
+        <Label htmlFor="graph-include-archived" className="text-xs font-normal leading-tight">
+          {g.include_archived_projection}
+        </Label>
+      </div>
       <Button
         type="button"
         variant="outline"
@@ -360,6 +388,7 @@ export function GraphHost({
                 graphWriteEnabled={!capsLoading && (caps?.graph_write ?? false)}
                 decisionsEnabled={!capsLoading && (caps?.decisions ?? false)}
                 externalReloadToken={reloadToken}
+                includeArchivedProjection={includeArchivedProjection}
                 apiErrorLocale={apiLocale}
                 externalDiffOverlay={diffPreview ? diffOverlay : null}
                 onNodeSelectNotify={diffPreview ? onDiffPreviewNodeSelect : undefined}

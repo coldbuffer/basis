@@ -22,6 +22,8 @@ from basis.application.knowledge.operations import (
     op_get_chunk,
     op_get_statement,
     op_list_derived_facts,
+    op_list_entity_type_object_labels,
+    op_list_surface_phrases,
     op_list_typed_facts,
 )
 from basis.interface.http.shared.operation_http import http_response_from_payload
@@ -36,14 +38,12 @@ async def list_surface_phrases(
     limit: int = Query(100, ge=1, le=200),
     user: User = Depends(get_current_user),
     store: AdminStore = Depends(get_store),
-    knowledge: KnowledgeStore = Depends(get_knowledge_store),
 ) -> dict[str, Any]:
     """
 List Surface Phrases. Evidence ledger: documents, chunks, statements, entities. Requires workspace membership (session) or workspace API token with read/write scope. All paths are scoped to `{workspace_id}`.
     """
-    get_workspace_for_viewer(request, user, workspace_id, store)
-    phrases = knowledge.list_distinct_surface_phrases(workspace_id, limit=limit)
-    return {"phrases": phrases}
+    ctx = build_workspace_core_context(request, workspace_id=workspace_id, user=user, store=store)
+    return await asyncio.to_thread(op_list_surface_phrases, ctx, {"limit": limit})
 
 
 @router.get("/{workspace_id}/ledger/entity-type-object-labels")
@@ -53,17 +53,12 @@ async def list_entity_type_object_labels(
     limit: int = Query(100, ge=1, le=200),
     user: User = Depends(get_current_user),
     store: AdminStore = Depends(get_store),
-    knowledge: KnowledgeStore = Depends(get_knowledge_store),
 ) -> dict[str, Any]:
     """
 List object labels from type assertions (e.g. 是 / instance_of) for entity-class mappings.
     """
-    get_workspace_for_viewer(request, user, workspace_id, store)
-    labels = knowledge.list_entity_type_object_labels(workspace_id, limit=limit)
-    return {
-        "labels": labels,
-        "type_surface_phrases": knowledge.entity_type_surface_phrases(workspace_id),
-    }
+    ctx = build_workspace_core_context(request, workspace_id=workspace_id, user=user, store=store)
+    return await asyncio.to_thread(op_list_entity_type_object_labels, ctx, {"limit": limit})
 
 
 @router.get(

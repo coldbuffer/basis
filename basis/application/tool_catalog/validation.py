@@ -11,6 +11,7 @@ from basis.application.connectors.schemas import TOOL_RESPONSE_MODELS as CONNECT
 from basis.application.graph.schemas import TOOL_INPUT_MODELS as GRAPH_INPUT
 from basis.application.graph.schemas import TOOL_RESPONSE_MODELS as GRAPH_RESPONSE
 from basis.application.knowledge.schemas import TOOL_INPUT_MODELS as KNOWLEDGE_INPUT
+from basis.application.ontology.schemas import TOOL_INPUT_MODELS as ONTOLOGY_INPUT
 from basis.application.knowledge.schemas import TOOL_RESPONSE_MODELS as KNOWLEDGE_RESPONSE
 from basis.application.reasoning.schemas import TOOL_INPUT_MODELS as REASONING_INPUT
 from basis.application.reasoning.schemas import TOOL_RESPONSE_MODELS as REASONING_RESPONSE
@@ -24,6 +25,7 @@ from basis.application.semantica_compat.schemas import TOOL_RESPONSE_MODELS as S
 OPERATION_INPUT_MODELS: dict[str, type[BaseModel]] = {
     **WORKSPACE_INPUT,
     **KNOWLEDGE_INPUT,
+    **ONTOLOGY_INPUT,
     **GRAPH_INPUT,
     **REASONING_INPUT,
     **REVIEW_INPUT,

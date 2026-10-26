@@ -4,10 +4,12 @@ import { useQueryClient } from "@tanstack/react-query";
 import type Graph from "graphology";
 import { openGraphUpdatesWebSocket } from '@/lib/workspace/ws-http';
 import {
+  workspaceOpenApiDELETE,
   workspaceOpenApiGET,
   workspaceOpenApiPOST,
   workspaceOpenApiResponse,
 } from '@/lib/openapi/client.js';
+import { toast } from 'sonner';
 import { cn } from "@/lib/utils.js";
 import { wsApiErrorMessage } from '@/lib/workspace/ws-api-error';
 import { batchMergeEdges, batchMergeNodes, graph } from '@/lib/workspace/graphStore';
@@ -50,9 +52,7 @@ import {
   alignLoadBudgetWithLoaded,
   clampLoadBudget,
   defaultLoadBudget,
-  loadGraphLoadBudget,
   mergeCatalogTotals,
-  saveGraphLoadBudget,
   type GraphLoadBudget,
 } from '../lib/graph-load-budget.js';
 import { useGraphCatalogStats } from '../hooks/use-graph-catalog-stats.js';
@@ -1009,6 +1009,8 @@ interface GraphScreenProps {
   externalDiffOverlay?: import("@/modules/graph/lib/graph-diff-overlay.js").GraphDiffOverlayState | null;
   /** F-DIFF-01 canvas pick (e.g. entity merge staging on diff preview). */
   onNodeSelectNotify?: (nodeId: string) => void;
+  /** When true, load projection nodes with status=archived onto the canvas. */
+  includeArchivedProjection?: boolean;
 }
 
 export function GraphScreen({
@@ -1026,6 +1028,7 @@ export function GraphScreen({
   apiErrorLocale,
   externalDiffOverlay = null,
   onNodeSelectNotify,
+  includeArchivedProjection = false,
 }: GraphScreenProps) {
   const { locale: i18nLocale } = useI18n();
   const copyLocale: GraphScreenLocale = apiErrorLocale ?? i18nLocale;
@@ -1051,6 +1054,7 @@ export function GraphScreen({
   const [loadBudget, setLoadBudget] = useState<GraphLoadBudget>(() =>
     defaultLoadBudget({ nodeTotal: null, edgeTotal: null }),
   );
+  const loadBudgetSessionInitRef = useRef<string | null>(null);
   const [markdownDraftDirty, setMarkdownDraftDirty] = useState(false);
   const markdownRefreshGuard = useMemo(() => new NodeMarkdownRefreshGuard(), []);
   const handleMarkdownDirtyChange = useCallback((dirty: boolean) => {
@@ -1063,6 +1067,7 @@ export function GraphScreen({
   const [keywordFilter, setKeywordFilter] = useState("");
   const [predictionType, setPredictionType] = useState("");
   const [isRunningPredictions, setIsRunningPredictions] = useState(false);
+  const [isArchivingNode, setIsArchivingNode] = useState(false);
   const [predictions, setPredictions] = useState<LinkPrediction[]>([]);
   const [pathTargetId, setPathTargetId] = useState("");
   const [pathResult, setPathResult] = useState<PathResponse | null>(null);
@@ -1288,6 +1293,7 @@ export function GraphScreen({
     copyLocale: copyLocale,
     loadMaxNodes: loadBudget.maxNodes,
     loadMaxEdges: loadBudget.maxEdges,
+    includeArchivedProjection,
     onGraphReady: applyGraphReadySummary,
     onProgress: handleLoadProgress,
   });
@@ -1307,14 +1313,24 @@ export function GraphScreen({
   );
 
   const handleLoadBudgetCommit = useCallback((next: GraphLoadBudget) => {
-    const clamped = clampLoadBudget(next, catalogTotals);
-    saveGraphLoadBudget(workspaceId, clamped);
-    setLoadBudget(clamped);
-  }, [catalogTotals, workspaceId]);
+    setLoadBudget(clampLoadBudget(next, catalogTotals));
+  }, [catalogTotals]);
 
   useEffect(() => {
-    setLoadBudget(loadGraphLoadBudget(workspaceId, { nodeTotal: null, edgeTotal: null }));
+    loadBudgetSessionInitRef.current = null;
+    setLoadBudget(defaultLoadBudget({ nodeTotal: null, edgeTotal: null }));
   }, [workspaceId]);
+
+  useEffect(() => {
+    if (catalogTotals.nodeTotal == null && catalogTotals.edgeTotal == null) {
+      return;
+    }
+    if (loadBudgetSessionInitRef.current === workspaceId) {
+      return;
+    }
+    loadBudgetSessionInitRef.current = workspaceId;
+    setLoadBudget(defaultLoadBudget(catalogTotals));
+  }, [workspaceId, catalogTotals.edgeTotal, catalogTotals.nodeTotal]);
 
   useEffect(() => {
     setLoadBudget((current) => clampLoadBudget(current, catalogTotals));
@@ -1334,7 +1350,6 @@ export function GraphScreen({
       if (next.maxNodes === current.maxNodes && next.maxEdges === current.maxEdges) {
         return current;
       }
-      saveGraphLoadBudget(workspaceId, next);
       return next;
     });
   }, [
@@ -1796,6 +1811,29 @@ export function GraphScreen({
     }
   }, [copyLocale, graphWriteEnabled, inspectableNodeId, workspaceId, predictionType]);
 
+  const handleArchiveNode = useCallback(
+    async (nodeId: string) => {
+      if (!graphWriteEnabled || !nodeId.trim()) return;
+      setIsArchivingNode(true);
+      try {
+        await workspaceOpenApiDELETE(
+          workspaceId,
+          `graph/nodes/${encodeURIComponent(nodeId)}`,
+        );
+        setSelectedNodeId("");
+        setSelectedEdgeId("");
+        reload();
+        toast.success(inspectorCopy(copyLocale, "archiveNodeToast"));
+      } catch (archiveError) {
+        console.error("[GraphScreen] archive node failed", archiveError);
+        toast.error(wsApiErrorMessage(archiveError, copyLocale));
+      } finally {
+        setIsArchivingNode(false);
+      }
+    },
+    [copyLocale, graphWriteEnabled, reload, workspaceId],
+  );
+
   const handleTracePath = useCallback(async () => {
     if (!inspectableNodeId || !pathTargetId.trim()) return;
     try {
@@ -1890,9 +1928,8 @@ export function GraphScreen({
           return;
         }
         if (parsed.type === "connected") {
-          if (typeof parsed.projectionRevision === "number") {
-            lastProjectionRevisionRef.current = parsed.projectionRevision;
-          }
+          // Do not seed lastProjectionRevisionRef here: a following projection_updated
+          // often carries the same revision and must still trigger a full reload.
           return;
         }
         if (parsed.type === "connection_ack" || parsed.type === "unknown") {
@@ -2485,6 +2522,13 @@ export function GraphScreen({
       setSelectedEdgeId("");
     }
   }, [displayResult.graph, selectedEdgeId]);
+
+  useEffect(() => {
+    setTypeFilterOpen(false);
+    setHiddenNodeTypes([]);
+    setHiddenEdgeTypes([]);
+  }, [workspaceId]);
+
   const displayState = useMemo(
     () => (
       viewMode === "grouped"
@@ -3512,6 +3556,8 @@ export function GraphScreen({
                       onFocusNode={focusNode}
                       onMarkdownApplied={handleMarkdownApplied}
                       onMarkdownDirtyChange={handleMarkdownDirtyChange}
+                      onArchiveNode={handleArchiveNode}
+                      isArchivingNode={isArchivingNode}
                     />
                   </Suspense>
                 </div>

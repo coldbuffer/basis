@@ -11,6 +11,7 @@ from basis.domain.knowledge.access.connector import ConnectorAccess
 from basis.domain.knowledge.access.governance import GovernanceAccess
 from basis.domain.knowledge.access.document_delete import DocumentDeleteAccess
 from basis.domain.knowledge.access.entity_delete import EntityDeleteAccess
+from basis.domain.knowledge.access.entity_invalidate import EntityInvalidateAccess
 from basis.domain.knowledge.access.entity_merges import EntityMergesAccess
 from basis.domain.knowledge.access.graph_staging import GraphStagingAccess
 from basis.domain.knowledge.access.documents import DocumentsAccess
@@ -25,6 +26,7 @@ from basis.domain.ontology.mappings import MappingsAccess
 from basis.domain.knowledge.access.projection import ProjectionAccess
 from basis.domain.knowledge.access.review import ReviewAccess, merge_review_subject_key
 from basis.domain.knowledge.access.search import SearchAccess
+from basis.domain.knowledge.access.workspace_reset import WorkspaceResetAccess
 from basis.domain.knowledge.persistence import sql_guards as ledger_guards
 
 
@@ -44,6 +46,7 @@ class KnowledgeStore:
         self._connector = ConnectorAccess(self)
         self._graph_staging = GraphStagingAccess(self)
         self._entity_delete = EntityDeleteAccess(self)
+        self._entity_invalidate = EntityInvalidateAccess(self)
         self._entity_merges = EntityMergesAccess(self)
         self._document_delete = DocumentDeleteAccess(self)
         self._processing = ProcessingJobsAccess(self)
@@ -59,6 +62,7 @@ class KnowledgeStore:
         self._governance = GovernanceAccess(self)
         self._search = SearchAccess(self)
         self._ledger = LedgerAccess(self)
+        self._workspace_reset = WorkspaceResetAccess(self)
 
     def close(self) -> None:
         if self._owns_db_ref:
@@ -113,6 +117,9 @@ for _name in ("graph_staging_at", "upsert_graph_staging_session"):
 
 for _name in ("preview_entity_deletion", "execute_delete_entity"):
     setattr(KnowledgeStore, _name, _workspace_access_delegate("_entity_delete", _name))
+
+for _name in ("invalidate_entity",):
+    setattr(KnowledgeStore, _name, _workspace_access_delegate("_entity_invalidate", _name))
 
 for _name in (
     "store_upload_bytes",
@@ -203,6 +210,7 @@ for _name in (
 
 for _name in (
     "list_typed_facts",
+    "list_typed_facts_for_subject",
     "insert_derived_fact",
     "list_derived_facts",
     "list_derived_facts_for_entity",
@@ -293,3 +301,6 @@ for _name in (
     "get_statement_browse",
 ):
     setattr(KnowledgeStore, _name, _workspace_access_delegate("_ledger", _name))
+
+for _name in ("preview_workspace_reset", "execute_workspace_reset"):
+    setattr(KnowledgeStore, _name, _workspace_access_delegate("_workspace_reset", _name))
