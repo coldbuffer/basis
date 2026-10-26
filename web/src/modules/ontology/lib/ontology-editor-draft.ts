@@ -16,12 +16,22 @@ export type OntologyAxiomChange = {
 
 export type OntologyRestrictionChange = {
   type: string;
+  /** `object` (default) or `data` — OWL 2 property scope. */
+  property_scope?: 'object' | 'data';
   /** Class that receives the restriction (subClassOf anonymous restriction). */
   class_uri?: string;
   onProperty?: string;
-  /** Filler class for someValuesFrom (legacy key: onClass). */
+  /** Filler class for someValuesFrom / allValuesFrom / qualified (legacy: onClass). */
   filler_class?: string;
   onClass?: string;
+  /** Object ``hasValue`` individual URI. */
+  filler_individual?: string;
+  /** Data range or literal datatype IRI. */
+  filler_datatype?: string;
+  /** Data ``hasValue`` lexical form. */
+  literal_value?: string;
+  /** Cardinality for min/max/exact (qualified or unqualified). */
+  cardinality?: number;
   value?: string;
 };
 
@@ -84,6 +94,18 @@ export function labelFromEntityUri(uri: string): string {
   return segment || uri;
 }
 
+export function edgeTripleKey(edge: Pick<OntologyEdgeChange, 'source' | 'type' | 'target'>): string {
+  return `${edge.source}|${edge.type}|${edge.target}`;
+}
+
 export function edgeChangeKey(edge: OntologyEdgeChange): string {
-  return edge.id ?? `${edge.source}|${edge.type}|${edge.target}`;
+  return edge.id ?? edgeTripleKey(edge);
+}
+
+/** Reference stored in ``removed_edges`` when no stable runtime edge id exists. */
+export function edgeRemovalRef(
+  edge: Pick<OntologyEdgeChange, 'source' | 'type' | 'target'> & { id?: string },
+): string {
+  const id = edge.id?.trim();
+  return id ? id : edgeTripleKey(edge);
 }

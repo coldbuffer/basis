@@ -25,8 +25,108 @@ def test_materialize_restrictions_builds_nodes_and_edges() -> None:
     )
     assert len(nodes) == 1
     assert nodes[0]["type"] == "owl:Restriction"
+    assert nodes[0]["properties"]["owl:someValuesFrom"] == f"{ns}/Person"
     assert len(edges) == 3
     assert any(edge["type"] == "rdfs:subClassOf" for edge in edges)
+
+
+@pytest.mark.parametrize(
+    ("payload", "predicate", "filler_edge"),
+    [
+        (
+            {
+                "type": "allValuesFrom",
+                "class_uri": "http://ex.org/C",
+                "onProperty": "http://ex.org/p",
+                "filler_class": "http://ex.org/D",
+            },
+            "owl:allValuesFrom",
+            "owl:allValuesFrom",
+        ),
+        (
+            {
+                "type": "hasValue",
+                "class_uri": "http://ex.org/C",
+                "onProperty": "http://ex.org/p",
+                "filler_individual": "http://ex.org/ind1",
+            },
+            "owl:hasValue",
+            "owl:hasValue",
+        ),
+        (
+            {
+                "type": "maxCardinality",
+                "class_uri": "http://ex.org/C",
+                "onProperty": "http://ex.org/p",
+                "cardinality": 2,
+            },
+            "owl:maxCardinality",
+            None,
+        ),
+        (
+            {
+                "type": "maxQualifiedCardinality",
+                "class_uri": "http://ex.org/C",
+                "onProperty": "http://ex.org/p",
+                "filler_class": "http://ex.org/D",
+                "cardinality": 1,
+            },
+            "owl:maxQualifiedCardinality",
+            "owl:onClass",
+        ),
+        (
+            {
+                "property_scope": "data",
+                "type": "someValuesFrom",
+                "class_uri": "http://ex.org/C",
+                "onProperty": "http://ex.org/dp",
+                "filler_datatype": "http://www.w3.org/2001/XMLSchema#string",
+            },
+            "owl:someValuesFrom",
+            "owl:someValuesFrom",
+        ),
+        (
+            {
+                "property_scope": "data",
+                "type": "hasValue",
+                "class_uri": "http://ex.org/C",
+                "onProperty": "http://ex.org/dp",
+                "literal_value": "active",
+                "filler_datatype": "http://www.w3.org/2001/XMLSchema#string",
+            },
+            "owl:hasValue",
+            None,
+        ),
+    ],
+)
+def test_materialize_restrictions_owl_variants(payload, predicate, filler_edge) -> None:
+    nodes, edges = materialize_restrictions("http://ex.org#ontology", [payload])
+    assert len(nodes) == 1
+    assert predicate in nodes[0]["properties"]
+    if filler_edge:
+        assert any(edge["type"] == filler_edge for edge in edges)
+
+
+def test_apply_removals_purges_edge_by_triple_key() -> None:
+    from semantica.context import ContextGraph
+
+    graph = ContextGraph()
+    graph.add_node("http://ex.org/A", "owl:Class", content="A")
+    graph.add_node("http://ex.org/B", "owl:Class", content="B")
+    graph.add_edge("http://ex.org/A", "http://ex.org/B", "rdfs:subClassOf")
+
+    class _Session:
+        def __init__(self, g: object) -> None:
+            self.graph = g
+
+    diff = {"removed_edges": ["http://ex.org/A|rdfs:subClassOf|http://ex.org/B"]}
+    _, removed_edges = apply_removals(
+        _Session(graph),
+        diff,
+        diff_list=lambda _d, key: list(diff.get(key) or []),
+    )
+    assert removed_edges == 1
+    assert not graph.find_edges()
 
 
 def test_apply_removals_purges_nodes_and_edges() -> None:

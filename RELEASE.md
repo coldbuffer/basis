@@ -79,7 +79,6 @@ Do **not** promise these in v0.1 release notes or marketing. Target **v0.2+** un
 
 - ADR 0007 Part B — full canvas merge studio (use graph-diff + staging + review today)
 - Markdown node resource persistence
-- Multi-instance realtime WS (Redis pub/sub); single worker / sticky sessions OK for v0.1
 - Agent Memory browser (`F-MEM-*`) — excluded
 - Semantica graph as standalone npm package (M5-02) — excluded
 
@@ -106,7 +105,7 @@ Do **not** promise these in v0.1 release notes or marketing. Target **v0.2+** un
 
 - OpenConnector 大批量迁移、Airbyte entity 全量合成
 - 连接器 GA 名单扩大、embed 产品决策收口（规划 **0.2**）
-- 画布合并 B 方案、Memory 产品、多实例 WS 等（见 `docs/progress.md` §4 Deferred）
+- 画布合并 B 方案、Memory 产品等（见 `docs/progress.md` §4 Deferred）
 
 ### 发版操作
 

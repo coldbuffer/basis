@@ -9,6 +9,12 @@ import type {
   OntologyEditorDraftDiff,
   OntologyRestrictionChange,
 } from '../lib/ontology-editor-draft.js';
+import {
+  ONTOLOGY_RESTRICTION_OPTIONS,
+  parseRestrictionOptionValue,
+  restrictionMetaForChange,
+  restrictionOptionValue,
+} from '../lib/ontology-restriction-types.js';
 
 type EditorCopy = LocaleMessages['ontology']['hub']['editor'];
 
@@ -25,6 +31,8 @@ export function OntologyEditorDraftPanel({ copy, draftDiff, onChange }: Ontology
     draftDiff.added_edges.length > 0;
 
   if (!hasPending) return null;
+
+  const restrictionTypeLabels = copy.restriction_types;
 
   const updateAxiom = (index: number, patch: Partial<OntologyAxiomChange>) => {
     const next = [...draftDiff.added_axioms];
@@ -97,48 +105,106 @@ export function OntologyEditorDraftPanel({ copy, draftDiff, onChange }: Ontology
           />
         </div>
       ))}
-      {draftDiff.added_restrictions.map((restriction, index) => (
-        <div key={`restriction-${index}`} className="mb-3 space-y-2 rounded-md border border-border p-3">
-          <div className="flex items-center justify-between gap-2">
-            <Label className="text-xs">{copy.restriction_row_label}</Label>
-            <Button
-              type="button"
-              variant="ghost"
+      {draftDiff.added_restrictions.map((restriction, index) => {
+        const scope = restriction.property_scope === 'data' ? 'data' : 'object';
+        const selectValue = restrictionOptionValue(scope, restriction.type);
+        const meta = restrictionMetaForChange(restriction);
+        return (
+          <div key={`restriction-${index}`} className="mb-3 space-y-2 rounded-md border border-border p-3">
+            <div className="flex items-center justify-between gap-2">
+              <Label className="text-xs">{copy.restriction_row_label}</Label>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2"
+                onClick={() => removeRestriction(index)}
+              >
+                <PublicIcon name="trash-01" size={14} />
+              </Button>
+            </div>
+            <NativeSelect
+              value={selectValue}
+              onChange={(event) => {
+                const parsed = parseRestrictionOptionValue(event.target.value);
+                if (!parsed) return;
+                updateRestriction(index, {
+                  property_scope: parsed.scope,
+                  type: parsed.type,
+                });
+              }}
+              className="text-xs"
               size="sm"
-              className="h-7 px-2"
-              onClick={() => removeRestriction(index)}
             >
-              <PublicIcon name="trash-01" size={14} />
-            </Button>
+              {ONTOLOGY_RESTRICTION_OPTIONS.map((option) => (
+                <NativeSelectOption key={option.value} value={option.value}>
+                  {restrictionTypeLabels[option.labelKey]}
+                </NativeSelectOption>
+              ))}
+            </NativeSelect>
+            <Input
+              className="h-8 font-mono text-xs"
+              placeholder={copy.restriction_class_uri_placeholder}
+              value={restriction.class_uri ?? ''}
+              onChange={(event) => updateRestriction(index, { class_uri: event.target.value })}
+            />
+            <Input
+              className="h-8 font-mono text-xs"
+              placeholder={copy.restriction_property_placeholder}
+              value={restriction.onProperty ?? ''}
+              onChange={(event) => updateRestriction(index, { onProperty: event.target.value })}
+            />
+            {meta?.needsCardinality ? (
+              <Input
+                className="h-8 font-mono text-xs"
+                type="number"
+                min={0}
+                step={1}
+                placeholder={copy.restriction_cardinality_placeholder}
+                value={restriction.cardinality ?? ''}
+                onChange={(event) => {
+                  const raw = event.target.value;
+                  updateRestriction(index, {
+                    cardinality: raw === '' ? undefined : Number.parseInt(raw, 10),
+                  });
+                }}
+              />
+            ) : null}
+            {meta?.needsClassFiller ? (
+              <Input
+                className="h-8 font-mono text-xs"
+                placeholder={copy.restriction_class_placeholder}
+                value={restriction.filler_class ?? restriction.onClass ?? ''}
+                onChange={(event) => updateRestriction(index, { filler_class: event.target.value })}
+              />
+            ) : null}
+            {meta?.needsIndividualFiller ? (
+              <Input
+                className="h-8 font-mono text-xs"
+                placeholder={copy.restriction_individual_placeholder}
+                value={restriction.filler_individual ?? ''}
+                onChange={(event) => updateRestriction(index, { filler_individual: event.target.value })}
+              />
+            ) : null}
+            {meta?.needsDatatypeFiller ? (
+              <Input
+                className="h-8 font-mono text-xs"
+                placeholder={copy.restriction_datatype_placeholder}
+                value={restriction.filler_datatype ?? ''}
+                onChange={(event) => updateRestriction(index, { filler_datatype: event.target.value })}
+              />
+            ) : null}
+            {meta?.needsLiteralValue ? (
+              <Input
+                className="h-8 font-mono text-xs"
+                placeholder={copy.restriction_literal_placeholder}
+                value={restriction.literal_value ?? ''}
+                onChange={(event) => updateRestriction(index, { literal_value: event.target.value })}
+              />
+            ) : null}
           </div>
-          <NativeSelect
-            value={restriction.type}
-            onChange={(event) => updateRestriction(index, { type: event.target.value })}
-            className="text-xs"
-            size="sm"
-          >
-            <NativeSelectOption value="someValuesFrom">{copy.restriction_type_some_values}</NativeSelectOption>
-          </NativeSelect>
-          <Input
-            className="h-8 font-mono text-xs"
-            placeholder={copy.restriction_class_uri_placeholder}
-            value={restriction.class_uri ?? ''}
-            onChange={(event) => updateRestriction(index, { class_uri: event.target.value })}
-          />
-          <Input
-            className="h-8 font-mono text-xs"
-            placeholder={copy.restriction_property_placeholder}
-            value={restriction.onProperty ?? ''}
-            onChange={(event) => updateRestriction(index, { onProperty: event.target.value })}
-          />
-          <Input
-            className="h-8 font-mono text-xs"
-            placeholder={copy.restriction_class_placeholder}
-            value={restriction.filler_class ?? restriction.onClass ?? restriction.value ?? ''}
-            onChange={(event) => updateRestriction(index, { filler_class: event.target.value })}
-          />
-        </div>
-      ))}
+        );
+      })}
     </section>
   );
 }

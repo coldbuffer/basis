@@ -24,6 +24,23 @@ def test_restore_diff_reverses_head_to_older() -> None:
     assert "urn:ex:A" not in diff["removed_classes"]
 
 
+def test_restore_diff_includes_removed_edges_when_rolling_back() -> None:
+    entries = [
+        {"version_id": "1.0.0", "diff_summary": {}},
+        {
+            "version_id": "1.1.0",
+            "diff_summary": {
+                "added_edges": [
+                    {"source": "urn:ex:A", "target": "urn:ex:B", "type": "rdfs:subClassOf"},
+                ],
+            },
+        },
+    ]
+    built = build_restore_draft_diff(entries, "1.0.0")
+    removed = built["diff"]["removed_edges"]
+    assert any("urn:ex:A" in ref and "urn:ex:B" in ref for ref in removed)
+
+
 def test_compare_changes_to_draft_diff_maps_edges() -> None:
     changes = compare_published_versions(
         [

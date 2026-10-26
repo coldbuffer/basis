@@ -30,6 +30,7 @@ import {
   allocateOntologyEntityUri,
   createEmptyOntologyEditorDraft,
   edgeChangeKey,
+  edgeRemovalRef,
   ontologyEntityNamespace,
   type OntologyEditorDraftDiff,
   type OntologyEdgeChange,
@@ -552,7 +553,13 @@ export function OntologyEditor() {
       ...prev,
       added_restrictions: [
         ...prev.added_restrictions,
-        { type: "someValuesFrom", class_uri: defaultClass, onProperty: "", filler_class: "" },
+        {
+          type: "someValuesFrom",
+          property_scope: "object",
+          class_uri: defaultClass,
+          onProperty: "",
+          filler_class: "",
+        },
       ],
     }));
   }, [selectedElement]);
@@ -573,7 +580,29 @@ export function OntologyEditor() {
     writeEntitySelection(node.id);
   }, []);
 
-  const saveDraft = useCallback(async () => {
+  const persistDraftOnly = useCallback(async () => {
+    if (!ontologyUri) {
+      alert(e.select_ontology_first);
+      return;
+    }
+    setIsSaving(true);
+    try {
+      const saved = await saveOntologyDraft(workspaceId, {
+        ontology_uri: ontologyUri,
+        diff: draftDiff,
+        author: "user",
+        summary: e.draft_summary,
+      });
+      toast.success(fmt(e.draft_saved, { id: saved.draft_id }));
+    } catch (error) {
+      console.error(e.draft_save_failed, error);
+      toast.error(wsApiErrorMessage(error, locale as Locale));
+    } finally {
+      setIsSaving(false);
+    }
+  }, [draftDiff, e, workspaceId, locale, ontologyUri]);
+
+  const submitProposalFromEditor = useCallback(async () => {
     if (!ontologyUri) {
       alert(e.select_ontology_first);
       return;
@@ -618,21 +647,31 @@ export function OntologyEditor() {
     if (target) {
       if ("source" in target) {
         const edgeId = target.id;
+        const edgeType = String(target.label ?? "rdfs:subClassOf");
         setEdges((eds) => eds.filter((edge) => edge.id !== edgeId));
         setDraftDiff((prev) => {
-          const addedKey = edgeId ?? edgeChangeKey({
+          const addedKey = edgeChangeKey({
             source: target.source,
             target: target.target,
-            type: String(target.label ?? "rdfs:subClassOf"),
+            type: edgeType,
+            id: edgeId,
           });
           const nextAddedEdges = prev.added_edges.filter((edge) => edgeChangeKey(edge) !== addedKey);
           const wasDraftEdge = nextAddedEdges.length !== prev.added_edges.length;
+          const removalRef = edgeRemovalRef({
+            id: edgeId,
+            source: target.source,
+            target: target.target,
+            type: edgeType,
+          });
+          const nextRemoved =
+            wasDraftEdge || prev.removed_edges.includes(removalRef)
+              ? prev.removed_edges
+              : [...prev.removed_edges, removalRef];
           return {
             ...prev,
             added_edges: nextAddedEdges,
-            removed_edges: wasDraftEdge || !edgeId
-              ? prev.removed_edges
-              : [...prev.removed_edges, edgeId],
+            removed_edges: nextRemoved,
           };
         });
       } else if (isNamedIndividualNode(target)) {
@@ -783,7 +822,18 @@ export function OntologyEditor() {
           {e.auto_layout}
         </Button>
         <div className="flex-1" />
-        <Button type="button" size="sm" className="h-8" onClick={saveDraft} disabled={isSaving}>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          className="h-8"
+          onClick={persistDraftOnly}
+          disabled={isSaving}
+        >
+          <PublicIcon name="save-01" size={14} />
+          {isSaving ? e.saving : e.save_draft}
+        </Button>
+        <Button type="button" size="sm" className="h-8" onClick={submitProposalFromEditor} disabled={isSaving}>
           <PublicIcon name="paper-plane" size={14} />
           {isSaving ? e.saving : e.propose}
         </Button>

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from basis.domain.ontology.hub.edge_refs import edge_removal_ref
 from basis.domain.ontology.hub.proposal_store import _get_field
 from basis.domain.ontology.hub.version_cumulative import (
     compare_published_versions,
@@ -56,6 +57,16 @@ def compare_changes_to_draft_diff(changes: dict[str, Any]) -> dict[str, Any]:
         if source and target and edge_type:
             added_edges.append({"source": source, "target": target, "type": edge_type})
 
+    removed_edges: list[str] = []
+    for raw in edge_changes.get("removed") or []:
+        if not isinstance(raw, dict):
+            continue
+        source = str(raw.get("source") or "").strip()
+        target = str(raw.get("target") or "").strip()
+        edge_type = str(raw.get("type") or "").strip()
+        if source and target and edge_type:
+            removed_edges.append(edge_removal_ref(source, edge_type, target))
+
     return {
         "added_classes": list(class_changes.get("added") or []),
         "removed_classes": list(class_changes.get("removed") or []),
@@ -66,7 +77,7 @@ def compare_changes_to_draft_diff(changes: dict[str, Any]) -> dict[str, Any]:
         "added_individuals": list(individual_changes.get("added") or []),
         "removed_individuals": list(individual_changes.get("removed") or []),
         "added_edges": added_edges,
-        "removed_edges": [],
+        "removed_edges": removed_edges,
         "added_axioms": [],
         "removed_axioms": [],
     }
