@@ -50,7 +50,18 @@ export function SurfacePhraseCombobox({
   }, [open]);
 
   if (phrases.length === 0) {
-    return <p className="text-sm text-muted-foreground">{emptyPhrasesLabel}</p>;
+    if (!value.trim()) {
+      return <p className="text-sm text-muted-foreground">{emptyPhrasesLabel}</p>;
+    }
+    return (
+      <Input
+        value={value}
+        placeholder={placeholder}
+        disabled={disabled}
+        autoComplete="off"
+        onChange={(event) => onValueChange(event.target.value)}
+      />
+    );
   }
 
   const displayValue = open ? query : value;

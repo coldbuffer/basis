@@ -98,11 +98,11 @@ def op_reset_workspace(ctx: WorkspaceCoreContext, args: dict[str, Any]) -> dict[
     message = _validate_reset_confirmation(ctx, args)
     if message is not None:
         return {"error": "confirmation_required", "message": message}
-    from basis.domain.knowledge.services.workspace_reset_run import (
+    from basis.application.workspace.reset_run import (
+        _apply_reset_body,
         enqueue_workspace_reset_job,
         run_workspace_reset_job,
         schedule_workspace_reset_job,
-        _apply_reset_body,
     )
     from basis.domain.knowledge.services.workspace_reset_scopes import normalize_reset_scopes
 

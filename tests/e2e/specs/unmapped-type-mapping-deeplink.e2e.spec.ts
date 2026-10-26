@@ -39,7 +39,7 @@ test('review unmapped type opens prefilled create type mapping dialog', async ({
 
   const dialog = page.getByTestId('mappings-create-dialog');
   await expect(dialog).toBeVisible({ timeout: 30_000 });
-  await expect(dialog.getByText(seeded.label, { exact: true })).toBeVisible();
+  await expect(dialog.getByRole('combobox').first()).toHaveValue(seeded.label);
 });
 
 test('review unmapped type with L1 hint includes typeMappingUri in navigation', async ({ page }) => {

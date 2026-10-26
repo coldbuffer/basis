@@ -21,7 +21,7 @@ test('mappings page shows type relation phrases and interpretation config dialog
   await expect(banner).toBeVisible({ timeout: 30_000 });
   await expect(banner).toContainText('e2e_custom_type');
 
-  await banner.getByRole('link').click();
+  await banner.getByRole('button', { name: /Open settings|打开配置/i }).click();
   const panel = page.getByTestId('interpretation-config-panel');
   await expect(panel).toBeVisible({ timeout: 30_000 });
   await expect(panel.getByLabel(/Entity type relation phrases|类型关系词/i)).toHaveValue(

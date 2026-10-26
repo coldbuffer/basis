@@ -37,14 +37,22 @@ test('ontology hub alignments tab', async ({ page }) => {
   await registerFreshUser(page);
   const workspaceId = await defaultWorkspaceId(page);
   const token = await bearerToken(page);
-  await page.request.post(e2eWorkspaceApiPath(workspaceId, 'ontology'), {
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    data: { name: 'E2E B', namespace: 'http://example.org/e2e-b' },
-  });
+  const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
+  for (const [name, namespace] of [
+    ['E2E Align A', 'http://example.org/e2e-align-a'],
+    ['E2E Align B', 'http://example.org/e2e-align-b'],
+  ] as const) {
+    const created = await page.request.post(e2eWorkspaceApiPath(workspaceId, 'ontology'), {
+      headers,
+      data: { name, namespace },
+    });
+    expect(created.ok(), await created.text()).toBeTruthy();
+  }
 
   await page.goto(`/workspaces/${workspaceId}/ontology?tab=alignments`);
   await expect(page.getByRole('tab', { name: /Vocabulary alignment|词汇对齐/i })).toHaveAttribute(
     'data-state',
     'active',
+    { timeout: 60_000 },
   );
 });

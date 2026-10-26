@@ -7,18 +7,8 @@ import threading
 import uuid
 from typing import Any
 
-logger = logging.getLogger(__name__)
-
 from basis.application.kernel import WorkspaceCoreContext
 from basis.domain.errors import AdminError
-from basis.domain.tenancy.admin.admin_types import utc_now_iso
-from basis.domain.knowledge.services.workspace_reset_scopes import (
-    DEFAULT_RESET_SCOPES,
-    SCOPE_GRAPH,
-    SCOPE_KNOWLEDGE,
-    normalize_reset_scopes,
-    scopes_for_api,
-)
 from basis.domain.knowledge.persistence.sql_processing_jobs import fetch_job_row
 from basis.domain.knowledge.persistence.sql_workspace_reset_job import (
     fetch_active_workspace_reset_job,
@@ -27,6 +17,16 @@ from basis.domain.knowledge.persistence.sql_workspace_reset_job import (
     mark_workspace_reset_running,
     mark_workspace_reset_succeeded,
 )
+from basis.domain.knowledge.services.workspace_reset_scopes import (
+    DEFAULT_RESET_SCOPES,
+    SCOPE_GRAPH,
+    SCOPE_KNOWLEDGE,
+    normalize_reset_scopes,
+    scopes_for_api,
+)
+from basis.domain.tenancy.admin.admin_types import utc_now_iso
+
+logger = logging.getLogger(__name__)
 
 
 def _apply_reset_body(
