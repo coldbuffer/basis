@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import hashlib
-from typing import Any, Literal
+from typing import Any
 
 from basis.domain.errors import AdminError
 from basis.domain.knowledge.store import KnowledgeStore

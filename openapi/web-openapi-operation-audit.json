@@ -669,6 +669,18 @@
     {
       "file": "web/src/lib/openapi/schema-workspaces.d.ts",
       "kind": "literal",
+      "path": "/api/v1/workspaces/{workspace_id}/entity-types/assign",
+      "operationId": "assign_entity_types_api_v1_workspaces__workspace_id__entity_types_assign_post"
+    },
+    {
+      "file": "web/src/lib/openapi/schema-workspaces.d.ts",
+      "kind": "literal",
+      "path": "/api/v1/workspaces/{workspace_id}/entity-types/clear",
+      "operationId": "clear_entity_types_api_v1_workspaces__workspace_id__entity_types_clear_post"
+    },
+    {
+      "file": "web/src/lib/openapi/schema-workspaces.d.ts",
+      "kind": "literal",
       "path": "/api/v1/workspaces/{workspace_id}/export",
       "operationId": "export_graph_api_v1_workspaces__workspace_id__export_post"
     },
@@ -683,6 +695,12 @@
       "kind": "literal",
       "path": "/api/v1/workspaces/{workspace_id}/governance/governor/run",
       "operationId": "governance_governor_run_api_v1_workspaces__workspace_id__governance_governor_run_post"
+    },
+    {
+      "file": "web/src/lib/openapi/schema-workspaces.d.ts",
+      "kind": "literal",
+      "path": "/api/v1/workspaces/{workspace_id}/governance/interpretation",
+      "operationId": "get_interpretation_config_api_v1_workspaces__workspace_id__governance_interpretation_get"
     },
     {
       "file": "web/src/lib/openapi/schema-workspaces.d.ts",
@@ -842,6 +860,12 @@
     },
     {
       "file": "web/src/lib/openapi/schema-workspaces.d.ts",
+      "kind": "literal",
+      "path": "/api/v1/workspaces/{workspace_id}/ledger/entities/invalidate",
+      "operationId": "invalidate_ledger_entities_api_v1_workspaces__workspace_id__ledger_entities_invalidate_post"
+    },
+    {
+      "file": "web/src/lib/openapi/schema-workspaces.d.ts",
       "kind": "dynamic",
       "path": "/api/v1/workspaces/{workspace_id}/ledger/entities/{entity_id}",
       "operationId": "delete_ledger_entity_api_v1_workspaces__workspace_id__ledger_entities__entity_id__delete"
@@ -923,6 +947,12 @@
       "kind": "literal",
       "path": "/api/v1/workspaces/{workspace_id}/ontology/alignments",
       "operationId": "list_alignments_api_v1_workspaces__workspace_id__ontology_alignments_get"
+    },
+    {
+      "file": "web/src/lib/openapi/schema-workspaces.d.ts",
+      "kind": "literal",
+      "path": "/api/v1/workspaces/{workspace_id}/ontology/alignments/suggest-target-uri",
+      "operationId": "suggest_alignment_target_uri_api_v1_workspaces__workspace_id__ontology_alignments_suggest_target_uri_get"
     },
     {
       "file": "web/src/lib/openapi/schema-workspaces.d.ts",
@@ -1089,6 +1119,12 @@
     {
       "file": "web/src/lib/openapi/schema-workspaces.d.ts",
       "kind": "dynamic",
+      "path": "/api/v1/workspaces/{workspace_id}/ontology/versions/{ontology_uri}/restore-draft",
+      "operationId": "_ont_29_restore_version_draft_api_v1_workspaces__workspace_id__ontology_versions__ontology_uri__restore_draft_post"
+    },
+    {
+      "file": "web/src/lib/openapi/schema-workspaces.d.ts",
+      "kind": "dynamic",
       "path": "/api/v1/workspaces/{workspace_id}/ontology/{ontology_uri}",
       "operationId": "_ont_14_remove_ontology_api_v1_workspaces__workspace_id__ontology__ontology_uri__delete"
     },
@@ -1169,6 +1205,12 @@
       "kind": "literal",
       "path": "/api/v1/workspaces/{workspace_id}/remember/proposals",
       "operationId": "create_remember_proposal_api_v1_workspaces__workspace_id__remember_proposals_post"
+    },
+    {
+      "file": "web/src/lib/openapi/schema-workspaces.d.ts",
+      "kind": "literal",
+      "path": "/api/v1/workspaces/{workspace_id}/reset",
+      "operationId": "preview_workspace_reset_api_v1_workspaces__workspace_id__reset_get"
     },
     {
       "file": "web/src/lib/openapi/schema-workspaces.d.ts",
@@ -1917,6 +1959,18 @@
     {
       "file": "web/src/lib/openapi/schema.d.ts",
       "kind": "literal",
+      "path": "/api/v1/workspaces/{workspace_id}/entity-types/assign",
+      "operationId": "assign_entity_types_api_v1_workspaces__workspace_id__entity_types_assign_post"
+    },
+    {
+      "file": "web/src/lib/openapi/schema.d.ts",
+      "kind": "literal",
+      "path": "/api/v1/workspaces/{workspace_id}/entity-types/clear",
+      "operationId": "clear_entity_types_api_v1_workspaces__workspace_id__entity_types_clear_post"
+    },
+    {
+      "file": "web/src/lib/openapi/schema.d.ts",
+      "kind": "literal",
       "path": "/api/v1/workspaces/{workspace_id}/export",
       "operationId": "export_graph_api_v1_workspaces__workspace_id__export_post"
     },
@@ -1931,6 +1985,12 @@
       "kind": "literal",
       "path": "/api/v1/workspaces/{workspace_id}/governance/governor/run",
       "operationId": "governance_governor_run_api_v1_workspaces__workspace_id__governance_governor_run_post"
+    },
+    {
+      "file": "web/src/lib/openapi/schema.d.ts",
+      "kind": "literal",
+      "path": "/api/v1/workspaces/{workspace_id}/governance/interpretation",
+      "operationId": "get_interpretation_config_api_v1_workspaces__workspace_id__governance_interpretation_get"
     },
     {
       "file": "web/src/lib/openapi/schema.d.ts",
@@ -2090,6 +2150,12 @@
     },
     {
       "file": "web/src/lib/openapi/schema.d.ts",
+      "kind": "literal",
+      "path": "/api/v1/workspaces/{workspace_id}/ledger/entities/invalidate",
+      "operationId": "invalidate_ledger_entities_api_v1_workspaces__workspace_id__ledger_entities_invalidate_post"
+    },
+    {
+      "file": "web/src/lib/openapi/schema.d.ts",
       "kind": "dynamic",
       "path": "/api/v1/workspaces/{workspace_id}/ledger/entities/{entity_id}",
       "operationId": "delete_ledger_entity_api_v1_workspaces__workspace_id__ledger_entities__entity_id__delete"
@@ -2183,6 +2249,12 @@
       "kind": "literal",
       "path": "/api/v1/workspaces/{workspace_id}/ontology/alignments",
       "operationId": "list_alignments_api_v1_workspaces__workspace_id__ontology_alignments_get"
+    },
+    {
+      "file": "web/src/lib/openapi/schema.d.ts",
+      "kind": "literal",
+      "path": "/api/v1/workspaces/{workspace_id}/ontology/alignments/suggest-target-uri",
+      "operationId": "suggest_alignment_target_uri_api_v1_workspaces__workspace_id__ontology_alignments_suggest_target_uri_get"
     },
     {
       "file": "web/src/lib/openapi/schema.d.ts",
@@ -2349,6 +2421,12 @@
     {
       "file": "web/src/lib/openapi/schema.d.ts",
       "kind": "dynamic",
+      "path": "/api/v1/workspaces/{workspace_id}/ontology/versions/{ontology_uri}/restore-draft",
+      "operationId": "_ont_29_restore_version_draft_api_v1_workspaces__workspace_id__ontology_versions__ontology_uri__restore_draft_post"
+    },
+    {
+      "file": "web/src/lib/openapi/schema.d.ts",
+      "kind": "dynamic",
       "path": "/api/v1/workspaces/{workspace_id}/ontology/{ontology_uri}",
       "operationId": "_ont_14_remove_ontology_api_v1_workspaces__workspace_id__ontology__ontology_uri__delete"
     },
@@ -2429,6 +2507,12 @@
       "kind": "literal",
       "path": "/api/v1/workspaces/{workspace_id}/remember/proposals",
       "operationId": "create_remember_proposal_api_v1_workspaces__workspace_id__remember_proposals_post"
+    },
+    {
+      "file": "web/src/lib/openapi/schema.d.ts",
+      "kind": "literal",
+      "path": "/api/v1/workspaces/{workspace_id}/reset",
+      "operationId": "preview_workspace_reset_api_v1_workspaces__workspace_id__reset_get"
     },
     {
       "file": "web/src/lib/openapi/schema.d.ts",
