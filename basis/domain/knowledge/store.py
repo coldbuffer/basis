@@ -303,5 +303,14 @@ for _name in (
 ):
     setattr(KnowledgeStore, _name, _workspace_access_delegate("_ledger", _name))
 
-for _name in ("preview_workspace_reset", "execute_workspace_reset"):
+for _name in (
+    "preview_workspace_reset",
+    "execute_workspace_reset",
+    "fetch_active_workspace_reset_job",
+    "enqueue_workspace_reset_job",
+    "mark_workspace_reset_running",
+    "mark_workspace_reset_succeeded",
+    "mark_workspace_reset_failed",
+    "workspace_reset_job_scopes",
+):
     setattr(KnowledgeStore, _name, _workspace_access_delegate("_workspace_reset", _name))

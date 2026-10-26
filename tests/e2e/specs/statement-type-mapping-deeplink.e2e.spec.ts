@@ -18,5 +18,5 @@ test('semantic alignment deep link opens prefilled type mapping dialog', async (
 
   const dialog = page.getByTestId('mappings-create-dialog');
   await expect(dialog).toBeVisible({ timeout: 30_000 });
-  await expect(dialog.getByRole('combobox').first()).toHaveValue(label);
+  await expect(dialog.getByLabel(/Object label|客体标签/i)).toHaveValue(label);
 });
