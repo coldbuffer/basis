@@ -15,6 +15,7 @@ interface OntologyScreenProps {
   pageActionsHosted?: boolean;
   onPageActionsChange?: (actions: { openLoadOntology: () => void } | null) => void;
   onFixInEditor?: (entityUri: string) => void;
+  onOpenVocabularyAlignment?: (ontologyUri?: string) => void;
 }
 
 export function OntologyScreen({
@@ -23,6 +24,7 @@ export function OntologyScreen({
   pageActionsHosted = false,
   onPageActionsChange,
   onFixInEditor,
+  onOpenVocabularyAlignment,
 }: OntologyScreenProps) {
   const handleFixInEditor =
     onFixInEditor ??
@@ -42,7 +44,12 @@ export function OntologyScreen({
       case "editor":
         return <OntologyEditor />;
       case "health":
-        return <HealthPanel onFixInEditor={handleFixInEditor} />;
+        return (
+          <HealthPanel
+            onFixInEditor={handleFixInEditor}
+            onOpenVocabularyAlignment={onOpenVocabularyAlignment}
+          />
+        );
     }
   };
 

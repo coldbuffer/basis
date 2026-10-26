@@ -85,6 +85,8 @@ export interface EdgeAttributes {
   
  
   edgeType: string;
+  /** Wire/API edge type before display normalization (e.g. vocabulary_alignment:*). */
+  rawEdgeType?: string;
   weight: number;
   properties: Record<string, any>;
 }

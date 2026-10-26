@@ -5819,7 +5819,7 @@
           "workspaces"
         ],
         "summary": "Get Governance Config",
-        "description": "Governance Config. Per-workspace governor schedule and confidence threshold (F-GOV-04). Requires workspace viewer+.",
+        "description": "Governance Config. Validation policy: governor schedule, confidence, SHACL ontology URI (F-GOV-04). Requires workspace viewer+.",
         "operationId": "get_governance_config_api_v1_workspaces__workspace_id__governance_config_get",
         "parameters": [
           {
@@ -6008,6 +6008,140 @@
                   "type": "object",
                   "additionalProperties": true,
                   "title": "Response Governance Governor Run Api V1 Workspaces  Workspace Id  Governance Governor Run Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-basis-surface": "workspaces",
+        "x-basis-auth": "session-or-workspace-api-token"
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/governance/interpretation": {
+      "get": {
+        "tags": [
+          "workspaces"
+        ],
+        "summary": "Get Interpretation Config",
+        "description": "Interpretation Config. Alignment policy: surface phrases for entity class (rdf:type) mapping. Requires workspace viewer+.",
+        "operationId": "get_interpretation_config_api_v1_workspaces__workspace_id__governance_interpretation_get",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Workspace Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Interpretation Config Api V1 Workspaces  Workspace Id  Governance Interpretation Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-basis-surface": "workspaces",
+        "x-basis-auth": "session-or-workspace-api-token"
+      },
+      "put": {
+        "tags": [
+          "workspaces"
+        ],
+        "summary": "Update Interpretation Config",
+        "description": "Interpretation Config Update. Set type-mapping relation phrases (semantic alignment). Requires workspace editor+.",
+        "operationId": "update_interpretation_config_api_v1_workspaces__workspace_id__governance_interpretation_put",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Workspace Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InterpretationConfigRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Update Interpretation Config Api V1 Workspaces  Workspace Id  Governance Interpretation Put"
                 }
               }
             }
@@ -9621,6 +9755,97 @@
               "application/json": {
                 "schema": {
                   "title": "Response Delete Alignment Api V1 Workspaces  Workspace Id  Ontology Alignments Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-basis-surface": "workspaces",
+        "x-basis-auth": "session-or-workspace-api-token"
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/ontology/alignments/suggest-target-uri": {
+      "get": {
+        "tags": [
+          "workspaces",
+          "workspaces"
+        ],
+        "summary": "Suggest Alignment Target Uri",
+        "description": "Suggest Target Uri. Match a surface label to class/property URIs via vocabulary alignments (L1). Requires workspace viewer+.",
+        "operationId": "suggest_alignment_target_uri_api_v1_workspaces__workspace_id__ontology_alignments_suggest_target_uri_get",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Workspace Id"
+            }
+          },
+          {
+            "name": "label",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Label"
+            }
+          },
+          {
+            "name": "entity_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "class",
+              "title": "Entity Type"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 8,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Suggest Alignment Target Uri Api V1 Workspaces  Workspace Id  Ontology Alignments Suggest Target Uri Get"
                 }
               }
             }
@@ -17139,20 +17364,17 @@
             "title": "Governance Ontology Uri",
             "description": "Ontology URI for Hub SHACL during conflict scans (empty clears)."
           },
-          "entity_type_surface_phrases": {
+          "vocabulary_alignment_requires_review": {
             "anyOf": [
               {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
+                "type": "boolean"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Entity Type Surface Phrases",
-            "description": "Relation phrases treated as rdf:type for class mapping scans (e.g. 是, is_a). Omit to keep stored value; empty list clears override."
+            "title": "Vocabulary Alignment Requires Review",
+            "description": "When true, vocabulary alignment upsert/delete enqueue review before publish. Omit to leave unchanged."
           }
         },
         "type": "object",
@@ -17230,6 +17452,12 @@
             "type": "boolean",
             "title": "Include Graph Dedup",
             "description": "Enqueue graph semantic duplicate pairs (requires graph runtime).",
+            "default": true
+          },
+          "include_unmapped_entity_types": {
+            "type": "boolean",
+            "title": "Include Unmapped Entity Types",
+            "description": "Enqueue taxonomic object labels without a confirmed class mapping (L2).",
             "default": true
           }
         },
@@ -17415,6 +17643,20 @@
           "doc_id"
         ],
         "title": "IngestTextRequest"
+      },
+      "InterpretationConfigRequest": {
+        "properties": {
+          "entity_type_surface_phrases": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Entity Type Surface Phrases",
+            "description": "Relation phrases treated as rdf:type for class mapping materialization (e.g. 是, is_a). Use GET/PUT …/governance/interpretation (L2 alignment policy)."
+          }
+        },
+        "type": "object",
+        "title": "InterpretationConfigRequest"
       },
       "InvalidateEntitiesRequest": {
         "properties": {

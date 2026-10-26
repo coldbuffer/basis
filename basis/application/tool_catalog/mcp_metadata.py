@@ -89,6 +89,37 @@ MCP_TOOL_METADATA: dict[str, dict[str, Any]] = {
     "search_ontology_entities": {
         "description": "Search ontology hub entities by keyword (class, property, individual, concept, scheme)."
     },
+    "suggest_alignment_target_uri": {
+        "description": (
+            "Match a surface label to class or property URIs using recorded vocabulary alignments (L1). "
+            "Same semantics as HTTP GET …/ontology/alignments/suggest-target-uri."
+        )
+    },
+    "list_vocabulary_alignments": {
+        "description": (
+            "List recorded vocabulary alignments (URI equivalences and SKOS matches) in the ontology hub. "
+            "Same semantics as HTTP GET …/ontology/alignments."
+        )
+    },
+    "upsert_vocabulary_alignment": {
+        "description": (
+            "Create or update a vocabulary alignment between entity URIs (editor). "
+            "Persists hub sidecar and projects an alignment edge into the graph. "
+            "Same semantics as HTTP POST …/ontology/alignments."
+        )
+    },
+    "delete_vocabulary_alignment": {
+        "description": (
+            "Remove a vocabulary alignment by alignment_id (editor). "
+            "Same semantics as HTTP DELETE …/ontology/alignments?id=…."
+        )
+    },
+    "suggest_vocabulary_alignments": {
+        "description": (
+            "Rank candidate URI alignments by label similarity across ontologies in the graph. "
+            "Same semantics as HTTP POST …/ontology/suggest-alignments."
+        )
+    },
     "save_ontology_draft": {
         "description": (
             "Save an ontology editor draft diff (editor). Persists hub sidecar; does not publish. "

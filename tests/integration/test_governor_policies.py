@@ -143,6 +143,7 @@ def test_governor_run_http_and_approve_low_confidence(tmp_path: Path) -> None:
             "include_shacl": False,
             "include_low_confidence": False,
             "include_entity_label_clusters": False,
+            "include_unmapped_entity_types": False,
             "include_graph_dedup": False,
         },
     )

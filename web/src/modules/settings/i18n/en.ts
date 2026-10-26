@@ -76,17 +76,18 @@ export default {
       manual_hint: "Run a pass anytime from the",
       review_link: "Smart review",
       manual_hint_suffix: " and use Start check.",
-      data_quality_link: "Manage rules and SHACL under Data quality → Scan settings.",
+      data_quality_link: "Manage rules and SHACL under Quality inspection → Scan settings.",
       settings_redirect_body:
-        "Scheduled governor scans, confidence thresholds, and SHACL ontology URI live under Data quality → Scan settings.",
-      settings_redirect_button: "Open data quality",
+        "Scheduled governor scans, confidence thresholds, and SHACL ontology URI live under Quality inspection → Scan settings.",
+      settings_redirect_button: "Open quality inspection",
       edit_title: "Scheduled check settings",
       edit_desc: "Enable background passes and set thresholds for this workspace.",
       toast_saved: "Governor settings saved.",
-      type_phrases_label: "Entity type relation phrases",
-      type_phrases_hint:
-        "Statements using these surface phrases (one per line) are candidates for class mapping scans, e.g. 是 or is_a. Also used on the Mappings page.",
-      type_phrases_placeholder: "是\nis_a\nrdf:type"
+      type_phrases_hint: "Type relation phrases (interpretation policy) live under",
+      type_phrases_link: "Semantic alignment",
+      vocabulary_alignment_review_label: "Vocabulary alignment review",
+      vocabulary_alignment_review_hint:
+        "When on, alignment create/update/delete enqueue Smart review before updating the hub and graph.",
     }
   },
   org_sso: {

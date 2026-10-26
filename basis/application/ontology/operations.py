@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from basis.application.kernel import WorkspaceCoreContext, require_workspace_editor
+from basis.domain.knowledge.services.graph_audit import audit_graph
 from basis.application.ontology.hub_access import OntologyHubAccess, run_ontology_hub
 from basis.domain.ontology.browse.graph_read import (
     get_ontology_graph as get_ontology_graph_read,
@@ -115,6 +116,191 @@ def op_search_ontology_entities(ctx: WorkspaceCoreContext, args: dict[str, Any])
         return {"q": query, "results": results}
 
     return run_ontology_hub(ctx, _run)
+
+
+def op_suggest_alignment_target_uri(ctx: WorkspaceCoreContext, args: dict[str, Any]) -> dict[str, Any]:
+    label = str(args.get("label") or "").strip()
+    if not label:
+        return {"error": "label is required"}
+    entity_type = str(args.get("entity_type") or "class").strip().casefold()
+    if entity_type not in {"class", "property"}:
+        return {"error": "entity_type must be class or property"}
+    limit = min(max(1, int(args.get("limit", 8))), 32)
+
+    def _run(hub: OntologyHubAccess) -> dict[str, Any]:
+        from basis.domain.ontology.hub.catalog import suggest_alignment_target_uris
+
+        suggestions = suggest_alignment_target_uris(
+            hub.alignments,
+            label=label,
+            entity_type=entity_type,  # type: ignore[arg-type]
+            limit=limit,
+        )
+        return {"label": label, "entity_type": entity_type, "suggestions": suggestions}
+
+    return run_ontology_hub(ctx, _run)
+
+
+def op_list_vocabulary_alignments(ctx: WorkspaceCoreContext, args: dict[str, Any]) -> dict[str, Any]:
+    uri_prefix = str(args.get("uri") or "").strip() or None
+    limit = min(max(1, int(args.get("limit", 100))), 500)
+
+    def _run(hub: OntologyHubAccess) -> dict[str, Any]:
+        alignments = [item for item in hub.alignments.values() if isinstance(item, dict)]
+        if uri_prefix:
+            alignments = [
+                item
+                for item in alignments
+                if str(item.get("source_uri", "")).startswith(uri_prefix)
+                or str(item.get("target_uri", "")).startswith(uri_prefix)
+            ]
+        alignments.sort(
+            key=lambda item: (
+                str(item.get("source_label", "")),
+                str(item.get("target_label", "")),
+                str(item.get("relation", "")),
+            )
+        )
+        return {"alignments": alignments[:limit]}
+
+    return run_ontology_hub(ctx, _run)
+
+
+def op_upsert_vocabulary_alignment(ctx: WorkspaceCoreContext, args: dict[str, Any]) -> dict[str, Any]:
+    require_workspace_editor(ctx)
+    source_uri = str(args.get("source_uri") or "").strip()
+    target_uri = str(args.get("target_uri") or "").strip()
+    relation = str(args.get("relation") or "").strip()
+    if not source_uri or not target_uri or not relation:
+        return {"error": "source_uri, target_uri, and relation are required"}
+    confidence = float(args.get("confidence", 1.0))
+
+    from basis.domain.ontology.hub.alignment_review import (
+        propose_vocabulary_alignment_upsert,
+        vocabulary_alignment_requires_review,
+    )
+
+    if vocabulary_alignment_requires_review(ctx.knowledge, ctx.workspace.id):
+        return propose_vocabulary_alignment_upsert(
+            ctx.knowledge,
+            ctx.workspace.id,
+            source_uri=source_uri,
+            target_uri=target_uri,
+            relation=relation,
+            source_label=args.get("source_label"),
+            target_label=args.get("target_label"),
+            confidence=confidence,
+            provenance=args.get("provenance"),
+            source=args.get("source"),
+            reviewer=args.get("reviewer"),
+        )
+
+    def _run(hub: OntologyHubAccess) -> dict[str, Any]:
+        from basis.domain.ontology.hub.alignment_graph import apply_vocabulary_alignment_edge
+        from basis.domain.ontology.hub.catalog import upsert_alignment
+
+        result = upsert_alignment(
+            hub.alignments,
+            hub.graph_session,
+            source_uri=source_uri,
+            target_uri=target_uri,
+            relation=relation,
+            source_label=args.get("source_label"),
+            target_label=args.get("target_label"),
+            confidence=confidence,
+            provenance=args.get("provenance"),
+            source=args.get("source"),
+            reviewer=args.get("reviewer"),
+        )
+        apply_vocabulary_alignment_edge(hub.graph_session, result)
+        hub.persist_hub()
+        return {"alignment": result}
+
+    payload = run_ontology_hub(ctx, _run)
+    if payload.get("error"):
+        return payload
+    alignment = (payload.get("alignment") or {}) if isinstance(payload, dict) else {}
+    audit_graph(
+        ctx.store,
+        ctx.user,
+        ctx.workspace.id,
+        "workspace.ontology.vocabulary_alignment_upsert",
+        extra={
+            "alignment_id": alignment.get("id"),
+            "source_uri": alignment.get("source_uri"),
+            "target_uri": alignment.get("target_uri"),
+            "relation": alignment.get("relation"),
+        },
+    )
+    return payload
+
+
+def op_suggest_vocabulary_alignments(ctx: WorkspaceCoreContext, args: dict[str, Any]) -> dict[str, Any]:
+    threshold = float(args.get("threshold", 0.65))
+    limit = min(max(1, int(args.get("limit", 25))), 100)
+    source_ontology_uri = str(args.get("source_ontology_uri") or "").strip() or None
+    target_ontology_uri = str(args.get("target_ontology_uri") or "").strip() or None
+
+    def _run(hub: OntologyHubAccess) -> dict[str, Any]:
+        from basis.domain.ontology.hub.catalog import suggest_alignments
+
+        suggestions = suggest_alignments(
+            hub.graph_session,
+            source_ontology_uri=source_ontology_uri,
+            target_ontology_uri=target_ontology_uri,
+            threshold=threshold,
+            limit=limit,
+        )
+        return {"suggestions": suggestions}
+
+    return run_ontology_hub(ctx, _run)
+
+
+def op_delete_vocabulary_alignment(ctx: WorkspaceCoreContext, args: dict[str, Any]) -> dict[str, Any]:
+    require_workspace_editor(ctx)
+    alignment_id = str(args.get("alignment_id") or "").strip()
+    if not alignment_id:
+        return {"error": "alignment_id is required"}
+
+    from basis.domain.ontology.hub.alignment_review import (
+        propose_vocabulary_alignment_delete,
+        vocabulary_alignment_requires_review,
+    )
+
+    if vocabulary_alignment_requires_review(ctx.knowledge, ctx.workspace.id):
+
+        def _snapshot(hub: OntologyHubAccess) -> dict[str, Any] | None:
+            item = hub.alignments.get(alignment_id)
+            return dict(item) if isinstance(item, dict) else None
+
+        snapshot = ctx.ontology_hub(_snapshot) if ctx.ontology_hub else None
+        return propose_vocabulary_alignment_delete(
+            ctx.knowledge,
+            ctx.workspace.id,
+            alignment_id,
+            snapshot=snapshot,
+        )
+
+    def _run(hub: OntologyHubAccess) -> dict[str, Any]:
+        from basis.domain.ontology.hub.alignment_graph import remove_vocabulary_alignment_edge
+        from basis.domain.ontology.hub.catalog import delete_alignment
+
+        result = delete_alignment(hub.alignments, alignment_id)
+        remove_vocabulary_alignment_edge(hub.graph_session, alignment_id)
+        hub.persist_hub()
+        return result
+
+    payload = run_ontology_hub(ctx, _run)
+    if payload.get("error"):
+        return payload
+    audit_graph(
+        ctx.store,
+        ctx.user,
+        ctx.workspace.id,
+        "workspace.ontology.vocabulary_alignment_delete",
+        extra={"alignment_id": alignment_id},
+    )
+    return payload
 
 
 def op_save_ontology_draft(ctx: WorkspaceCoreContext, args: dict[str, Any]) -> dict[str, Any]:

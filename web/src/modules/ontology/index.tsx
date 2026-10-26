@@ -1,10 +1,11 @@
 import { PublicIcon } from '@/components/app/shared/primitives/public-icon.js';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { ConsolePageLayout } from '@/components/app/shared/console/index.js';
 import {
   OntologyAlignmentsPanel,
   OntologyRegistryPanel,
+  OntologyStatementMappingsPanel,
   OntologyVersionsPanel,
   type OntologyHubPageActions,
 } from '@/modules/ontology/components/ontology-hub-panels.js';
@@ -16,6 +17,8 @@ import type { OntologyHubTab } from '@/modules/analyze/lib/hub-route.js';
 import { ontologyHubTabEnabled, resolveOntologyHubTab } from '@/modules/analyze/lib/hub-tabs.js';
 import { useWorkspaceCapabilities } from '@/lib/workspace/capabilities.js';
 import { workspacePath } from '@/lib/nav/nav-config.js';
+import { workspaceOpenApiGET } from '@/lib/openapi/client.js';
+import { applyVocabularyAlignmentSuggestParams } from '@/modules/ontology/lib/vocabulary-alignment-deeplink.js';
 
 const WORKSPACE_CLASS = 'min-h-0 flex-1 rounded-lg border border-border';
 const INTERIOR_WORKSPACE_CLASS = 'h-[calc(100svh-14rem)] min-h-[28rem] flex-1 rounded-lg border border-border';
@@ -27,6 +30,7 @@ export function OntologyPage() {
   const { getWorkspace } = useWorkspaceCatalog();
   const { caps } = useWorkspaceCapabilities();
   const [pageActions, setPageActions] = useState<OntologyHubPageActions | null>(null);
+  const [registeredOntologyCount, setRegisteredOntologyCount] = useState<number | null>(null);
   const onPageActionsChange = useCallback((actions: OntologyHubPageActions | null) => {
     setPageActions(actions);
   }, []);
@@ -43,6 +47,26 @@ export function OntologyPage() {
       ),
     [caps, rawTabParam, searchParams],
   );
+
+  const workspaceId = id ?? '';
+
+  useEffect(() => {
+    if (!workspaceId || !ontologyHubTabEnabled('registry', caps)) {
+      setRegisteredOntologyCount(null);
+      return;
+    }
+    void (async () => {
+      try {
+        const rows = await workspaceOpenApiGET<unknown[]>(workspaceId, 'ontology/registry');
+        setRegisteredOntologyCount(Array.isArray(rows) ? rows.length : 0);
+      } catch {
+        setRegisteredOntologyCount(0);
+      }
+    })();
+  }, [workspaceId, caps]);
+
+  const showVocabularyAlignmentTab =
+    registeredOntologyCount !== null && registeredOntologyCount >= 2;
 
   if (!id) {
     return null;
@@ -71,6 +95,27 @@ export function OntologyPage() {
       setSearchParams(params, { replace: true });
     },
     [searchParams, setSearchParams],
+  );
+
+  useEffect(() => {
+    if (tab !== 'alignments' || showVocabularyAlignmentTab || registeredOntologyCount === null) {
+      return;
+    }
+    const params = new URLSearchParams(searchParams);
+    params.delete('tab');
+    setSearchParams(params, { replace: true });
+  }, [registeredOntologyCount, searchParams, setSearchParams, showVocabularyAlignmentTab, tab]);
+
+  const onOpenVocabularyAlignment = useCallback(
+    (ontologyUri?: string) => {
+      if (!showVocabularyAlignmentTab) {
+        return;
+      }
+      const params = new URLSearchParams(searchParams);
+      applyVocabularyAlignmentSuggestParams(params, ontologyUri);
+      setSearchParams(params, { replace: true });
+    },
+    [searchParams, setSearchParams, showVocabularyAlignmentTab],
   );
 
   return (
@@ -105,9 +150,14 @@ export function OntologyPage() {
           <TabsTrigger value="versions" disabled={!ontologyHubTabEnabled('versions', caps)}>
             {hubTabs.versions}
           </TabsTrigger>
-          <TabsTrigger value="alignments" disabled={!ontologyHubTabEnabled('alignments', caps)}>
-            {hubTabs.alignments}
+          <TabsTrigger value="statement" disabled={!ontologyHubTabEnabled('statement', caps)}>
+            {hubTabs.statement}
           </TabsTrigger>
+          {showVocabularyAlignmentTab ? (
+            <TabsTrigger value="alignments" disabled={!ontologyHubTabEnabled('alignments', caps)}>
+              {hubTabs.alignments}
+            </TabsTrigger>
+          ) : null}
         </TabsList>
 
         <TabsContent
@@ -136,6 +186,7 @@ export function OntologyPage() {
             panel="health"
             className={INTERIOR_WORKSPACE_CLASS}
             onFixInEditor={onFixInEditor}
+            onOpenVocabularyAlignment={onOpenVocabularyAlignment}
           />
         </TabsContent>
         <TabsContent
@@ -143,6 +194,15 @@ export function OntologyPage() {
           className="mt-4 flex min-h-0 flex-1 flex-col data-[state=inactive]:hidden"
         >
           <OntologyVersionsPanel workspaceId={id} className={WORKSPACE_CLASS} />
+        </TabsContent>
+        <TabsContent
+          value="statement"
+          className="mt-4 flex min-h-0 flex-1 flex-col data-[state=inactive]:hidden"
+        >
+          <OntologyStatementMappingsPanel
+            workspaceId={id}
+            className="h-[calc(100svh-14rem)] min-h-[28rem] flex-1"
+          />
         </TabsContent>
         <TabsContent
           value="alignments"

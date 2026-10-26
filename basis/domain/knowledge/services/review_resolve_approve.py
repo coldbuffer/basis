@@ -26,6 +26,11 @@ from basis.domain.knowledge.services.conflict_review import (
 
 from basis.domain.knowledge.services.governor import LOW_CONFIDENCE_KIND, resolve_low_confidence_approve
 from basis.domain.knowledge.services.governor_cluster import ENTITY_CLUSTER_KIND
+from basis.domain.knowledge.services.governor_unmapped_types import UNMAPPED_ENTITY_TYPE_KIND
+from basis.domain.ontology.hub.alignment_review import (
+    VOCABULARY_ALIGNMENT_REVIEW_KIND,
+    publish_vocabulary_alignment_proposal,
+)
 from basis.domain.knowledge.services.graph_audit import audit_graph
 from basis.domain.knowledge.services.import_review import (
     discard_staged_import,
@@ -60,6 +65,7 @@ class ReviewApproveDeps:
     runtime_loader: Callable[[], GraphRuntime]
     persist_graph: Callable[[str], None]
     rebuild_projection: Callable[[], dict[str, Any]]
+    ontology_hub: Callable[[Callable[..., Any]], Any] | None = None
 
 
 
@@ -289,6 +295,25 @@ async def approve_review_item(
         payload = dict(item.get("payload") or {})
         approve_action = "workspace.shacl.violation_acknowledged"
         merge_result = {"status": "acknowledged", "payload": payload}
+    elif item["kind"] == UNMAPPED_ENTITY_TYPE_KIND:
+        payload = dict(item.get("payload") or {})
+        approve_action = "workspace.entity_type.unmapped_acknowledged"
+        merge_result = {"status": "acknowledged", "payload": payload}
+    elif item["kind"] == VOCABULARY_ALIGNMENT_REVIEW_KIND:
+        if deps.ontology_hub is None:
+            raise AdminError(500, "internal_error", "ontology hub unavailable for alignment publish")
+        payload = dict(item.get("payload") or {})
+
+        def _publish(access: Any) -> dict[str, Any]:
+            return publish_vocabulary_alignment_proposal(
+                access.alignments,
+                access.graph_session,
+                access.persist_hub,
+                payload,
+            )
+
+        merge_result = deps.ontology_hub(_publish)
+        approve_action = "workspace.ontology.vocabulary_alignment_publish"
     elif item["kind"] == "connector_writeback":
         approve_action = "workspace.connector.writeback_approved"
         outbox_id = str((item.get("payload") or {}).get("outbox_id") or item["subject_id"])

@@ -15,6 +15,8 @@ from basis.domain.knowledge.services.graph_audit import audit_graph
 from basis.domain.knowledge.services.conflict_review import SHACL_VIOLATION_KIND, run_shacl_conflict_scan
 from basis.domain.knowledge.services.governor import LOW_CONFIDENCE_KIND, resolve_low_confidence_reject
 from basis.domain.knowledge.services.governor_cluster import ENTITY_CLUSTER_KIND
+from basis.domain.knowledge.services.governor_unmapped_types import UNMAPPED_ENTITY_TYPE_KIND
+from basis.domain.ontology.hub.alignment_review import VOCABULARY_ALIGNMENT_REVIEW_KIND
 from basis.domain.knowledge.services.import_review import discard_staged_import
 from basis.domain.ontology.mappings.service import (
     MAPPING_REVIEW_KIND,
@@ -177,6 +179,10 @@ def reject_review_item(
         if projection_bindings is not None:
             rebuild_graph_projection(projection_bindings, workspace_id)
         reject_action = "workspace.statement.low_confidence_rejected"
+    elif kind == UNMAPPED_ENTITY_TYPE_KIND:
+        reject_action = "workspace.entity_type.unmapped_dismissed"
+    elif kind == VOCABULARY_ALIGNMENT_REVIEW_KIND:
+        reject_action = "workspace.ontology.vocabulary_alignment_proposal_dismissed"
     else:
         reject_action = "workspace.graph.merge_rejected"
     audit_graph(

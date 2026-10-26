@@ -37,6 +37,9 @@ test('review queue governance scan button', async ({ page }) => {
   await expect(scanBtn).toBeVisible({ timeout: 60_000 });
   await scanBtn.click();
   await expect(page.getByRole('dialog')).toBeVisible({ timeout: 15_000 });
+  await expect(
+    page.getByRole('checkbox', { name: /Unmapped type labels|未映射类型标签/ }),
+  ).toBeVisible();
   await page.getByRole('button', { name: /^(Start check|开始检查)$/ }).click();
   await expect(scanBtn).toBeEnabled({ timeout: 120_000 });
 });

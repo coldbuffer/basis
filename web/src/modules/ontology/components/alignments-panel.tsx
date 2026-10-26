@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils.js";
 import {
   ontAlignMatrixCell,
@@ -50,6 +52,7 @@ import {
   suggestAlignments,
 } from '../lib/api.js';
 import { useOntologyWorkspaceId } from "./ontology-workspace-context";
+import { workspaceReviewPath } from '@/lib/nav/nav-config.js';
 import { wsApiErrorMessage } from '@/lib/workspace/ws-api-error';
 import type { LocaleMessages } from "@/i18n/en.js";
 import type { AlignmentRelation, AlignmentSuggestion, OntologyAlignment, OntologyEntry } from '../lib/types.js';
@@ -78,6 +81,8 @@ function alignmentRelationLabel(
 
 export function AlignmentsPanel() {
   const workspaceId = useOntologyWorkspaceId();
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { t, locale } = useI18n();
   const copy = t.ontology.alignments;
   const apiLocale = locale as Locale;
@@ -106,6 +111,26 @@ export function AlignmentsPanel() {
   const [error, setError] = useState("");
   const [editorOpen, setEditorOpen] = useState(false);
   const [suggestOpen, setSuggestOpen] = useState(false);
+
+  useEffect(() => {
+    const ontologyUri = searchParams.get('alignOntology')?.trim();
+    if (ontologyUri) {
+      setSourceOntology(ontologyUri);
+    }
+    if (searchParams.get('alignSuggest') !== '1') {
+      if (ontologyUri) {
+        const next = new URLSearchParams(searchParams);
+        next.delete('alignOntology');
+        setSearchParams(next, { replace: true });
+      }
+      return;
+    }
+    setSuggestOpen(true);
+    const next = new URLSearchParams(searchParams);
+    next.delete('alignSuggest');
+    next.delete('alignOntology');
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   const reload = useCallback(async () => {
     setError("");
@@ -189,7 +214,7 @@ export function AlignmentsPanel() {
     setBusy(true);
     setError("");
     try {
-      await saveAlignment(
+      const saved = await saveAlignment(
         workspaceId,
         {
           source_uri: sourceUri.trim(),
@@ -204,14 +229,41 @@ export function AlignmentsPanel() {
       );
       setSourceUri("");
       setTargetUri("");
-      await reload();
       setEditorOpen(false);
+      if (saved && typeof saved === "object" && "status" in saved && saved.status === "proposed") {
+        await reload();
+        toast.success(copy.toast_proposed, {
+          action: {
+            label: copy.toast_review_action,
+            onClick: () => navigate(workspaceReviewPath(workspaceId)),
+          },
+        });
+      } else {
+        await reload();
+        toast.success(copy.toast_saved);
+      }
     } catch (err) {
       setError(wsApiErrorMessage(err, apiLocale));
     } finally {
       setBusy(false);
     }
-  }, [apiLocale, copy.missing_uris, workspaceId, sourceUri, targetUri, relation, confidence, provenance, source, reviewer, reload]);
+  }, [
+    apiLocale,
+    copy.missing_uris,
+    copy.toast_saved,
+    copy.toast_proposed,
+    copy.toast_review_action,
+    workspaceId,
+    sourceUri,
+    targetUri,
+    relation,
+    confidence,
+    provenance,
+    source,
+    reviewer,
+    reload,
+    navigate,
+  ]);
 
   const handleSuggest = useCallback(async () => {
     setBusy(true);
@@ -249,14 +301,22 @@ export function AlignmentsPanel() {
     setBusy(true);
     setError("");
     try {
-      await removeAlignment(workspaceId, id, { locale: apiLocale });
+      const removed = await removeAlignment(workspaceId, id, { locale: apiLocale });
       await reload();
+      if (removed?.status === "proposed") {
+        toast.success(copy.toast_delete_proposed, {
+          action: {
+            label: copy.toast_review_action,
+            onClick: () => navigate(workspaceReviewPath(workspaceId)),
+          },
+        });
+      }
     } catch (err) {
       setError(wsApiErrorMessage(err, apiLocale));
     } finally {
       setBusy(false);
     }
-  }, [apiLocale, workspaceId, reload]);
+  }, [apiLocale, workspaceId, reload, navigate, copy.toast_delete_proposed, copy.toast_review_action]);
 
   function openAlignment(item: OntologyAlignment) {
     setSourceUri(item.source_uri);
@@ -466,7 +526,10 @@ export function AlignmentsPanel() {
       </Dialog>
 
       <Dialog open={suggestOpen} onOpenChange={setSuggestOpen}>
-        <DialogContent className="max-h-[min(92vh,40rem)] max-w-lg overflow-y-auto">
+        <DialogContent
+          className="max-h-[min(92vh,40rem)] max-w-lg overflow-y-auto"
+          data-testid="vocabulary-alignment-suggest-dialog"
+        >
           <DialogHeader>
             <DialogTitle>{copy.suggest_title}</DialogTitle>
             <DialogDescription>{copy.suggest_body}</DialogDescription>
@@ -478,6 +541,7 @@ export function AlignmentsPanel() {
                 <NativeSelect
                   value={sourceOntology}
                   onChange={(event) => setSourceOntology(event.target.value)}
+                  data-testid="vocabulary-alignment-suggest-source"
                 >
                   <NativeSelectOption value="">{copy.any_ontology}</NativeSelectOption>
                   {registry.map((entry) => (

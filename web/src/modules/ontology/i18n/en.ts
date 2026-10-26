@@ -5,14 +5,17 @@ export default {
       editor: "Edit",
       health: "Health",
       versions: "Versions",
-      alignments: "Alignments"
+      statement: "Semantic alignment",
+      alignments: "Vocabulary alignment"
     },
     hub_subtitles: {
       registry: "Browse, import, and manage ontologies mounted on this workspace.",
       editor: "Edit classes, properties, and individuals on the visual canvas.",
       health: "Review quality and completeness signals; open the editor from an issue in one click.",
       versions: "OWL drafts and published versions; ontology change proposals are reviewed here (separate from the ledger queue).",
-      alignments: "Maintain alignments between this workspace’s ontologies and external vocabularies or ontologies."
+      statement:
+        "Align extracted statements to ontology URIs: relation mappings (predicates) and type mappings (classes). External tables use Content & connections → Table sync.",
+      alignments: "Record URI equivalences and SKOS matches between registered ontologies and external vocabularies."
     },
     manager: {
       search_placeholder: "Search ontologies by name, URI, or namespace…",
@@ -236,7 +239,8 @@ export default {
       actionable_issues: "Actionable issues",
       no_issues: "No actionable issues reported for this ontology.",
       select_ontology: "Select an ontology to compute health signals.",
-      fix_in_editor: "Fix in editor"
+      fix_in_editor: "Fix in editor",
+      open_vocabulary_alignment: "Open vocabulary alignment"
     },
     search: {
       entity_types: {
@@ -443,7 +447,7 @@ export default {
     recorded: "Recorded",
     new_alignment: "New alignment",
     suggest: "Suggest",
-    ephemeral: "Alignments stay in server memory and are dropped on restart.",
+    ephemeral: "Published vocabulary alignments are stored in the workspace database and projected to the graph.",
     empty_matrix_title: "Need two ontologies",
     empty_matrix_body: "Register at least two ontologies to see pairwise alignments.",
     empty_recorded_title: "No alignments",
@@ -462,6 +466,10 @@ export default {
     reviewer: "Reviewer",
     save: "Save alignment",
     saving: "Saving…",
+    toast_saved: "Alignment saved; graph explorer will show the vocabulary link.",
+    toast_proposed: "Alignment change submitted for review.",
+    toast_delete_proposed: "Alignment removal submitted for review.",
+    toast_review_action: "Open review",
     missing_uris: "Provide both source and target entity URIs.",
     suggest_title: "Suggest alignments",
     suggest_body: "Rank candidate mappings by label similarity.",
@@ -486,7 +494,8 @@ export default {
   },
   page: {
     loading_ontology: "Loading ontology…",
-    loading_alignments: "Loading ontology alignments…",
+    loading_alignments: "Loading vocabulary alignments…",
+    loading_statement: "Loading semantic alignment…",
     loading_shacl: "Loading SHACL studio…",
     loading_ontology_versions: "Loading ontology versions…",
     load_ontology: "Load ontology",

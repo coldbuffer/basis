@@ -4,7 +4,6 @@ import { messagesForLocale } from "@/i18n/pick-locale.js";
 
 import { parseWsJson, wsMutationResult } from '@/lib/workspace/ws-api-error';
 import {
-  workspaceOpenApiDELETE,
   workspaceOpenApiGET,
   workspaceOpenApiPATCH,
   workspaceOpenApiPOST,
@@ -129,21 +128,37 @@ export async function saveAlignment(
     reviewer?: string;
   },
   options?: OntologyRequestOptions,
-): Promise<OntologyAlignment> {
+): Promise<OntologyAlignment | VocabularyAlignmentProposed> {
   const response = await workspaceOpenApiResponse('POST', workspaceId, ontologyApiSuffix("alignments"), {
     body: payload,
   });
-  return parseResponse<OntologyAlignment>(response, options?.locale);
+  return parseResponse<OntologyAlignment | VocabularyAlignmentProposed>(response, options?.locale);
 }
+
+export type VocabularyAlignmentProposed = {
+  status: 'proposed';
+  review_item_id: string;
+};
 
 export async function removeAlignment(
   workspaceId: string,
   id: string,
   options?: OntologyRequestOptions,
-): Promise<void> {
-  await workspaceOpenApiDELETE(workspaceId, ontologyApiSuffix("alignments"), {
-    params: { query: { id } },
-  });
+): Promise<VocabularyAlignmentProposed | undefined> {
+  const response = await workspaceOpenApiResponse(
+    'DELETE',
+    workspaceId,
+    ontologyApiSuffix('alignments'),
+    { params: { query: { id } } },
+  );
+  const body = await parseResponse<VocabularyAlignmentProposed | { status: string }>(
+    response,
+    options?.locale,
+  );
+  if (body.status === 'proposed') {
+    return body as VocabularyAlignmentProposed;
+  }
+  return undefined;
 }
 
 export async function suggestAlignments(

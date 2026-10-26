@@ -28,9 +28,10 @@ import {
 
 interface HealthPanelProps {
   onFixInEditor?: (entityUri: string) => void;
+  onOpenVocabularyAlignment?: (ontologyUri?: string) => void;
 }
 
-export function HealthPanel({ onFixInEditor }: HealthPanelProps) {
+export function HealthPanel({ onFixInEditor, onOpenVocabularyAlignment }: HealthPanelProps) {
   const { t, locale } = useI18n();
   const h = t.ontology.hub.health;
   const workspaceId = useOntologyWorkspaceId();
@@ -99,7 +100,7 @@ export function HealthPanel({ onFixInEditor }: HealthPanelProps) {
   }, [health]);
 
   return (
-    <div className={`${ontPageScroll} gap-4`}>
+    <div className={`${ontPageScroll} gap-4`} data-testid="ontology-health-panel">
       <section className={ontHero}>
         <div>
           <div className={ontKicker}>
@@ -114,6 +115,7 @@ export function HealthPanel({ onFixInEditor }: HealthPanelProps) {
             <NativeSelect
               value={selectedUri}
               onChange={(event) => setSelectedUri(event.target.value)}
+              data-testid="ontology-health-ontology-select"
             >
               {registry.map((entry) => (
                 <NativeSelectOption key={entry.uri} value={entry.uri}>
@@ -176,7 +178,9 @@ export function HealthPanel({ onFixInEditor }: HealthPanelProps) {
                   key={issue.id}
                   issue={issue}
                   fixLabel={h.fix_in_editor}
+                  alignmentLabel={h.open_vocabulary_alignment}
                   onFixInEditor={onFixInEditor}
+                  onOpenVocabularyAlignment={onOpenVocabularyAlignment}
                 />
               ))}
               {!health.issues.length ? (
@@ -192,15 +196,24 @@ export function HealthPanel({ onFixInEditor }: HealthPanelProps) {
   );
 }
 
+function isVocabularyAlignmentIssue(issue: HealthIssue): boolean {
+  return issue.id.startsWith("alignment:") || issue.category === "Alignment";
+}
+
 function IssueRow({
   issue,
   fixLabel,
+  alignmentLabel,
   onFixInEditor,
+  onOpenVocabularyAlignment,
 }: {
   issue: HealthIssue;
   fixLabel: string;
+  alignmentLabel: string;
   onFixInEditor?: (entityUri: string) => void;
+  onOpenVocabularyAlignment?: (ontologyUri?: string) => void;
 }) {
+  const showAlignmentAction = isVocabularyAlignmentIssue(issue) && onOpenVocabularyAlignment;
   return (
     <div className={`${ontRowCard} grid grid-cols-[14px_1fr_auto_auto] items-start gap-3`}>
       <div className={cn("mt-1.5 size-2.5 shrink-0 rounded-full", severityDotClass(issue.severity))} />
@@ -214,7 +227,19 @@ function IssueRow({
       <span className="rounded-full border border-primary/25 px-2 py-1 text-[10px] font-bold text-primary">
         {issue.category}
       </span>
-      {issue.entity_uri ? (
+      {showAlignmentAction ? (
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          className="h-8 gap-1.5 px-2.5 text-xs"
+          data-testid="ontology-health-open-vocabulary-alignment"
+          onClick={() => onOpenVocabularyAlignment?.(issue.entity_uri || undefined)}
+        >
+          <PublicIcon name="arrows-left-right" size={13} />
+          {alignmentLabel}
+        </Button>
+      ) : issue.entity_uri ? (
         <Button
           type="button"
           size="sm"

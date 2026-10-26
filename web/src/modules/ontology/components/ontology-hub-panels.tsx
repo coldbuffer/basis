@@ -21,6 +21,12 @@ const AlignmentsPanel = lazy(() =>
   })),
 );
 
+const MappingsWorkspacePanel = lazy(() =>
+  import('@/modules/mappings/index.js').then((module) => ({
+    default: module.MappingsWorkspacePanel,
+  })),
+);
+
 const ShaclStudio = lazy(() =>
   import('@/modules/ontology/components/shacl-studio.js').then((module) => ({
     default: module.ShaclStudio,
@@ -52,12 +58,14 @@ export function OntologyRegistryPanel({
   panel,
   onPageActionsChange,
   onFixInEditor,
+  onOpenVocabularyAlignment,
 }: {
   workspaceId: string;
   className?: string;
   panel: OntologyInteriorPanel;
   onPageActionsChange?: (actions: OntologyHubPageActions | null) => void;
   onFixInEditor?: (entityUri: string) => void;
+  onOpenVocabularyAlignment?: (ontologyUri?: string) => void;
 }) {
   const { t } = useI18n();
   const pageActionsHosted = Boolean(onPageActionsChange) && panel === 'registry';
@@ -72,10 +80,29 @@ export function OntologyRegistryPanel({
             pageActionsHosted={pageActionsHosted}
             onPageActionsChange={onPageActionsChange}
             onFixInEditor={onFixInEditor}
+            onOpenVocabularyAlignment={onOpenVocabularyAlignment}
           />
         </Suspense>
       </div>
     </WorkspaceConsoleShell>
+  );
+}
+
+export function OntologyStatementMappingsPanel({
+  workspaceId,
+  className,
+}: {
+  workspaceId: string;
+  className?: string;
+}) {
+  const { t } = useI18n();
+
+  return (
+    <div className={cn('flex min-h-0 flex-1 flex-col overflow-hidden', className)}>
+      <Suspense fallback={<OntologySuspenseFallback label={t.ontology.page.loading_statement} />}>
+        <MappingsWorkspacePanel workspaceId={workspaceId} />
+      </Suspense>
+    </div>
   );
 }
 

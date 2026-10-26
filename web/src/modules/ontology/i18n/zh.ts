@@ -5,14 +5,17 @@ export default {
       editor: "编辑",
       health: "健康",
       versions: "版本与提案",
-      alignments: "对齐"
+      statement: "语义对齐",
+      alignments: "词汇对齐"
     },
     hub_subtitles: {
       registry: "查看、导入与管理本库已挂载的本体。",
       editor: "在可视化画布上编辑类、属性与个体。",
       health: "查看质量与完整性信号，并从问题一键进入编辑。",
       versions: "OWL 草案与发布版本；本体变更提案在此审批（与智能审查分离）。",
-      alignments: "维护本库本体与外部词汇或本体的对齐关系。"
+      statement:
+        "将抽取陈述对齐到本体 URI：关系映射（谓词）与类型映射（类）。外部表数据请使用「数据接入 → 表同步」。",
+      alignments: "维护本库本体与外部词汇或其他本体之间的 URI 等价与 SKOS 匹配。"
     },
     manager: {
       search_placeholder: "按名称、URI 或命名空间搜索本体…",
@@ -236,7 +239,8 @@ export default {
       actionable_issues: "可处理问题",
       no_issues: "该本体暂无需要处理的问题。",
       select_ontology: "请选择一个本体以计算健康信号。",
-      fix_in_editor: "在编辑器中修复"
+      fix_in_editor: "在编辑器中修复",
+      open_vocabulary_alignment: "打开词汇对齐"
     },
     search: {
       entity_types: {
@@ -441,12 +445,12 @@ export default {
   alignments: {
     matrix: "矩阵",
     recorded: "已记录",
-    new_alignment: "新建对齐",
+    new_alignment: "新建词汇对齐",
     suggest: "建议",
-    ephemeral: "对齐保存在服务内存中，重启后不会保留。",
+    ephemeral: "已发布的词汇对齐写入工作区数据库，并投影到图探索。",
     empty_matrix_title: "至少需要两个本体",
     empty_matrix_body: "注册两个以上本体后，这里会显示两两之间的对齐。",
-    empty_recorded_title: "尚无对齐",
+    empty_recorded_title: "尚无词汇对齐",
     empty_recorded_body: "记录等价或 SKOS 匹配关系，并附上置信度。",
     click_hint: "点击关系标记可载入编辑器。",
     remove: "移除对齐",
@@ -462,6 +466,10 @@ export default {
     reviewer: "审核人",
     save: "保存",
     saving: "保存中…",
+    toast_saved: "已保存；图探索将显示词汇对齐边。",
+    toast_proposed: "对齐变更已提交审核。",
+    toast_delete_proposed: "删除对齐已提交审核。",
+    toast_review_action: "打开审核",
     missing_uris: "请填写源实体和目标实体 URI。",
     suggest_title: "对齐建议",
     suggest_body: "按标签相似度排序候选映射。",
@@ -486,7 +494,8 @@ export default {
   },
   page: {
     loading_ontology: "加载本体…",
-    loading_alignments: "加载本体对齐…",
+    loading_alignments: "加载词汇对齐…",
+    loading_statement: "加载语义对齐…",
     loading_shacl: "加载 SHACL…",
     loading_ontology_versions: "加载本体版本…",
     load_ontology: "加载本体",

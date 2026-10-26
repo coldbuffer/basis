@@ -20,6 +20,8 @@ export function reviewKindLabel(
   if (kind === 'shacl_violation') return copy.kind_shacl;
   if (kind === 'low_confidence') return copy.kind_low_confidence;
   if (kind === 'entity_cluster') return copy.kind_entity_cluster;
+  if (kind === 'unmapped_entity_type') return copy.kind_unmapped_entity_type;
+  if (kind === 'vocabulary_alignment_change') return copy.kind_vocabulary_alignment_change;
   if (kind === 'connector_writeback') return copy.kind_writeback;
   if (kind === 'entity_merge') return copy.kind_merge;
   return kind;
@@ -64,6 +66,26 @@ export function reviewItemSummaryLine(
       confidence: String(payload.confidence ?? emptyCell),
       threshold: String(payload.confidence_min ?? emptyCell),
       predicate: String(payload.surface_phrase ?? emptyCell),
+    });
+  }
+
+  if (kind === 'unmapped_entity_type') {
+    return fmt(copy.unmapped_entity_type_line, {
+      label: String(payload.label ?? emptyCell),
+    });
+  }
+
+  if (kind === 'vocabulary_alignment_change') {
+    const action = String(payload.action ?? 'change');
+    const alignment =
+      payload.action === 'delete' && payload.alignment && typeof payload.alignment === 'object'
+        ? (payload.alignment as Record<string, unknown>)
+        : payload;
+    return fmt(copy.vocabulary_alignment_line, {
+      action,
+      source: String(alignment.source_uri ?? emptyCell),
+      target: String(alignment.target_uri ?? emptyCell),
+      relation: String(alignment.relation ?? emptyCell),
     });
   }
 

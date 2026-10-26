@@ -31,6 +31,8 @@ READ_TOOLS_EMPTY_OK = frozenset(
         "get_ontology_proposal",
         "list_ontology_versions",
         "compare_ontology_versions",
+        "list_vocabulary_alignments",
+        "suggest_vocabulary_alignments",
     }
 )
 
@@ -97,6 +99,8 @@ def test_read_tools_call_on_empty_workspace(tmp_path: Path, tool_name: str) -> N
     args: dict = {}
     if tool_name in {"list_mappings", "list_surface_phrases", "list_entity_type_object_labels"}:
         args["limit"] = 10
+    if tool_name == "suggest_alignment_target_uri":
+        args["label"] = "Person"
     payload = _mcp(client, workspace_id, headers, tool_name, args, rpc_id=2)
     _assert_ok_payload(tool_name, payload)
 

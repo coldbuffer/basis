@@ -536,6 +536,63 @@ def delete_alignment(align_store: dict[str, Any], alignment_id: str) -> dict[str
     return {"status": "removed", "id": alignment_id}
 
 
+_CLASS_ALIGNMENT_RELATIONS = frozenset(
+    {
+        "owl:equivalentClass",
+        "skos:exactMatch",
+        "skos:closeMatch",
+        "skos:broadMatch",
+        "skos:narrowMatch",
+        "skos:relatedMatch",
+    }
+)
+_PROPERTY_ALIGNMENT_RELATIONS = frozenset({"owl:equivalentProperty"})
+
+
+def suggest_alignment_target_uris(
+    align_store: dict[str, Any],
+    *,
+    label: str,
+    entity_type: Literal["class", "property"],
+    limit: int = 8,
+) -> list[dict[str, Any]]:
+    """Resolve surface labels to ontology URIs using recorded vocabulary alignments (L1)."""
+    needle = label.strip().casefold()
+    if not needle:
+        return []
+    allowed = _CLASS_ALIGNMENT_RELATIONS if entity_type == "class" else _PROPERTY_ALIGNMENT_RELATIONS
+    hits: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for item in align_store.values():
+        if not isinstance(item, dict):
+            continue
+        relation = str(item.get("relation", ""))
+        if relation not in allowed:
+            continue
+        confidence = float(item.get("confidence", 1.0))
+        alignment_id = item.get("id")
+        for uri_key, label_key in (("source_uri", "source_label"), ("target_uri", "target_label")):
+            uri = str(item.get(uri_key) or "").strip()
+            side_label = str(item.get(label_key) or uri).strip()
+            if not uri or uri in seen:
+                continue
+            label_cf = side_label.casefold()
+            if label_cf != needle and needle not in label_cf:
+                continue
+            seen.add(uri)
+            hits.append(
+                {
+                    "uri": uri,
+                    "label": side_label,
+                    "relation": relation,
+                    "confidence": confidence,
+                    "alignment_id": alignment_id,
+                }
+            )
+    hits.sort(key=lambda row: (-float(row["confidence"]), row["label"]))
+    return hits[: max(1, min(limit, 32))]
+
+
 def suggest_alignments(
     session: Any,
     *,

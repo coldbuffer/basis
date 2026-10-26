@@ -114,6 +114,99 @@ async def e2e_shacl_violation(
     }
 
 
+@router.post("/{workspace_id}/_e2e/unmapped-entity-type")
+async def e2e_unmapped_entity_type(
+    workspace_id: str,
+    request: Request,
+    user: User = Depends(get_current_user),
+    store: AdminStore = Depends(get_store),
+    knowledge: KnowledgeStore = Depends(get_knowledge_store),
+) -> dict[str, object]:
+    """Seed a taxonomic object label without class mapping and enqueue governor review (Playwright only)."""
+    if not _e2e_helpers_enabled(request):
+        raise AdminError(404, "not_found", "资源不存在")
+    get_workspace_for_editor(request, user, workspace_id, store)
+
+    raw: dict[str, object] = {}
+    try:
+        body = await request.json()
+        if isinstance(body, dict):
+            raw = body
+    except Exception:
+        pass
+
+    label = str(raw.get("label") or "").strip() or f"e2e_unmapped_{uuid4().hex[:8]}"
+    with_l1_hint = bool(raw.get("with_l1_hint"))
+
+    _, version_id, _, _ = knowledge.store_upload_bytes(
+        workspace_id,
+        title="e2e-unmapped.txt",
+        mime_type="text/plain",
+        data=b"e2e",
+        created_by=user.id,
+        external_key=f"e2e-unmapped-{uuid4().hex}",
+    )
+    chunk_id = knowledge.create_chunk(workspace_id, version_id, ordinal=0, text="e2e evidence")
+    knowledge.set_version_status(workspace_id, version_id, "ready")
+
+    subject_id = knowledge.create_entity(workspace_id, canonical_label="E2E unmapped subject")
+    knowledge.add_open_statement(
+        workspace_id,
+        subject_id=subject_id,
+        surface_phrase="是",
+        object_entity_id=None,
+        object_value=label,
+        status="confirmed",
+        proposed_by=user.id,
+        chunk_id=chunk_id,
+        quote=label,
+    )
+
+    align_store = None
+    l1_uri = "http://example.org/e2e#Class"
+    if with_l1_hint:
+        from basis.domain.ontology.hub.hub_persistence import persist_ontology_hub
+        from basis.domain.ontology.hub.scoped_state import merged_governor_align_store
+
+        with OntologyHubState(request, workspace_id):
+            alignments = request.app.state.ontology_alignments[workspace_id]
+            alignment_id = f"e2e-{uuid4().hex[:8]}"
+            alignments[alignment_id] = {
+                "id": alignment_id,
+                "source_uri": l1_uri,
+                "target_uri": "https://schema.org/Thing",
+                "source_label": label,
+                "target_label": "Thing",
+                "relation": "skos:exactMatch",
+                "confidence": 0.9,
+            }
+        persist_ontology_hub(request, workspace_id)
+        align_store = merged_governor_align_store(request, workspace_id)
+
+    from basis.domain.knowledge.services.governor_unmapped_types import (
+        UNMAPPED_ENTITY_TYPE_KIND,
+        scan_unmapped_entity_type_labels,
+    )
+
+    scan_unmapped_entity_type_labels(knowledge, workspace_id, align_store=align_store)
+    items = knowledge.list_review_items(workspace_id, kind=UNMAPPED_ENTITY_TYPE_KIND, status="open")
+    review_item_id = items[-1]["id"] if items else None
+    hints: list[object] = []
+    if items:
+        payload = items[-1].get("payload") or {}
+        if isinstance(payload, dict):
+            hints = list(payload.get("vocabulary_alignment_suggestions") or [])
+    hint_uri = None
+    if hints and isinstance(hints[0], dict):
+        hint_uri = hints[0].get("uri")
+
+    return {
+        "review_item_id": review_item_id,
+        "label": label,
+        "l1_uri": hint_uri,
+    }
+
+
 def _ontology_payload_id(payload: object, key: str) -> str | None:
     if hasattr(payload, "model_dump"):
         data = payload.model_dump()

@@ -11,6 +11,7 @@ from basis.domain.knowledge.persistence.sql_delete import (
 from basis.domain.knowledge.services.workspace_reset_scopes import (
     SCOPE_CONNECTORS,
     SCOPE_GOVERNANCE,
+    SCOPE_GRAPH,
     SCOPE_KNOWLEDGE,
     SCOPE_REASONING,
 )
@@ -103,3 +104,6 @@ def purge_workspace_reset_data(
 
     if SCOPE_GOVERNANCE in scopes:
         _delete_workspace_rows(conn, "governance_configs", workspace_id)
+
+    if SCOPE_GRAPH in scopes:
+        _delete_workspace_rows(conn, "vocabulary_alignments", workspace_id)

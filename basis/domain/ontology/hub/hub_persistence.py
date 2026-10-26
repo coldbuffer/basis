@@ -55,14 +55,36 @@ def _rehydrate_versions(model: Any, raw: dict[str, Any]) -> dict[str, list[Any]]
     return hydrated
 
 
+def _load_sidecar_alignments_into_memory(
+    persistence: GraphPersistence,
+    app_state: Any,
+    workspace_id: str,
+) -> None:
+    """Reload alignments from hub sidecar when in-memory store is empty."""
+    if app_state.ontology_alignments.get(workspace_id):
+        return
+    path = _hub_path(persistence, workspace_id)
+    if not path.is_file():
+        return
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return
+    if int(payload.get("schema_version", 0)) != _HUB_SCHEMA_VERSION:
+        return
+    app_state.ontology_alignments[workspace_id] = dict(payload.get("alignments") or {})
+
+
 def ensure_ontology_hub_loaded(request: Any, workspace_id: str) -> None:
     """Load sidecar into app.state once per process (if present on disk)."""
     app_state = request.app.state
     loaded: set[str] = getattr(app_state, "_ontology_hub_loaded", set())
+    persistence: GraphPersistence = app_state.graph_persistence
     if workspace_id in loaded:
+        _load_sidecar_alignments_into_memory(persistence, app_state, workspace_id)
+        _hydrate_alignments_from_sql(request, workspace_id)
         return
 
-    persistence: GraphPersistence = app_state.graph_persistence
     path = _hub_path(persistence, workspace_id)
     backfill_needed = False
     if path.is_file():
@@ -92,10 +114,44 @@ def ensure_ontology_hub_loaded(request: Any, workspace_id: str) -> None:
             vers = app_state.ontology_versions[workspace_id]
             backfill_needed = bool(backfill_registry_from_versions(reg, vers))
 
+    app_state.ontology_alignments.setdefault(workspace_id, {})
+    _hydrate_alignments_from_sql(request, workspace_id)
+
     loaded.add(workspace_id)
     app_state._ontology_hub_loaded = loaded
     if backfill_needed:
         persist_ontology_hub(request, workspace_id)
+
+
+def _hydrate_alignments_from_sql(request: Any, workspace_id: str) -> None:
+    knowledge = getattr(request.app.state, "knowledge_store", None)
+    if knowledge is None:
+        return
+    from basis.domain.ontology.hub.alignment_sql import backfill_from_sidecar_dict, fetch_alignments_dict
+
+    app_state = request.app.state
+    with knowledge._lock:
+        db_align = fetch_alignments_dict(knowledge._conn, workspace_id)
+        if db_align:
+            app_state.ontology_alignments[workspace_id] = db_align
+            return
+        sidecar_align = dict(app_state.ontology_alignments.get(workspace_id) or {})
+        if sidecar_align:
+            backfill_from_sidecar_dict(knowledge._conn, workspace_id, sidecar_align)
+            knowledge._conn.commit()
+
+
+def _sync_alignments_to_sql(request: Any, workspace_id: str) -> None:
+    knowledge = getattr(request.app.state, "knowledge_store", None)
+    if knowledge is None:
+        return
+    from basis.domain.ontology.hub.alignment_sql import replace_workspace_alignments
+
+    app_state = request.app.state
+    alignments = dict(app_state.ontology_alignments.get(workspace_id) or {})
+    with knowledge._lock:
+        replace_workspace_alignments(knowledge._conn, workspace_id, alignments)
+        knowledge._conn.commit()
 
 
 def persist_ontology_hub(request: Any, workspace_id: str) -> None:
@@ -111,7 +167,8 @@ def persist_ontology_hub(request: Any, workspace_id: str) -> None:
     payload = {
         "schema_version": _HUB_SCHEMA_VERSION,
         "registry": dict(app_state.ontology_registries.get(workspace_id) or {}),
-        "alignments": _serialize_store(app_state.ontology_alignments.get(workspace_id) or {}),
+        # Vocabulary alignments: canonical store is SQL (`vocabulary_alignments`); sidecar key kept empty.
+        "alignments": {},
         "drafts": _serialize_store(app_state.ontology_drafts.get(workspace_id) or {}),
         "proposals": _serialize_store(app_state.ontology_proposals.get(workspace_id) or {}),
         "versions": _serialize_versions(app_state.ontology_versions.get(workspace_id) or {}),
@@ -120,6 +177,33 @@ def persist_ontology_hub(request: Any, workspace_id: str) -> None:
         tmp.parent.mkdir(parents=True, exist_ok=True)
         tmp.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
         _atomic_replace(tmp, path)
+    _sync_alignments_to_sql(request, workspace_id)
+
+
+def read_alignments_snapshot(
+    persistence: GraphPersistence,
+    workspace_id: str,
+    *,
+    knowledge: Any | None = None,
+) -> dict[str, Any] | None:
+    """Return alignments dict from SQL (if any) or hub sidecar."""
+    if knowledge is not None:
+        from basis.domain.ontology.hub.alignment_sql import fetch_alignments_dict
+
+        with knowledge._lock:
+            db_align = fetch_alignments_dict(knowledge._conn, workspace_id)
+        if db_align:
+            return db_align
+    path = _hub_path(persistence, workspace_id)
+    if not path.is_file():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return {}
+    if int(payload.get("schema_version", 0)) != _HUB_SCHEMA_VERSION:
+        return {}
+    return dict(payload.get("alignments") or {})
 
 
 def read_registry_snapshot(

@@ -65,6 +65,80 @@ def test_alignments_isolated_between_workspaces(tmp_path) -> None:
     assert list_b.json() == []
 
 
+def test_alignment_suggest_target_uri_by_label(tmp_path) -> None:
+    if not graph_runtime_available():
+        pytest.skip("explorer extra not installed")
+
+    client = TestClient(create_app(Settings(data_dir=tmp_path)))
+    admin = client.post(
+        "/api/v1/auth/register",
+        json={"email": "alst@example.com", "password": "password1", "display_name": "Alst"},
+    ).json()
+    headers = {"Authorization": f"Bearer {admin['token']}"}
+    workspace_id = client.get("/api/v1/workspaces", headers=headers).json()["workspaces"][0]["id"]
+
+    client.post(
+        f"/api/v1/workspaces/{workspace_id}/ontology/alignments",
+        headers=headers,
+        json={
+            "source_uri": "http://example.org/a#Person",
+            "target_uri": "https://schema.org/Person",
+            "relation": "skos:exactMatch",
+            "source_label": "人",
+            "target_label": "Person",
+            "confidence": 0.95,
+        },
+    )
+
+    suggest = client.get(
+        f"/api/v1/workspaces/{workspace_id}/ontology/alignments/suggest-target-uri",
+        headers=headers,
+        params={"label": "人", "entity_type": "class"},
+    )
+    assert suggest.status_code == 200
+    uris = {row["uri"] for row in suggest.json()["suggestions"]}
+    assert "http://example.org/a#Person" in uris
+
+
+def test_alignments_persisted_across_app_restart(tmp_path) -> None:
+    if not graph_runtime_available():
+        pytest.skip("explorer extra not installed")
+
+    settings = Settings(data_dir=tmp_path)
+    client = TestClient(create_app(settings))
+    admin = client.post(
+        "/api/v1/auth/register",
+        json={"email": "alip@example.com", "password": "password1", "display_name": "Alip"},
+    ).json()
+    headers = {"Authorization": f"Bearer {admin['token']}"}
+    workspace_id = client.get("/api/v1/workspaces", headers=headers).json()["workspaces"][0]["id"]
+
+    payload = {
+        "source_uri": "http://example.org/a#Class1",
+        "target_uri": "http://example.org/b#Class2",
+        "relation": "skos:exactMatch",
+        "confidence": 0.9,
+    }
+    created = client.post(
+        f"/api/v1/workspaces/{workspace_id}/ontology/alignments",
+        headers=headers,
+        json=payload,
+    )
+    assert created.status_code == 200
+    alignment_id = created.json()["id"]
+
+    client2 = TestClient(create_app(settings))
+    admin2 = client2.post(
+        "/api/v1/auth/login",
+        json={"email": "alip@example.com", "password": "password1"},
+    ).json()
+    headers2 = {"Authorization": f"Bearer {admin2['token']}"}
+    listed = client2.get(f"/api/v1/workspaces/{workspace_id}/ontology/alignments", headers=headers2)
+    assert listed.status_code == 200
+    assert len(listed.json()) == 1
+    assert listed.json()[0]["id"] == alignment_id
+
+
 def test_drafts_isolated_between_workspaces(tmp_path) -> None:
     if not graph_runtime_available():
         pytest.skip("explorer extra not installed")
@@ -234,3 +308,52 @@ def test_ontology_health_after_create(tmp_path) -> None:
     assert body["name"] == "Health HTTP"
     assert "total_score" in body
     assert any(dim.get("key") == "shacl" for dim in body.get("dimensions", []))
+
+
+def test_ontology_health_alignment_issue_includes_entity_uri(tmp_path) -> None:
+    if not graph_runtime_available():
+        pytest.skip("explorer extra not installed")
+
+    e2e_root = tmp_path / "data" / "e2e"
+    e2e_root.mkdir(parents=True)
+    client = TestClient(create_app(Settings(data_dir=e2e_root)))
+    admin = client.post(
+        "/api/v1/auth/register",
+        json={"email": "hlthali@example.com", "password": "password1", "display_name": "Hlth Ali"},
+    ).json()
+    headers = {"Authorization": f"Bearer {admin['token']}"}
+    workspace_id = client.get("/api/v1/workspaces", headers=headers).json()["workspaces"][0]["id"]
+
+    seeded = client.post(
+        f"/api/v1/workspaces/{workspace_id}/_e2e/ontology-proposal",
+        headers=headers,
+    )
+    assert seeded.status_code == 200
+    proposal_id = seeded.json()["proposal_id"]
+    ontology_uri = seeded.json()["ontology_uri"]
+
+    assert client.post(
+        f"/api/v1/workspaces/{workspace_id}/ontology/proposals/{proposal_id}/approve",
+        headers=headers,
+    ).status_code == 200
+    assert client.post(
+        f"/api/v1/workspaces/{workspace_id}/ontology/proposals/{proposal_id}/publish",
+        headers=headers,
+    ).status_code == 200
+
+    client.post(
+        f"/api/v1/workspaces/{workspace_id}/ontology",
+        headers=headers,
+        json={"name": "Health Ali B", "namespace": "http://example.org/health-ali-b"},
+    )
+
+    health = client.get(
+        f"/api/v1/workspaces/{workspace_id}/ontology/health",
+        headers=headers,
+        params={"uri": ontology_uri},
+    )
+    assert health.status_code == 200
+    body = health.json()
+    alignment_issues = [issue for issue in body.get("issues", []) if issue.get("category") == "Alignment"]
+    assert alignment_issues
+    assert alignment_issues[0]["entity_uri"] == ontology_uri

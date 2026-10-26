@@ -1,19 +1,15 @@
 export default {
   menu: {
-    data_quality: "Data quality",
+    data_quality: "Quality inspection",
   },
   page: {
-    subtitle: "Structure constraints, statement policies, and scan settings live here; Smart review runs checks and queues work.",
-    tab_overview: "Overview",
-    tab_structure: "Structure",
+    subtitle: "Edit and save SHACL shapes; governor scan options are under Scan settings.",
+    structure_meta: "Predicate and type rules live under Semantic alignment; findings queue in Smart review.",
     tab_scan: "Scan settings",
-    overview_structure_title: "Structure (SHACL)",
-    overview_structure_body:
-      "Shapes generated from the Ontology Hub or saved on this page. Governor SHACL scans use the saved Turtle paired with the ontology URI in scan settings.",
-    overview_mappings_title: "Statement rules (mappings)",
-    overview_mappings_body:
-      "Predicate policies in extraction mappings (e.g. single-valued) drive lightweight scans separate from SHACL Turtle.",
-    open_mappings: "Open statement mappings",
-    open_review: "Open smart review",
+    section_scan_hint:
+      "Governor schedule, confidence threshold, SHACL ontology URI, and type-mapping relation words. Predicate policies on the mappings page (e.g. single-valued) feed lightweight scans separate from SHACL shapes.",
+    open_mappings: "Semantic alignment",
+    open_review: "Smart review",
+    open_scan_settings: "Scan settings",
   },
 } as const;

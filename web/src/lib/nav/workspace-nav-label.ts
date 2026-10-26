@@ -22,8 +22,6 @@ export function workspaceNavMenuLabel(t: LocaleMessages, labelKey: SidebarMenuKe
       return t.analyze.menu.analyze;
     case 'vocabulary':
       return t.vocabulary.menu.vocabulary;
-    case 'mappings':
-      return t.mappings.menu.mappings;
     case 'review':
       return t.review.menu.review;
     case 'dataQuality':

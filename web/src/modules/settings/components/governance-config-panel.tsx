@@ -14,7 +14,6 @@ import {
 } from '@/components/ui/dialog.js';
 import { Input } from '@/components/ui/input.js';
 import { Label } from '@/components/ui/label.js';
-import { Textarea } from '@/components/ui/textarea.js';
 import { Switch } from '@/components/ui/switch.js';
 import { Spinner } from '@/components/ui/spinner.js';
 import { useI18n } from '@/i18n/context.js';
@@ -28,6 +27,7 @@ import type { Locale } from '@/i18n/locale.js';
 import { formatUserFacingApiError } from '@/lib/errors/api-error-message.js';
 import { workspaceOpenApiGET, workspaceOpenApiPUT } from '@/lib/openapi/client.js';
 import { workspacePath, workspaceReviewPath } from '@/lib/nav/nav-config.js';
+import { workspaceOntologyHubPath } from '@/modules/analyze/lib/hub-route.js';
 
 function workspaceQualityScanPath(workspaceId: string): string {
   return `${workspacePath(workspaceId, 'quality')}?tab=scan`;
@@ -39,23 +39,10 @@ type GovernanceConfig = {
   governor_confidence_min: number;
   governor_last_run_at?: string | null;
   governance_ontology_uri?: string | null;
-  entity_type_surface_phrases?: string[];
+  vocabulary_alignment_requires_review?: boolean;
 };
 
-type GovernanceConfigDraft = GovernanceConfig & {
-  entity_type_surface_phrases_text: string;
-};
-
-function phrasesToText(phrases: string[]): string {
-  return phrases.join('\n');
-}
-
-function textToPhrases(text: string): string[] {
-  return text
-    .split(/\n/)
-    .map((line) => line.trim())
-    .filter(Boolean);
-}
+type GovernanceConfigDraft = GovernanceConfig;
 
 type GovernanceConfigResponse = {
   config: GovernanceConfig;
@@ -64,9 +51,12 @@ type GovernanceConfigResponse = {
 export function GovernanceConfigPanel({
   workspaceId,
   canEdit,
+  showDataQualityLink = true,
 }: {
   workspaceId: string;
   canEdit: boolean;
+  /** Hide self-link when already on the data quality page. */
+  showDataQualityLink?: boolean;
 }) {
   const { t, locale } = useI18n();
   const loc = locale as Locale;
@@ -99,10 +89,7 @@ export function GovernanceConfigPanel({
 
   function openEdit() {
     if (!config) return;
-    setDraft({
-      ...config,
-      entity_type_surface_phrases_text: phrasesToText(config.entity_type_surface_phrases ?? []),
-    });
+    setDraft({ ...config });
     setEditOpen(true);
   }
 
@@ -117,7 +104,7 @@ export function GovernanceConfigPanel({
           governor_interval_minutes: draft.governor_interval_minutes,
           governor_confidence_min: draft.governor_confidence_min,
           governance_ontology_uri: draft.governance_ontology_uri ?? '',
-          entity_type_surface_phrases: textToPhrases(draft.entity_type_surface_phrases_text),
+          vocabulary_alignment_requires_review: Boolean(draft.vocabulary_alignment_requires_review),
         },
       });
       setConfig(body.config);
@@ -181,10 +168,17 @@ export function GovernanceConfigPanel({
                 {config.governance_ontology_uri?.trim() ? config.governance_ontology_uri : emptyCell}
               </p>
               <p>
-                <span className="text-muted-foreground">{g.type_phrases_label}{t.settings.panel.label_suffix}</span>
-                {config.entity_type_surface_phrases?.length
-                  ? config.entity_type_surface_phrases.join(', ')
-                  : emptyCell}
+                <span className="text-muted-foreground">{g.vocabulary_alignment_review_label}{t.settings.panel.label_suffix}</span>
+                {config.vocabulary_alignment_requires_review ? g.enabled_on : g.enabled_off}
+              </p>
+              <p className="text-[11px] leading-snug text-muted-foreground">
+                {g.type_phrases_hint}{' '}
+                <Link
+                  to={workspaceOntologyHubPath(workspaceId, 'statement')}
+                  className="text-foreground underline-offset-2 hover:underline"
+                >
+                  {g.type_phrases_link}
+                </Link>
               </p>
               <p className="text-[11px] leading-snug text-muted-foreground">
                 {g.manual_hint}{' '}
@@ -193,11 +187,13 @@ export function GovernanceConfigPanel({
                 </Link>
                 {g.manual_hint_suffix}
               </p>
-              <p className="text-[11px] leading-snug text-muted-foreground">
-                <Link to={workspaceQualityScanPath(workspaceId)} className="text-foreground underline-offset-2 hover:underline">
-                  {g.data_quality_link}
-                </Link>
-              </p>
+              {showDataQualityLink ? (
+                <p className="text-[11px] leading-snug text-muted-foreground">
+                  <Link to={workspaceQualityScanPath(workspaceId)} className="text-foreground underline-offset-2 hover:underline">
+                    {g.data_quality_link}
+                  </Link>
+                </p>
+              ) : null}
             </>
           ) : null}
         </CardContent>
@@ -277,22 +273,20 @@ export function GovernanceConfigPanel({
                 />
                 <p className="text-[11px] text-muted-foreground">{g.ontology_uri_hint}</p>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="gov-type-phrases">{g.type_phrases_label}</Label>
-                <Textarea
-                  id="gov-type-phrases"
-                  rows={5}
-                  placeholder={g.type_phrases_placeholder}
-                  value={draft.entity_type_surface_phrases_text}
-                  onChange={(event) =>
+              <div className="flex items-center justify-between gap-3">
+                <div className="space-y-0.5">
+                  <Label htmlFor="gov-valign-review">{g.vocabulary_alignment_review_label}</Label>
+                  <p className="text-[11px] text-muted-foreground">{g.vocabulary_alignment_review_hint}</p>
+                </div>
+                <Switch
+                  id="gov-valign-review"
+                  checked={Boolean(draft.vocabulary_alignment_requires_review)}
+                  onCheckedChange={(checked) =>
                     setDraft((current) =>
-                      current
-                        ? { ...current, entity_type_surface_phrases_text: event.target.value }
-                        : current,
+                      current ? { ...current, vocabulary_alignment_requires_review: checked } : current,
                     )
                   }
                 />
-                <p className="text-[11px] text-muted-foreground">{g.type_phrases_hint}</p>
               </div>
             </div>
             <DialogFooter>

@@ -123,6 +123,54 @@ def test_ontology_health_implicit_graph_ontology() -> None:
     assert report["name"] == "Implicit"
 
 
+def test_ontology_health_alignment_issue_includes_entity_uri() -> None:
+    nodes_store: dict[str, dict] = {}
+    edges_store: list[dict] = []
+
+    class _Session:
+        graph = object()
+
+        def get_nodes(self, skip=0, limit=999_999):
+            items = list(nodes_store.values())[skip : skip + limit]
+            return items, len(nodes_store)
+
+        def get_edges(self, skip=0, limit=999_999):
+            items = edges_store[skip : skip + limit]
+            return items, len(edges_store)
+
+        def iter_nodes(self, node_type=None):
+            for node in nodes_store.values():
+                if node_type is None or node.get("type") == node_type:
+                    yield node
+
+        def get_node(self, node_id):
+            return nodes_store.get(node_id)
+
+    session = _Session()
+    uri = "http://example.org/align"
+    nodes_store[uri] = {
+        "id": uri,
+        "type": "owl:Ontology",
+        "content": "Align Ont",
+        "properties": {"namespace": uri},
+    }
+    nodes_store["http://example.org/align#Person"] = {
+        "id": "http://example.org/align#Person",
+        "type": "owl:Class",
+        "content": "Person",
+        "properties": {"rdfs:label": "Person"},
+    }
+
+    async def _run() -> dict:
+        return await ontology_health(session, {uri: {"name": "Align Ont", "uri": uri}}, {}, uri=uri)
+
+    report = asyncio.run(_run())
+    alignment_issues = [issue for issue in report["issues"] if issue.get("category") == "Alignment"]
+    assert len(alignment_issues) == 1
+    assert alignment_issues[0]["entity_uri"] == uri
+    assert alignment_issues[0]["entity_label"] == "Align Ont"
+
+
 def test_ontology_health_missing_registry_entry() -> None:
     class _Session:
         graph = object()

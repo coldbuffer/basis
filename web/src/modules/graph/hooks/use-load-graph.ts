@@ -16,6 +16,7 @@ import {
   type GraphNodeShapeVariant,
 } from "@/lib/workspace/graphTheme.js";
 import { classifyEntityShape } from '../lib/graph-entity-shape.js';
+import { displayGraphEdgeType } from '../lib/display-edge-type.js';
 import { assignSemanticGroupColors, colorForSemanticGroupIndex } from '../lib/semantic-group-color.js';
 import {
   type GraphScreenLocale,
@@ -753,7 +754,8 @@ export function useLoadGraph(options: UseLoadGraphOptions = {}) {
             sourceId: edge.source,
             targetId: edge.target,
             weight: edge.weight,
-            edgeType: edge.type,
+            edgeType: displayGraphEdgeType(edge.type, edge.properties),
+            rawEdgeType: edge.type,
             properties: edge.properties,
             size: clamp(0.18, 0.22 + Math.sqrt(Math.max(Number(edge.weight) || 1, 1)) * 0.2, 0.88),
             baseSize: clamp(0.18, 0.22 + Math.sqrt(Math.max(Number(edge.weight) || 1, 1)) * 0.2, 0.88),

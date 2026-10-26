@@ -8,6 +8,7 @@ from basis.domain.errors import AdminError
 from basis.domain.knowledge.services.conflict_review import run_shacl_conflict_scan
 from basis.domain.knowledge.governance_config import DEFAULT_GOVERNOR_CONFIDENCE_MIN
 from basis.domain.knowledge.services.governor_cluster import scan_entity_label_clusters
+from basis.domain.knowledge.services.governor_unmapped_types import scan_unmapped_entity_type_labels
 from basis.domain.knowledge.conflict.scan_context import ConflictScanContext
 from basis.domain.knowledge.store import KnowledgeStore
 
@@ -62,6 +63,8 @@ def run_governor_pass(
     include_shacl: bool = True,
     include_low_confidence: bool = True,
     include_entity_label_clusters: bool = True,
+    include_unmapped_entity_types: bool = True,
+    align_store: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Run selected governor scans (on-demand)."""
     if confidence_min is None:
@@ -84,6 +87,14 @@ def run_governor_pass(
         entity_clusters = scan_entity_label_clusters(knowledge, workspace_id)
     else:
         entity_clusters = {"created": 0, "skipped": 0}
+    if include_unmapped_entity_types:
+        unmapped_entity_types = scan_unmapped_entity_type_labels(
+            knowledge,
+            workspace_id,
+            align_store=align_store,
+        )
+    else:
+        unmapped_entity_types = {"created": 0, "skipped": 0}
     return {
         "confidence_min": threshold,
         "shacl_scan": {
@@ -99,6 +110,10 @@ def run_governor_pass(
         "entity_clusters": {
             "created": entity_clusters.get("created", 0),
             "skipped": entity_clusters.get("skipped", 0),
+        },
+        "unmapped_entity_types": {
+            "created": unmapped_entity_types.get("created", 0),
+            "skipped": unmapped_entity_types.get("skipped", 0),
         },
     }
 

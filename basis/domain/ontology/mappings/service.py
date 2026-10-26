@@ -101,6 +101,30 @@ def apply_mapping_status_change(
             review_status="approved" if status == "confirmed" else "rejected",
             rationale=why,
         )
+    if status == "confirmed":
+        from basis.domain.knowledge.services.governor_unmapped_types import (
+            maybe_resolve_unmapped_entity_type_for_mapping,
+        )
+
+        resolved_review_ids = maybe_resolve_unmapped_entity_type_for_mapping(
+            knowledge,
+            workspace_id,
+            mapping,
+            resolved_by=actor.id,
+            rationale=why,
+        )
+        if resolved_review_ids:
+            audit_graph(
+                store,
+                actor,
+                workspace_id,
+                "workspace.entity_type.unmapped_resolved_by_mapping",
+                extra={
+                    "mapping_id": mapping_id,
+                    "signature": mapping.get("signature"),
+                    "review_item_ids": resolved_review_ids,
+                },
+            )
     audit_graph(
         store,
         actor,

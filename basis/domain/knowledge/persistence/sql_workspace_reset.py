@@ -39,6 +39,13 @@ def workspace_reset_preview(conn: Any, workspace_id: str) -> dict[str, int]:
         "SELECT COUNT(*) AS n FROM reasoning_rules WHERE workspace_id = ?",
         workspace_id,
     )
+    vocabulary_alignment_count = _count(
+        conn,
+        """
+        SELECT COUNT(*) AS n FROM vocabulary_alignments WHERE workspace_id = ?
+        """,
+        workspace_id,
+    )
     return {
         **stats,
         "mapping_count": mapping_count,
@@ -46,4 +53,5 @@ def workspace_reset_preview(conn: Any, workspace_id: str) -> dict[str, int]:
         "ingest_source_count": ingest_source_count,
         "connector_connection_count": connector_connection_count,
         "reasoning_rule_count": reasoning_rule_count,
+        "vocabulary_alignment_count": vocabulary_alignment_count,
     }

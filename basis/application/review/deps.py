@@ -27,4 +27,5 @@ def review_approve_deps(ctx: WorkspaceCoreContext) -> ReviewApproveDeps:
         runtime_loader=ctx.runtime_loader,
         persist_graph=ctx.persist_graph,
         rebuild_projection=ctx.rebuild_projection,
+        ontology_hub=ctx.ontology_hub,
     )

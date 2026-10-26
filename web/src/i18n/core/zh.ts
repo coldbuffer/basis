@@ -191,7 +191,7 @@ export default {
       knowledge: "内容与接入",
       connectors: "内容与接入",
       schema: "业务语义",
-      govern: "治理与质量",
+      govern: "质检与审查",
       system: "集成与设置",
       sources: "资料",
       processing: "处理",
@@ -209,7 +209,7 @@ export default {
     },
     placeholder: {
       title: "功能开发中",
-      hint: "导航按探索、内容与接入、业务语义、治理与质量组织；处理任务等入口在资料页。"
+      hint: "导航按探索、内容与接入、业务语义、质检与审查组织；处理任务等入口在资料页。"
     },
     capabilities: {
       graph_runtime_unavailable: "未安装图运行时。请在后端执行 uv sync --extra explorer 后重启服务。",

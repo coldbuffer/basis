@@ -182,6 +182,8 @@ async def ontology_health(
                 category="Alignment",
                 message="No cross-ontology alignments are recorded for local classes or properties.",
                 action="Review suggested alignments.",
+                entity_uri=uri,
+                entity_label=str(_entry_field(entry, "name", uri)),
             )
         )
 

@@ -12,14 +12,36 @@ describe('reviewItemQualityHref', () => {
     expect(href).toBe('/workspaces/ws-1/quality?tab=structure&ontology_uri=http%3A%2F%2Fex%2Fonto');
   });
 
-  it('links L2 SHACL to mappings', () => {
+  it('links L2 SHACL to semantic alignment tab', () => {
     expect(reviewItemQualityHref(ws, 'shacl_violation', { detector: 'l2_shacl_max_count' })).toBe(
-      '/workspaces/ws-1/mappings',
+      '/workspaces/ws-1/ontology?tab=statement',
     );
   });
 
-  it('links low confidence to mappings', () => {
-    expect(reviewItemQualityHref(ws, 'low_confidence', {})).toBe('/workspaces/ws-1/mappings');
+  it('links low confidence to semantic alignment tab', () => {
+    expect(reviewItemQualityHref(ws, 'low_confidence', {})).toBe(
+      '/workspaces/ws-1/ontology?tab=statement',
+    );
+  });
+
+  it('links vocabulary alignment proposals to alignments tab', () => {
+    const href = reviewItemQualityHref(ws, 'vocabulary_alignment_change', {
+      action: 'upsert',
+      source_uri: 'http://ex/a#Person',
+      target_uri: 'http://ex/b#Human',
+      relation: 'skos:exactMatch',
+    });
+    expect(href).toBe('/workspaces/ws-1/ontology?alignOntology=http%3A%2F%2Fex%2Fa&tab=alignments');
+  });
+
+  it('links unmapped type labels to prefilled create dialog', () => {
+    const href = reviewItemQualityHref(ws, 'unmapped_entity_type', {
+      label: '人',
+      vocabulary_alignment_suggestions: [{ uri: 'http://ex/Person' }],
+    });
+    expect(href).toContain('tab=statement');
+    expect(href).toContain('typeMappingLabel');
+    expect(href).toContain('typeMappingUri');
   });
 });
 
@@ -31,5 +53,11 @@ describe('reviewItemQualityLinkLabelKey', () => {
     expect(
       reviewItemQualityLinkLabelKey('shacl_violation', { detector: 'l2_shacl_max_count' }),
     ).toBe('open_statement_mappings');
+    expect(reviewItemQualityLinkLabelKey('unmapped_entity_type', { label: '人' })).toBe(
+      'open_create_type_mapping',
+    );
+    expect(reviewItemQualityLinkLabelKey('vocabulary_alignment_change', {})).toBe(
+      'open_vocabulary_alignments',
+    );
   });
 });

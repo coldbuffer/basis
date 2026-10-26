@@ -191,7 +191,7 @@ export default {
       knowledge: "Content & connections",
       connectors: "Content & connections",
       schema: "Business semantics",
-      govern: "Governance & quality",
+      govern: "Inspection & review",
       system: "API & settings",
       sources: "Sources",
       processing: "Processing",

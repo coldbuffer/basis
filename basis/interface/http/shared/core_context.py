@@ -22,6 +22,7 @@ from basis.interface.http.shared.deps import (
 )
 from basis.application.kernel import WorkspaceCoreContext
 from basis.application.ontology.hub_access import OntologyHubAccess
+from basis.domain.ontology.hub.hub_persistence import persist_ontology_hub
 from basis.domain.ontology.hub.scoped_state import OntologyHubState
 from basis.domain.graph.session.guard import require_graph_session
 
@@ -50,8 +51,12 @@ def build_workspace_core_context(
                 drafts=app_state.ontology_drafts[workspace_id],
                 proposals=app_state.ontology_proposals[workspace_id],
                 versions=app_state.ontology_versions[workspace_id],
+                alignments=app_state.ontology_alignments[workspace_id],
                 graph_session=session,
-                persist_hub=lambda: save_graph(request, workspace_id, sync_ledger=False),
+                persist_hub=lambda: (
+                    persist_ontology_hub(request, workspace_id),
+                    save_graph(request, workspace_id, sync_ledger=False),
+                ),
             )
             return fn(access)
 

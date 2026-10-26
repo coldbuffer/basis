@@ -1,10 +1,19 @@
 export default {
   page: {
-    page_title: "本体陈述映射",
+    page_title: "语义对齐",
     page_subtitle:
       "将抽取陈述对齐到本体 URI：关系映射（谓词）与类型映射（类）。外部表数据请使用「数据接入 → 表同步」。",
     type_phrases_banner: "类型映射会将下列中间关系词视为 rdf:type：{phrases}。",
-    type_phrases_banner_link: "在数据质量 → 扫描配置中编辑",
+    type_phrases_banner_link: "打开配置",
+    open_interpretation_config: "配置",
+    interpretation: {
+      title: "解释策略",
+      description: "抽取陈述里哪些关系词视为 rdf:type，用于类型映射物化（语义对齐 L2）。",
+      phrases_label: "类型关系词",
+      phrases_placeholder: "每行一个，如：是",
+      phrases_hint: "与「新建映射」中的类型映射配合使用；保存后立即生效。",
+      toast_saved: "解释策略已保存",
+    },
     refresh: "刷新",
     new_mapping: "新建映射",
     section_mappings: "陈述映射",
@@ -48,6 +57,9 @@ export default {
     ontology_uri_picker_placeholder_property: "搜索属性…",
     ontology_uri_picker_placeholder_class: "搜索类…",
     ontology_uri_picker_empty: "未找到匹配项。请换关键词或手动输入 URI。",
+    ontology_uri_picker_vocabulary_alignment: "词汇对齐",
+    alignment_suggestions_heading: "词汇对齐建议",
+    alignment_suggestions_relation: "{relation}",
     validation_target_uri_required: "关系或类型映射须填写目标 URI",
     validation_signature_required: "请选择关系词或客体标签",
     target_kind_property: "关系映射",
@@ -88,6 +100,6 @@ export default {
     clear_type_confirm: "清除主体 {subject} 的 rdf:type？",
   },
   menu: {
-    mappings: "映射",
+    mappings: "语义对齐",
   },
 } as const;

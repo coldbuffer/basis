@@ -65,8 +65,8 @@ export function platformAdminEntryPath(
  * Workspace sidebar zones:
  * 1. explore — graph, graph diff, search, entity ledger
  * 2. knowledge — sources, BOCP connections (stream sync lives under connectors routes)
- * 3. schema — ontology, vocabulary, statement mappings
- * 4. govern — smart review, change log, lineage (node provenance)
+ * 3. schema — ontology (incl. semantic alignment tab), vocabulary, analysis
+ * 4. govern — data quality, smart review, change log, lineage
  * 5. system — integration, settings; alerts via account menu only
  */
 export type WorkspaceZone = 'explore' | 'knowledge' | 'schema' | 'govern' | 'system';
@@ -104,13 +104,12 @@ export const WORKSPACE_NAV_BY_ZONE = {
   ],
   schema: [
     { segment: 'ontology', labelKey: 'ontology', icon: 'shapes-01' },
-    { segment: 'analyze', labelKey: 'analyze', icon: 'code-01' },
     { segment: 'vocabulary', labelKey: 'vocabulary', icon: 'tag' },
-    { segment: 'mappings', labelKey: 'mappings', icon: 'arrows-left-right' },
+    { segment: 'analyze', labelKey: 'analyze', icon: 'code-01' },
   ],
   govern: [
-    { segment: WORKSPACE_REVIEW_SEGMENT, labelKey: 'review', icon: 'check-square-contained' },
     { segment: 'quality', labelKey: 'dataQuality', icon: 'shield-01' },
+    { segment: WORKSPACE_REVIEW_SEGMENT, labelKey: 'review', icon: 'check-square-contained' },
     { segment: WORKSPACE_LOG_SEGMENT, labelKey: 'activityLog', icon: 'clock-01' },
     { segment: 'lineage', labelKey: 'lineage', icon: 'path' },
   ],
@@ -135,7 +134,12 @@ export type HubCapabilityNavKey =
   | 'reasoning';
 
 /** Routable segments and capability switches (includes legacy `processing`). */
-export type WorkspaceNavKey = SidebarMenuKey | HubCapabilityNavKey | 'processing' | typeof WORKSPACE_LOG_SEGMENT;
+export type WorkspaceNavKey =
+  | SidebarMenuKey
+  | HubCapabilityNavKey
+  | 'processing'
+  | 'mappings'
+  | typeof WORKSPACE_LOG_SEGMENT;
 
 export type SidebarNavItem = WorkspaceNavItem & { labelKey: SidebarMenuKey };
 
@@ -173,17 +177,17 @@ export function workspaceLogPath(workspaceId: string): string {
   return workspacePath(workspaceId, WORKSPACE_LOG_SEGMENT);
 }
 
-export type DataQualityTab = 'overview' | 'structure' | 'scan';
+export type DataQualityTab = 'structure' | 'scan';
 
-/** Data quality hub (`/quality`) with optional tab and ontology deep-link for SHACL. */
+/** Data quality page (`/quality`) with optional section scroll (`tab`) and SHACL ontology deep-link. */
 export function workspaceQualityPath(
   workspaceId: string,
-  tab: DataQualityTab = 'overview',
+  tab?: DataQualityTab,
   query?: { ontology_uri?: string },
 ): string {
   const base = workspacePath(workspaceId, 'quality');
   const params = new URLSearchParams();
-  if (tab !== 'overview') {
+  if (tab) {
     params.set('tab', tab);
   }
   const ontologyUri = query?.ontology_uri?.trim();
@@ -245,6 +249,9 @@ export function menuIconForPath(pathname: string): string | undefined {
     if (segment === 'connectors') {
       return WORKSPACE_NAV.find((item) => item.segment === 'connectors')?.icon;
     }
+    if (segment === 'mappings') {
+      return WORKSPACE_NAV.find((item) => item.segment === 'ontology')?.icon;
+    }
     return WORKSPACE_NAV.find((item) => item.segment === segment)?.icon;
   }
   return PLATFORM_NAV.find((item) =>
@@ -259,6 +266,9 @@ export function isWorkspaceScopedPath(pathname: string): boolean {
   if (!rest || rest === '/') return false;
   const segment = rest.replace(/^\//, '').split('/')[0];
   if (segment === 'connectors') {
+    return true;
+  }
+  if (segment === 'mappings') {
     return true;
   }
   return WORKSPACE_NAV.some((item) => item.segment === segment);

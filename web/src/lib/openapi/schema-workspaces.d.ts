@@ -1481,6 +1481,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{workspace_id}/entity-types/assign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Assign Entity Types
+         * @description Assign rdf:type to subjects (ledger entity or graph node id). Editor only.
+         */
+        post: operations["assign_entity_types_api_v1_workspaces__workspace_id__entity_types_assign_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspace_id}/entity-types/clear": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Clear Entity Types
+         * @description Clear rdf:type typed_facts for subjects. Editor only.
+         */
+        post: operations["clear_entity_types_api_v1_workspaces__workspace_id__entity_types_clear_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{workspace_id}/export": {
         parameters: {
             query?: never;
@@ -1510,7 +1550,7 @@ export interface paths {
         };
         /**
          * Get Governance Config
-         * @description Governance Config. Per-workspace governor schedule and confidence threshold (F-GOV-04). Requires workspace viewer+.
+         * @description Governance Config. Validation policy: governor schedule, confidence, SHACL ontology URI (F-GOV-04). Requires workspace viewer+.
          */
         get: operations["get_governance_config_api_v1_workspaces__workspace_id__governance_config_get"];
         /**
@@ -1539,6 +1579,30 @@ export interface paths {
          * @description Governance Governor Run. Batch conflict scan and low-confidence review enqueue (F-GOV-04). Requires workspace editor+.
          */
         post: operations["governance_governor_run_api_v1_workspaces__workspace_id__governance_governor_run_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspace_id}/governance/interpretation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Interpretation Config
+         * @description Interpretation Config. Alignment policy: surface phrases for entity class (rdf:type) mapping. Requires workspace viewer+.
+         */
+        get: operations["get_interpretation_config_api_v1_workspaces__workspace_id__governance_interpretation_get"];
+        /**
+         * Update Interpretation Config
+         * @description Interpretation Config Update. Set type-mapping relation phrases (semantic alignment). Requires workspace editor+.
+         */
+        put: operations["update_interpretation_config_api_v1_workspaces__workspace_id__governance_interpretation_put"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1665,7 +1729,11 @@ export interface paths {
         get: operations["graph_node_route_api_v1_workspaces__workspace_id__graph_nodes__node_id__get"];
         put?: never;
         post?: never;
-        delete?: never;
+        /**
+         * Archive Graph Node
+         * @description Archive Graph Node. Soft-delete (status=archived) on the projected graph session. Editor only.
+         */
+        delete: operations["archive_graph_node_api_v1_workspaces__workspace_id__graph_nodes__node_id__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -2079,6 +2147,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{workspace_id}/ledger/entities/invalidate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Invalidate Ledger Entities
+         * @description Invalidate Ledger Entities. Soft-delete entities and related ledger rows (temporal invalidated_at). Editor only.
+         */
+        post: operations["invalidate_ledger_entities_api_v1_workspaces__workspace_id__ledger_entities_invalidate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{workspace_id}/ledger/entities/{entity_id}": {
         parameters: {
             query?: never;
@@ -2370,6 +2458,26 @@ export interface paths {
          * @description Delete alignment. Ontology hub (SKOS, alignments) via workspace graph session. Requires workspace membership (session) or workspace API token with read/write scope. All paths are scoped to `{workspace_id}`.
          */
         delete: operations["delete_alignment_api_v1_workspaces__workspace_id__ontology_alignments_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspace_id}/ontology/alignments/suggest-target-uri": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Suggest Alignment Target Uri
+         * @description Suggest Target Uri. Match a surface label to class/property URIs via vocabulary alignments (L1). Requires workspace viewer+.
+         */
+        get: operations["suggest_alignment_target_uri_api_v1_workspaces__workspace_id__ontology_alignments_suggest_target_uri_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -2915,6 +3023,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{workspace_id}/ontology/versions/{ontology_uri}/restore-draft": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Ont 29 Restore Version Draft
+         * @description Restore Version Draft. Build an editor draft that moves the published head back toward ``target_version`` (governance review required to publish). Requires workspace editor.
+         */
+        post: operations["_ont_29_restore_version_draft_api_v1_workspaces__workspace_id__ontology_versions__ontology_uri__restore_draft_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{workspace_id}/ontology/{ontology_uri}": {
         parameters: {
             query?: never;
@@ -3193,6 +3321,30 @@ export interface paths {
          * @description Propose a canonical fact for human review (integration core `propose_remember`).
          */
         post: operations["create_remember_proposal_api_v1_workspaces__workspace_id__remember_proposals_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspace_id}/reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Preview Workspace Reset
+         * @description Preview counts before a workspace reset (owner or system admin).
+         */
+        get: operations["preview_workspace_reset_api_v1_workspaces__workspace_id__reset_get"];
+        put?: never;
+        /**
+         * Reset Workspace
+         * @description Reset workspace ledger and projections; keeps workspace id, members, and settings.
+         */
+        post: operations["reset_workspace_api_v1_workspaces__workspace_id__reset_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3798,6 +3950,18 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /** AssignEntityTypesRequest */
+        AssignEntityTypesRequest: {
+            /** Assignments */
+            assignments: {
+                [key: string]: unknown;
+            }[];
+            /**
+             * Replace Existing
+             * @default true
+             */
+            replace_existing: boolean;
+        };
         /** BatchCreateTableMappingsRequest */
         BatchCreateTableMappingsRequest: {
             /** Mappings */
@@ -3889,6 +4053,11 @@ export interface components {
             /** Code Challenge */
             code_challenge?: string | null;
         };
+        /** ClearEntityTypesRequest */
+        ClearEntityTypesRequest: {
+            /** Subject Ids */
+            subject_ids: string[];
+        };
         /**
          * ColumnMappingSpec
          * @description Single element of source_table_mappings.column_mappings_json.
@@ -3966,7 +4135,9 @@ export interface components {
         /** CreateMappingRequest */
         CreateMappingRequest: {
             /** Signature */
-            signature: string;
+            signature?: string | null;
+            /** Subject Id */
+            subject_id?: string | null;
             /** Target Uri */
             target_uri?: string | null;
             /**
@@ -4359,6 +4530,11 @@ export interface components {
              * @description Ontology URI for Hub SHACL during conflict scans (empty clears).
              */
             governance_ontology_uri?: string | null;
+            /**
+             * Vocabulary Alignment Requires Review
+             * @description When true, vocabulary alignment upsert/delete enqueue review before publish. Omit to leave unchanged.
+             */
+            vocabulary_alignment_requires_review?: boolean | null;
         };
         /** GovernanceShaclRequest */
         GovernanceShaclRequest: {
@@ -4410,6 +4586,12 @@ export interface components {
              * @default true
              */
             include_graph_dedup: boolean;
+            /**
+             * Include Unmapped Entity Types
+             * @description Enqueue taxonomic object labels without a confirmed class mapping (L2).
+             * @default true
+             */
+            include_unmapped_entity_types: boolean;
         };
         /** GraphSearchRequest */
         GraphSearchRequest: {
@@ -4425,6 +4607,12 @@ export interface components {
              * @description Optional temporal instant (ISO). When set, results are limited to nodes active at that instant.
              */
             at?: string | null;
+            /**
+             * Include Archived
+             * @description When true, include projection nodes with status=archived in search results.
+             * @default false
+             */
+            include_archived: boolean;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -4455,6 +4643,19 @@ export interface components {
             relation_method?: string | null;
             /** Extract Relations */
             extract_relations?: boolean | null;
+        };
+        /** InterpretationConfigRequest */
+        InterpretationConfigRequest: {
+            /**
+             * Entity Type Surface Phrases
+             * @description Relation phrases treated as rdf:type for class mapping materialization (e.g. 是, is_a). Use GET/PUT …/governance/interpretation (L2 alignment policy).
+             */
+            entity_type_surface_phrases?: string[];
+        };
+        /** InvalidateEntitiesRequest */
+        InvalidateEntitiesRequest: {
+            /** Entity Ids */
+            entity_ids: string[];
         };
         /** InvokeConnectorPrimitiveRequest */
         InvokeConnectorPrimitiveRequest: {
@@ -5250,6 +5451,13 @@ export interface components {
             /** Version2 */
             version2: string;
         };
+        /** VersionRestoreRequest */
+        VersionRestoreRequest: {
+            /** Target Version */
+            target_version: string;
+            /** Summary */
+            summary?: string | null;
+        };
         /** WebhookIngestRequest */
         WebhookIngestRequest: {
             /** Title */
@@ -5263,6 +5471,25 @@ export interface components {
              * @default true
              */
             auto_process: boolean;
+        };
+        /** WorkspaceResetRequest */
+        WorkspaceResetRequest: {
+            /**
+             * Confirmation
+             * @description Must match the workspace display name exactly.
+             */
+            confirmation: string;
+            /**
+             * Async
+             * @description Run reset in background; poll GET …/ingest/jobs/{job_id}.
+             * @default true
+             */
+            async: boolean;
+            /**
+             * Scopes
+             * @description Subset to clear: knowledge, graph, connectors, reasoning, governance.
+             */
+            scopes?: string[] | null;
         };
         /** CreateOntologyRequest */
         basis__domain__ontology__hub__hub_models__CreateOntologyRequest: {
@@ -8197,6 +8424,84 @@ export interface operations {
             };
         };
     };
+    assign_entity_types_api_v1_workspaces__workspace_id__entity_types_assign_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                workspace_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssignEntityTypesRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    clear_entity_types_api_v1_workspaces__workspace_id__entity_types_clear_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                workspace_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClearEntityTypesRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     export_graph_api_v1_workspaces__workspace_id__export_post: {
         parameters: {
             query?: never;
@@ -8318,6 +8623,80 @@ export interface operations {
         requestBody?: {
             content: {
                 "application/json": components["schemas"]["GovernorRunRequest"] | null;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_interpretation_config_api_v1_workspaces__workspace_id__governance_interpretation_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                workspace_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_interpretation_config_api_v1_workspaces__workspace_id__governance_interpretation_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                workspace_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InterpretationConfigRequest"];
             };
         };
         responses: {
@@ -8568,10 +8947,47 @@ export interface operations {
             };
         };
     };
+    archive_graph_node_api_v1_workspaces__workspace_id__graph_nodes__node_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                workspace_id: string;
+                node_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     graph_neighbors_route_api_v1_workspaces__workspace_id__graph_nodes__node_id__neighbors_get: {
         parameters: {
             query?: {
                 depth?: number;
+                include_archived?: boolean;
             };
             header?: {
                 authorization?: string | null;
@@ -9309,6 +9725,45 @@ export interface operations {
             };
         };
     };
+    invalidate_ledger_entities_api_v1_workspaces__workspace_id__ledger_entities_invalidate_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                workspace_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InvalidateEntitiesRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     delete_ledger_entity_api_v1_workspaces__workspace_id__ledger_entities__entity_id__delete: {
         parameters: {
             query?: never;
@@ -9936,6 +10391,43 @@ export interface operations {
         parameters: {
             query: {
                 id: string;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                workspace_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    suggest_alignment_target_uri_api_v1_workspaces__workspace_id__ontology_alignments_suggest_target_uri_get: {
+        parameters: {
+            query: {
+                label: string;
+                entity_type?: string;
+                limit?: number;
             };
             header?: {
                 authorization?: string | null;
@@ -10926,6 +11418,44 @@ export interface operations {
             };
         };
     };
+    _ont_29_restore_version_draft_api_v1_workspaces__workspace_id__ontology_versions__ontology_uri__restore_draft_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                workspace_id: string;
+                ontology_uri: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VersionRestoreRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     _ont_14_remove_ontology_api_v1_workspaces__workspace_id__ontology__ontology_uri__delete: {
         parameters: {
             query?: never;
@@ -11441,6 +11971,82 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["RememberProposalRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    preview_workspace_reset_api_v1_workspaces__workspace_id__reset_get: {
+        parameters: {
+            query?: {
+                scopes?: string[] | null;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                workspace_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reset_workspace_api_v1_workspaces__workspace_id__reset_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                workspace_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkspaceResetRequest"];
             };
         };
         responses: {

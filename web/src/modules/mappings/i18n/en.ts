@@ -1,11 +1,21 @@
 export default {
   page: {
-    page_title: "Ontology statement mappings",
+    page_title: "Semantic alignment",
     page_subtitle:
       "Align extracted statements to ontology URIs: relation mappings (predicates) and type mappings (classes). For external tables, use Connections → Table sync.",
     type_phrases_banner:
       "Type mappings match statements whose relation phrase is one of: {phrases}.",
-    type_phrases_banner_link: "Edit in Data quality → Scan settings",
+    type_phrases_banner_link: "Open settings",
+    open_interpretation_config: "Configure",
+    interpretation: {
+      title: "Interpretation policy",
+      description:
+        "Surface phrases treated as rdf:type for class mapping materialization (alignment layer).",
+      phrases_label: "Entity type relation phrases",
+      phrases_placeholder: "One per line, e.g. 是",
+      phrases_hint: "Used with type mappings above; saved changes apply immediately.",
+      toast_saved: "Interpretation policy saved",
+    },
     refresh: "Refresh",
     new_mapping: "New mapping",
     section_mappings: "Statement mappings",
@@ -49,6 +59,9 @@ export default {
     ontology_uri_picker_placeholder_property: "Search properties…",
     ontology_uri_picker_placeholder_class: "Search classes…",
     ontology_uri_picker_empty: "No matches. Try another term or paste a URI.",
+    ontology_uri_picker_vocabulary_alignment: "Vocabulary alignment",
+    alignment_suggestions_heading: "From vocabulary alignment",
+    alignment_suggestions_relation: "{relation}",
     validation_target_uri_required: "Relation and type mappings require a target URI",
     validation_signature_required: "Select a relation word or object label",
     target_kind_property: "Relation",
@@ -89,6 +102,6 @@ export default {
     clear_type_confirm: "Clear rdf:type for subject {subject}?",
   },
   menu: {
-    mappings: "Statement mappings",
+    mappings: "Semantic alignment",
   },
 } as const;

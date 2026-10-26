@@ -2,9 +2,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { ConsolePageLayout } from '@/components/app/shared/console/index.js';
+import { workspaceOntologyHubPath } from '@/modules/analyze/lib/hub-route.js';
 import { DataTable, type DataTableColumn } from '@/components/app/shared/console/DataTable.js';
 import { Badge } from '@/components/ui/badge.js';
 import { Button } from '@/components/ui/button.js';
@@ -41,10 +41,11 @@ import { useApiErrorMessage } from '@/lib/errors/use-api-error-message.js';
 import { useWorkspaceCatalog } from '@/lib/workspace/context.js';
 import { EntityRefLine } from '@/components/app/shared/workspace/entity-ref-line.js';
 import { useWorkspaceNodeLabels } from '@/lib/workspace/node-labels.js';
-import { workspacePath, workspaceQualityPath, workspaceReviewPath } from '@/lib/nav/nav-config.js';
+import { workspacePath, workspaceReviewPath } from '@/lib/nav/nav-config.js';
 import { cn } from '@/lib/utils.js';
 import type { LocaleMessages } from '@/i18n/en.js';
 import { AssignEntityTypeDialog } from '@/modules/mappings/components/assign-entity-type-dialog.js';
+import { InterpretationConfigDialog } from '@/modules/mappings/components/interpretation-config-panel.js';
 import { OntologyUriPicker } from '@/modules/mappings/components/ontology-uri-picker.js';
 import { SurfacePhraseCombobox } from '@/modules/mappings/components/surface-phrase-combobox.js';
 import { isRdfTypePredicate } from '@/modules/mappings/lib/rdf-type.js';
@@ -110,15 +111,19 @@ const defaultCreateMappingValues: CreateMappingValues = {
   direction: 'forward',
 };
 
-export function MappingsPage() {
+export function MappingsWorkspacePanel({ workspaceId }: { workspaceId: string }) {
   const { t, locale } = useI18n();
   const m = t.mappings.page;
   const emptyCell = t.core.common.emptyCell;
   const loc = locale as Locale;
-  const { id } = useParams();
+  const id = workspaceId;
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { getWorkspace } = useWorkspaceCatalog();
-  const workspaceMeta = id ? getWorkspace(id) : undefined;
+  const workspaceMeta = getWorkspace(workspaceId);
+  const canEditInterpretation = workspaceMeta
+    ? ['owner', 'admin'].includes(workspaceMeta.my_role)
+    : false;
   const [rows, setRows] = useState<MappingRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -131,6 +136,7 @@ export function MappingsPage() {
   const [assignInitialSubject, setAssignInitialSubject] = useState<string | undefined>();
   const [clearTypeBusy, setClearTypeBusy] = useState<string | null>(null);
   const [typeSurfacePhrases, setTypeSurfacePhrases] = useState<string[]>([]);
+  const [interpretationDialogOpen, setInterpretationDialogOpen] = useState(false);
 
   const entityIdsForLabels = typedFacts.flatMap((fact) =>
     [fact.subject_id, fact.object_entity_id].filter((value): value is string => Boolean(value)),
@@ -154,31 +160,101 @@ export function MappingsPage() {
     if (!createOpen) createForm.reset(defaultCreateMappingValues);
   }, [createOpen, createForm]);
 
+  useEffect(() => {
+    const label = searchParams.get('typeMappingLabel')?.trim();
+    if (!label) {
+      return;
+    }
+    const targetUri = searchParams.get('typeMappingUri')?.trim() ?? '';
+    createForm.setValue('targetKind', 'class');
+    createForm.setValue('signature', label);
+    createForm.setValue('direction', 'n/a');
+    if (targetUri) {
+      createForm.setValue('targetUri', targetUri);
+    }
+    setCreateOpen(true);
+    const next = new URLSearchParams(searchParams);
+    next.delete('typeMappingLabel');
+    next.delete('typeMappingUri');
+    setSearchParams(next, { replace: true });
+  }, [createForm, searchParams, setSearchParams]);
+
   const watchedTargetKind = createForm.watch('targetKind');
+  const watchedSignature = createForm.watch('signature');
+  const watchedTargetUri = createForm.watch('targetUri');
+  const [alignmentSuggestions, setAlignmentSuggestions] = useState<
+    Array<{ uri: string; label: string; relation: string; confidence: number }>
+  >([]);
   const signaturePickerOptions =
     watchedTargetKind === 'class' ? entityObjectLabels : phrases;
   const isEntityMapping = watchedTargetKind === 'class';
+
+  const alignmentSuggestKind =
+    watchedTargetKind === 'class' || watchedTargetKind === 'property' ? watchedTargetKind : null;
+
+  useEffect(() => {
+    if (!createOpen) {
+      setAlignmentSuggestions([]);
+      return;
+    }
+    if (!id || !alignmentSuggestKind) {
+      setAlignmentSuggestions([]);
+      return;
+    }
+    const label = watchedSignature.trim();
+    if (!label) {
+      setAlignmentSuggestions([]);
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      void (async () => {
+        try {
+          const body = await workspaceOpenApiGET<{
+            suggestions: Array<{
+              uri: string;
+              label: string;
+              relation: string;
+              confidence: number;
+            }>;
+          }>(id, 'ontology/alignments/suggest-target-uri', {
+            params: {
+              query: { label, entity_type: alignmentSuggestKind, limit: 8 },
+            },
+          });
+          const suggestions = body.suggestions ?? [];
+          setAlignmentSuggestions(suggestions);
+          if (!createForm.getValues('targetUri').trim() && suggestions.length === 1) {
+            createForm.setValue('targetUri', suggestions[0].uri);
+          }
+        } catch {
+          setAlignmentSuggestions([]);
+        }
+      })();
+    }, 320);
+    return () => window.clearTimeout(timer);
+  }, [alignmentSuggestKind, createForm, createOpen, id, watchedSignature]);
 
   const load = useCallback(async () => {
     if (!id) return;
     setLoading(true);
     setError(null);
     try {
-      const [mappingData, phraseData, entityLabelData, factData, governanceData] = await Promise.all([
+      const [mappingData, phraseData, entityLabelData, factData, interpretationData] =
+        await Promise.all([
         workspaceOpenApiGET<{ mappings: MappingRow[] }>(id, 'mappings'),
         workspaceOpenApiGET<{ phrases: string[] }>(id, 'ledger/surface-phrases'),
         workspaceOpenApiGET<{ labels: string[] }>(id, 'ledger/entity-type-object-labels'),
         workspaceOpenApiGET<{ facts: TypedFactRow[] }>(id, 'ledger/typed-facts'),
-        workspaceOpenApiGET<{ config: { entity_type_surface_phrases?: string[] } }>(
+        workspaceOpenApiGET<{ interpretation: { entity_type_surface_phrases?: string[] } }>(
           id,
-          'governance/config',
+          'governance/interpretation',
         ),
       ]);
       setRows(mappingData.mappings);
       setPhrases(phraseData.phrases);
       setEntityObjectLabels(entityLabelData.labels);
       setTypedFacts(factData.facts);
-      setTypeSurfacePhrases(governanceData.config.entity_type_surface_phrases ?? []);
+      setTypeSurfacePhrases(interpretationData.interpretation.entity_type_surface_phrases ?? []);
     } catch (err) {
       setError(apiError(err));
     } finally {
@@ -280,7 +356,6 @@ export function MappingsPage() {
     }
   }
 
-  const name = workspaceMeta?.name ?? id ?? t.core.common.ellipsis;
 
   const typePhraseSummary = useMemo(() => {
     if (typeSurfacePhrases.length === 0) return '';
@@ -460,51 +535,65 @@ export function MappingsPage() {
   );
 
   return (
-    <ConsolePageLayout
-      subtitle={m.page_subtitle}
-      crumbs={[
-        { label: t.core.workspace_nav.platform.workspaces, to: '/workspaces' },
-        { label: name, to: id ? workspacePath(id, 'graph') : '/workspaces' },
-        { label: m.page_title },
-      ]}
-      className="min-h-0 overflow-hidden"
-      actions={
-        <>
-          <Button type="button" variant="outline" size="sm" className="h-8" disabled={loading} onClick={() => void load()}>
-            {loading ? <PublicIcon name="loader-01" size={14} className="animate-spin" /> : <PublicIcon name="arrow-rotate-left-01" size={14} />}
-            {m.refresh}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="h-8"
-            onClick={() => {
-              setAssignInitialSubject(undefined);
-              setAssignOpen(true);
-            }}
-          >
-            <PublicIcon name="tag" size={14} />
-            {m.assign_type}
-          </Button>
-          <Button type="button" size="sm" className="h-8" onClick={() => setCreateOpen(true)}>
-            <PublicIcon name="plus-01" size={14} />
-            {m.new_mapping}
-          </Button>
-        </>
-      }
+    <div
+      className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden"
+      data-testid="mappings-workspace-panel"
     >
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <Button type="button" variant="outline" size="sm" className="h-8" disabled={loading} onClick={() => void load()}>
+          {loading ? <PublicIcon name="loader-01" size={14} className="animate-spin" /> : <PublicIcon name="arrow-rotate-left-01" size={14} />}
+          {m.refresh}
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="h-8"
+          onClick={() => {
+            setAssignInitialSubject(undefined);
+            setAssignOpen(true);
+          }}
+        >
+          <PublicIcon name="tag" size={14} />
+          {m.assign_type}
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="h-8"
+          data-testid="mappings-open-interpretation-config"
+          onClick={() => setInterpretationDialogOpen(true)}
+        >
+          <PublicIcon name="settings-01" size={14} />
+          {m.open_interpretation_config}
+        </Button>
+        <Button type="button" size="sm" className="h-8" onClick={() => setCreateOpen(true)}>
+          <PublicIcon name="plus-01" size={14} />
+          {m.new_mapping}
+        </Button>
+      </div>
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
       {id && typePhraseSummary ? (
         <p className="text-sm text-muted-foreground" data-testid="mappings-type-phrases-banner">
           {fmt(m.type_phrases_banner, { phrases: typePhraseSummary })}{' '}
-          <Link
-            to={workspaceQualityPath(id, 'scan')}
+          <button
+            type="button"
             className="text-foreground underline underline-offset-4"
+            onClick={() => setInterpretationDialogOpen(true)}
           >
             {m.type_phrases_banner_link}
-          </Link>
+          </button>
         </p>
+      ) : null}
+      {id ? (
+        <InterpretationConfigDialog
+          workspaceId={id}
+          canEdit={canEditInterpretation}
+          open={interpretationDialogOpen}
+          onOpenChange={setInterpretationDialogOpen}
+          onSaved={() => void load()}
+        />
       ) : null}
       <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden">
         <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border">
@@ -581,6 +670,7 @@ export function MappingsPage() {
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent
           className="overflow-visible sm:max-w-lg"
+          data-testid="mappings-create-dialog"
           onOpenAutoFocus={(event) => event.preventDefault()}
         >
           <Form {...createForm}>
@@ -705,6 +795,36 @@ export function MappingsPage() {
                         />
                       )}
                     </FormControl>
+                    {alignmentSuggestions.length > 1 ? (
+                      <div className="mt-2 space-y-1.5">
+                        <p className="text-xs text-muted-foreground">
+                          {m.alignment_suggestions_heading}
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {alignmentSuggestions.map((row) => (
+                            <Button
+                              key={`${row.uri}-${row.relation}`}
+                              type="button"
+                              variant={
+                                watchedTargetUri.trim() === row.uri ? 'secondary' : 'outline'
+                              }
+                              size="sm"
+                              className="h-auto max-w-full py-1 text-left"
+                              onClick={() => createForm.setValue('targetUri', row.uri)}
+                            >
+                              <span className="truncate font-medium">
+                                {row.label || row.uri}
+                              </span>
+                              <span className="ml-1 shrink-0 text-[10px] text-muted-foreground">
+                                {fmt(m.alignment_suggestions_relation, {
+                                  relation: row.relation,
+                                })}
+                              </span>
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
                     <FormMessage />
                   </FormItem>
                 )}
@@ -745,8 +865,16 @@ export function MappingsPage() {
           </Form>
         </DialogContent>
       </Dialog>
-    </ConsolePageLayout>
+    </div>
   );
+}
+
+export function MappingsPage() {
+  const { id } = useParams();
+  if (!id) {
+    return null;
+  }
+  return <Navigate to={workspaceOntologyHubPath(id, 'statement')} replace />;
 }
 
 function mappingTargetKindLabel(copy: MappingsPageCopy, kind: string): string {

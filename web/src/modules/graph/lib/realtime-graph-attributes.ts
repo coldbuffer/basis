@@ -1,6 +1,7 @@
 import type { EdgeAttributes } from '@/lib/workspace/graphStore';
 import { curveGroupForPair } from '@/lib/workspace/edgePairKeys.js';
 import { GRAPH_THEME } from "@/lib/workspace/graphTheme.js";
+import { displayGraphEdgeType } from './display-edge-type.js';
 
 export type RealtimeEdgePayload = {
   id: string;
@@ -26,7 +27,8 @@ export function buildRealtimeEdgeAttributes(
     sourceId: payload.source_id,
     targetId: payload.target_id,
     weight: Number(payload.weight ?? 1),
-    edgeType: payload.type || "related_to",
+    edgeType: displayGraphEdgeType(payload.type || 'related_to', properties),
+    rawEdgeType: payload.type || 'related_to',
     properties,
     size: 1,
     baseSize: 1,

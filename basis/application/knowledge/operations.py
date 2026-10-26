@@ -280,6 +280,17 @@ def op_propose_mapping(ctx: WorkspaceCoreContext, args: dict[str, Any]) -> dict[
         materialized = ctx.knowledge.materialize_mapping_facts(wid, mapping["id"])
         if materialized.get("created", 0) > 0 and ctx.rebuild_projection is not None:
             projection = ctx.rebuild_projection()
+        from basis.domain.knowledge.services.governor_unmapped_types import (
+            maybe_resolve_unmapped_entity_type_for_mapping,
+        )
+
+        maybe_resolve_unmapped_entity_type_for_mapping(
+            ctx.knowledge,
+            wid,
+            mapping,
+            resolved_by=ctx.user.id,
+            rationale=why,
+        )
     audit_graph(
         ctx.store,
         ctx.user,

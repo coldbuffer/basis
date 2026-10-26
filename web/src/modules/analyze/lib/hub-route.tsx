@@ -5,6 +5,7 @@ export type OntologyHubTab =
   | 'editor'
   | 'health'
   | 'versions'
+  | 'statement'
   | 'alignments';
 
 export type AnalyzeHubTab = 'sparql' | 'reasoning';
@@ -14,6 +15,7 @@ export const ONTOLOGY_HUB_TABS: OntologyHubTab[] = [
   'editor',
   'health',
   'versions',
+  'statement',
   'alignments',
 ];
 

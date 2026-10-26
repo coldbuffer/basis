@@ -22,6 +22,7 @@ export type GovernanceScanOptions = {
   include_shacl: boolean;
   include_low_confidence: boolean;
   include_entity_label_clusters: boolean;
+  include_unmapped_entity_types: boolean;
   include_graph_dedup: boolean;
   confidence_min: number;
   dedup_threshold: number;
@@ -106,6 +107,7 @@ export function GovernanceScanDialog({
   const [includeShacl, setIncludeShacl] = useState(true);
   const [includeLowConfidence, setIncludeLowConfidence] = useState(true);
   const [includeLabelClusters, setIncludeLabelClusters] = useState(true);
+  const [includeUnmappedEntityTypes, setIncludeUnmappedEntityTypes] = useState(true);
   const [includeGraphDedup, setIncludeGraphDedup] = useState(true);
   const [confidenceMin, setConfidenceMin] = useState(0.75);
   const [dedupThreshold, setDedupThreshold] = useState(DEFAULT_DEDUP_THRESHOLD);
@@ -133,7 +135,11 @@ export function GovernanceScanDialog({
   }, [loadConfig, open]);
 
   const anyScope =
-    includeShacl || includeLowConfidence || includeLabelClusters || includeGraphDedup;
+    includeShacl ||
+    includeLowConfidence ||
+    includeLabelClusters ||
+    includeUnmappedEntityTypes ||
+    includeGraphDedup;
 
   const handleRun = () => {
     if (!anyScope) return;
@@ -141,6 +147,7 @@ export function GovernanceScanDialog({
       include_shacl: includeShacl,
       include_low_confidence: includeLowConfidence,
       include_entity_label_clusters: includeLabelClusters,
+      include_unmapped_entity_types: includeUnmappedEntityTypes,
       include_graph_dedup: includeGraphDedup,
       confidence_min: confidenceMin,
       dedup_threshold: dedupThreshold,
@@ -214,6 +221,13 @@ export function GovernanceScanDialog({
                 onCheckedChange={setIncludeLabelClusters}
                 title={g.scope_label_clusters}
                 hint={g.scope_label_clusters_hint}
+              />
+
+              <ScopeOption
+                checked={includeUnmappedEntityTypes}
+                onCheckedChange={setIncludeUnmappedEntityTypes}
+                title={g.scope_unmapped_entity_types}
+                hint={g.scope_unmapped_entity_types_hint}
               />
 
               <ScopeOption

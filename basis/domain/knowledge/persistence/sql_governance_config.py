@@ -55,6 +55,19 @@ def _optional_ontology_uri(row: Any) -> str | None:
     return _optional_text_column(row, "governance_ontology_uri")
 
 
+def _optional_bool_column(row: Any, column: str) -> bool:
+    try:
+        keys = row.keys() if hasattr(row, "keys") else ()
+        if column not in keys:
+            return False
+        value = row[column]
+    except (KeyError, IndexError, TypeError):
+        return False
+    if value is None:
+        return False
+    return bool(value)
+
+
 def governance_config_from_row(row: Any) -> GovernanceConfig:
     return GovernanceConfig(
         workspace_id=row["workspace_id"],
@@ -67,6 +80,9 @@ def governance_config_from_row(row: Any) -> GovernanceConfig:
         governance_shacl_turtle=_optional_text_column(row, "governance_shacl_turtle"),
         entity_type_surface_phrases_json=_optional_text_column(
             row, "entity_type_surface_phrases_json"
+        ),
+        vocabulary_alignment_requires_review=_optional_bool_column(
+            row, "vocabulary_alignment_requires_review"
         ),
     )
 
@@ -85,8 +101,9 @@ def upsert_governance_config(
             governor_interval_minutes, governor_confidence_min,
             governor_last_run_at, governance_ontology_uri,
             governance_shacl_turtle, entity_type_surface_phrases_json,
+            vocabulary_alignment_requires_review,
             created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(workspace_id) DO UPDATE SET
             governor_enabled = excluded.governor_enabled,
             governor_interval_minutes = excluded.governor_interval_minutes,
@@ -94,6 +111,7 @@ def upsert_governance_config(
             governance_ontology_uri = excluded.governance_ontology_uri,
             governance_shacl_turtle = excluded.governance_shacl_turtle,
             entity_type_surface_phrases_json = excluded.entity_type_surface_phrases_json,
+            vocabulary_alignment_requires_review = excluded.vocabulary_alignment_requires_review,
             updated_at = excluded.updated_at
         """,
         (
@@ -106,6 +124,7 @@ def upsert_governance_config(
             config.governance_ontology_uri,
             config.governance_shacl_turtle,
             config.entity_type_surface_phrases_json,
+            int(config.vocabulary_alignment_requires_review),
             created_at,
             updated_at,
         ),

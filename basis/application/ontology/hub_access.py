@@ -16,6 +16,7 @@ class OntologyHubAccess:
     drafts: dict[str, Any]
     proposals: dict[str, Any]
     versions: dict[str, Any]
+    alignments: dict[str, Any]
     graph_session: Any
     persist_hub: Callable[[], None]
 

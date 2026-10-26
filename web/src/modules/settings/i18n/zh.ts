@@ -76,16 +76,16 @@ export default {
       manual_hint: "也可在",
       review_link: "智能审查",
       manual_hint_suffix: "中点击「开始检查」。",
-      data_quality_link: "在「数据质量 → 扫描配置」中集中管理规则与 SHACL。",
-      settings_redirect_body: "定时治理扫描、置信度阈值与 SHACL 本体 URI 已迁至「数据质量 → 扫描配置」。",
-      settings_redirect_button: "打开数据质量",
+      data_quality_link: "在「数据质检 → 扫描配置」中集中管理规则与 SHACL。",
+      settings_redirect_body: "定时治理扫描、置信度阈值与 SHACL 本体 URI 已迁至「数据质检 → 扫描配置」。",
+      settings_redirect_button: "打开数据质检",
       edit_title: "定时检查设置",
       edit_desc: "为本工作区开启后台扫描并设置阈值。",
       toast_saved: "治理设置已保存",
-      type_phrases_label: "实体类型关系词",
-      type_phrases_hint:
-        "每行一个表面关系词；用于类映射扫描（如「是」「is_a」），与「映射」页类型映射一致。",
-      type_phrases_placeholder: "是\nis_a\nrdf:type"
+      type_phrases_hint: "类型关系词（解释策略）在",
+      type_phrases_link: "语义对齐",
+      vocabulary_alignment_review_label: "词汇对齐需审核",
+      vocabulary_alignment_review_hint: "开启后，词汇对齐的新增/修改/删除会先进入智能审核，通过后再写入 Hub 与图。",
     }
   },
   org_sso: {

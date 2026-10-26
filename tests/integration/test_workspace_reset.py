@@ -5,10 +5,15 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
 from fastapi.testclient import TestClient
 
+from basis.domain.ontology.hub.alignment_sql import fetch_alignments_dict
+from basis.infra.runtime.capabilities import graph_runtime_available
 from basis.infra.runtime.config import Settings
 from basis.interface.http.app import create_app
+
+pytest.importorskip("semantica")
 
 
 def _session(tmp_path: Path) -> tuple[TestClient, str, dict[str, str], str]:
@@ -189,3 +194,47 @@ def test_workspace_reset_mcp_async_job(tmp_path: Path) -> None:
         time.sleep(0.05)
     assert status == "succeeded"
     assert client.get(f"/api/v1/workspaces/{workspace_id}", headers=headers).json()["document_count"] == 0
+
+
+def test_workspace_reset_clears_vocabulary_alignments(tmp_path: Path) -> None:
+    if not graph_runtime_available():
+        pytest.skip("explorer extra not installed")
+
+    app = create_app(Settings(data_dir=tmp_path))
+    client = TestClient(app)
+    admin = client.post(
+        "/api/v1/auth/register",
+        json={"email": "reset-align@example.com", "password": "password1", "display_name": "RA"},
+    ).json()
+    headers = {"Authorization": f"Bearer {admin['token']}"}
+    workspace_id = client.get("/api/v1/workspaces", headers=headers).json()["workspaces"][0]["id"]
+    workspace_name = client.get(f"/api/v1/workspaces/{workspace_id}", headers=headers).json()["name"]
+
+    created = client.post(
+        f"/api/v1/workspaces/{workspace_id}/ontology/alignments",
+        headers=headers,
+        json={
+            "source_uri": "http://example.org/reset#a",
+            "target_uri": "http://example.org/reset#b",
+            "relation": "skos:exactMatch",
+            "confidence": 0.9,
+        },
+    )
+    assert created.status_code == 200
+
+    preview = client.get(f"/api/v1/workspaces/{workspace_id}/reset", headers=headers).json()
+    assert preview["counts"]["vocabulary_alignment_count"] >= 1
+
+    ok = client.post(
+        f"/api/v1/workspaces/{workspace_id}/reset",
+        headers=headers,
+        json={"confirmation": workspace_name, "async": False},
+    )
+    assert ok.status_code == 200
+
+    listed = client.get(f"/api/v1/workspaces/{workspace_id}/ontology/alignments", headers=headers).json()
+    assert listed == []
+
+    knowledge = app.state.knowledge_store
+    with knowledge._lock:
+        assert fetch_alignments_dict(knowledge._conn, workspace_id) == {}

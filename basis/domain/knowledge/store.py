@@ -266,6 +266,7 @@ for _name in (
 for _name in (
     "get_governance_config",
     "update_governance_config",
+    "update_interpretation_config",
     "save_governance_shacl",
     "touch_governor_last_run",
     "list_governor_enabled_workspace_ids",

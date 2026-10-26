@@ -45,6 +45,7 @@ class GovernanceAccess:
         governance_ontology_uri: str | None = None,
         clear_governance_ontology_uri: bool = False,
         entity_type_surface_phrases: list[str] | None = None,
+        vocabulary_alignment_requires_review: bool | None = None,
     ) -> GovernanceConfig:
         existing = self.get_governance_config(workspace_id)
         ontology_uri = existing.governance_ontology_uri
@@ -64,6 +65,9 @@ class GovernanceAccess:
                 if len(phrase) > 128:
                     raise ValueError("entity_type_surface_phrase entry too long")
             type_phrases_json = json.dumps(cleaned, ensure_ascii=False) if cleaned else None
+        valign_review = existing.vocabulary_alignment_requires_review
+        if vocabulary_alignment_requires_review is not None:
+            valign_review = vocabulary_alignment_requires_review
         config = GovernanceConfig(
             workspace_id=workspace_id,
             schema_version=existing.schema_version,
@@ -74,6 +78,42 @@ class GovernanceAccess:
             governance_ontology_uri=ontology_uri,
             governance_shacl_turtle=shacl_turtle,
             entity_type_surface_phrases_json=type_phrases_json,
+            vocabulary_alignment_requires_review=valign_review,
+        )
+        validate_governance_config(config)
+        with self._store._lock:
+            now = _now()
+            gov_persist.upsert_governance_config(
+                self._store._conn, config, created_at=now, updated_at=now
+            )
+            self._store._conn.commit()
+        return config
+
+    def update_interpretation_config(
+        self,
+        workspace_id: str,
+        *,
+        entity_type_surface_phrases: list[str],
+    ) -> GovernanceConfig:
+        existing = self.get_governance_config(workspace_id)
+        cleaned = filter_type_phrases(entity_type_surface_phrases)
+        if len(cleaned) > 64:
+            raise ValueError("entity_type_surface_phrases supports at most 64 entries")
+        for phrase in cleaned:
+            if len(phrase) > 128:
+                raise ValueError("entity_type_surface_phrase entry too long")
+        type_phrases_json = json.dumps(cleaned, ensure_ascii=False) if cleaned else None
+        config = GovernanceConfig(
+            workspace_id=workspace_id,
+            schema_version=existing.schema_version,
+            governor_enabled=existing.governor_enabled,
+            governor_interval_minutes=existing.governor_interval_minutes,
+            governor_confidence_min=existing.governor_confidence_min,
+            governor_last_run_at=existing.governor_last_run_at,
+            governance_ontology_uri=existing.governance_ontology_uri,
+            governance_shacl_turtle=existing.governance_shacl_turtle,
+            entity_type_surface_phrases_json=type_phrases_json,
+            vocabulary_alignment_requires_review=existing.vocabulary_alignment_requires_review,
         )
         validate_governance_config(config)
         with self._store._lock:
@@ -106,6 +146,7 @@ class GovernanceAccess:
             governance_ontology_uri=uri,
             governance_shacl_turtle=turtle,
             entity_type_surface_phrases_json=existing.entity_type_surface_phrases_json,
+            vocabulary_alignment_requires_review=existing.vocabulary_alignment_requires_review,
         )
         validate_governance_config(config)
         with self._store._lock:

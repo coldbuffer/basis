@@ -94,7 +94,7 @@ Routes follow [`web/src/routes/index.tsx`](../../web/src/routes/index.tsx) (`App
 
 | Route | E2E | Spec(s) | Notes |
 |-------|-----|---------|-------|
-| `/workspaces/:id/ontology` | P | `governance.e2e.spec.ts`, `ontology-proposal-url.e2e.spec.ts` | Versions tab; proposal deep link |
+| `/workspaces/:id/ontology` | P | `governance.e2e.spec.ts`, `ontology-proposal-url.e2e.spec.ts`, `ontology-health-vocabulary-alignment.e2e.spec.ts`, `vocabulary-alignment-deeplink.e2e.spec.ts`, `vocabulary-alignment-review.e2e.spec.ts`, `statement-type-mapping-deeplink.e2e.spec.ts` | Versions tab; proposal deep link; health→词汇对齐; alignSuggest 深链; 审核门控发布；类型映射预填 |
 | `/workspaces/:id/analyze` | P | `analyze-hub.e2e.spec.ts` | SPARQL + reasoning tabs |
 | `/workspaces/:id/vocabulary` | S | `schema-surfaces.e2e.spec.ts` | Hub loads |
 | `/workspaces/:id/mappings` (statement / extraction) | D | `schema-surfaces.e2e.spec.ts`, `mappings-type-phrases.e2e.spec.ts`, `mappings-create-confirm.e2e.spec.ts`, `mappings-review-approve.e2e.spec.ts` | Ingest → UI mapping; list confirm or **Review** approve |
@@ -105,7 +105,7 @@ Routes follow [`web/src/routes/index.tsx`](../../web/src/routes/index.tsx) (`App
 
 | Route | E2E | Spec(s) | Notes |
 |-------|-----|---------|-------|
-| `/workspaces/:id/review` | D | `governance.e2e.spec.ts`, `connectors.e2e.spec.ts`, `mappings-review-approve.e2e.spec.ts` | Conflicts, approve narrative, ontology mapping approve |
+| `/workspaces/:id/review` | D | `governance.e2e.spec.ts`, `connectors.e2e.spec.ts`, `mappings-review-approve.e2e.spec.ts`, `unmapped-type-mapping-deeplink.e2e.spec.ts` | Conflicts, approve narrative, ontology mapping approve; 未映射类型→新建类型映射 |
 | `/workspaces/:id/log` | P | `decisions-deep-link.e2e.spec.ts`, `governance.e2e.spec.ts` | Activity log + `?graph_decision=` |
 | `/workspaces/:id/lineage` | P | `lineage.e2e.spec.ts` | `?node=` deep link |
 | `/workspaces/:id/graph-diff` | P | `graph-diff.e2e.spec.ts` | `from` / `to` query |
@@ -152,6 +152,11 @@ Routes follow [`web/src/routes/index.tsx`](../../web/src/routes/index.tsx) (`App
 | `mcp-integration.e2e.spec.ts` | Integration page (MCP, OpenAPI, tokens) |
 | `onboarding.e2e.spec.ts` | Register → sources paste → graph |
 | `ontology-proposal-url.e2e.spec.ts` | Ontology proposal list highlight |
+| `ontology-health-vocabulary-alignment.e2e.spec.ts` | Health alignment issue → vocabulary suggest dialog |
+| `vocabulary-alignment-deeplink.e2e.spec.ts` | `alignSuggest` / `alignOntology` URL |
+| `vocabulary-alignment-review.e2e.spec.ts` | `vocabulary_alignment_requires_review` → review approve → alignment listed |
+| `statement-type-mapping-deeplink.e2e.spec.ts` | `typeMappingLabel` opens create mapping dialog |
+| `unmapped-type-mapping-deeplink.e2e.spec.ts` | Review unmapped type → create/confirm type mapping → review auto-close |
 | `org-saml-settings.e2e.spec.ts` | Org SAML settings panel |
 | `org-sso-login.e2e.spec.ts` | Login SSO affordance |
 | `processing-job.e2e.spec.ts` | Processing job detail / failed flows |
@@ -164,6 +169,15 @@ Routes follow [`web/src/routes/index.tsx`](../../web/src/routes/index.tsx) (`App
 | `search-temporal-url.e2e.spec.ts` | Search chunk `as_of` URL |
 | `settings-graph-audit.e2e.spec.ts` | Workspace settings graph audit tab |
 | `shell.e2e.spec.ts` | Login form |
+
+## `/_e2e` seed helpers (API, `data/e2e` only)
+
+| POST path | Playwright helper | Purpose |
+|-----------|-------------------|---------|
+| `…/_e2e/shacl-violation` | `seedStatementConflictViaApi` | SHACL conflict review item |
+| `…/_e2e/ontology-proposal` | `seedOntologyProposalViaApi` | Ontology + draft + proposed change |
+| `…/_e2e/unmapped-entity-type` | `seedUnmappedEntityTypeViaApi` | Unmapped type label review (`with_l1_hint` optional) |
+| `…/_e2e/governance-trip` | `seedGovernanceTrippedViaApi` | Governance gate trip alert |
 
 ## Optional live GitHub (connector E2E)
 

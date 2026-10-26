@@ -76,6 +76,14 @@ def apply_rebuild_for_workspace(
         registry=repair_registry,
         versions=repair_versions,
     )
+    from basis.domain.ontology.hub.alignment_graph import reapply_vocabulary_alignments
+    from basis.domain.ontology.hub.hub_persistence import read_alignments_snapshot
+
+    alignments = read_alignments_snapshot(
+        bindings.persistence, workspace_id, knowledge=bindings.knowledge
+    )
+    if alignments:
+        reapply_vocabulary_alignments(session, alignments)
     return meta
 
 

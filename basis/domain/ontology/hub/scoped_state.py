@@ -36,3 +36,9 @@ class OntologyHubState:
 
     def __exit__(self, *_args: object) -> None:
         return None
+
+
+def merged_governor_align_store(request: Any, workspace_id: str) -> dict[str, Any]:
+    """Published vocabulary alignments for governor scans (hub state: SQL + sidecar hydrate)."""
+    with OntologyHubState(request, workspace_id):
+        return dict(request.app.state.ontology_alignments.get(workspace_id) or {})

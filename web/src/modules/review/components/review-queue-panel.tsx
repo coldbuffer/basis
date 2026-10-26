@@ -30,6 +30,7 @@ import {
 import { fetchWorkspaceNodeLabels } from '@/lib/workspace/node-labels.js';
 import { workspaceAlertsPath, reviewAlertEpisodeKey } from '@/modules/alerts/lib/alerts-url.js';
 import { workspaceOntologyProposalPath, workspaceOntologyVersionsPath, workspacePath } from '@/lib/nav/nav-config.js';
+import { workspaceOntologyHubPath } from '@/modules/analyze/lib/hub-route.js';
 import {
   activityLogBrowseDecisionsPath,
   decisionIdFromApproveResponse,
@@ -40,6 +41,7 @@ import {
   reviewItemQualityHref,
   reviewItemQualityLinkLabelKey,
 } from '@/modules/review/lib/review-quality-link.js';
+import { reviewItemSummaryLine } from '@/modules/review/lib/review-item-summary.js';
 import { Button } from '@/components/ui/button.js';
 import { cn } from '@/lib/utils.js';
 import { toast } from 'sonner';
@@ -335,6 +337,7 @@ export function ReviewQueuePanel({
         };
         low_confidence?: { created?: number; skipped?: number };
         entity_clusters?: { created?: number; skipped?: number };
+        unmapped_entity_types?: { created?: number; skipped?: number };
         graph_dedup_clusters?: { created?: number; skipped?: number; unavailable?: boolean };
       }>(workspaceId, 'governance/governor/run', {
         body: {
@@ -343,6 +346,7 @@ export function ReviewQueuePanel({
           include_shacl: options.include_shacl,
           include_low_confidence: options.include_low_confidence,
           include_entity_label_clusters: options.include_entity_label_clusters,
+          include_unmapped_entity_types: options.include_unmapped_entity_types,
           include_graph_dedup: options.include_graph_dedup,
         },
       });
@@ -355,17 +359,21 @@ export function ReviewQueuePanel({
       const lowSkipped = body.low_confidence?.skipped ?? 0;
       const clusterCreated = body.entity_clusters?.created ?? 0;
       const clusterSkipped = body.entity_clusters?.skipped ?? 0;
+      const unmappedCreated = body.unmapped_entity_types?.created ?? 0;
+      const unmappedSkipped = body.unmapped_entity_types?.skipped ?? 0;
       const graphDedupCreated = body.graph_dedup_clusters?.created ?? 0;
       const graphDedupSkipped = body.graph_dedup_clusters?.skipped ?? 0;
       const createdSum =
         (options.include_shacl ? shaclCreated : 0) +
         (options.include_low_confidence ? lowCreated : 0) +
         (options.include_entity_label_clusters ? clusterCreated : 0) +
+        (options.include_unmapped_entity_types ? unmappedCreated : 0) +
         (options.include_graph_dedup ? graphDedupCreated : 0);
       const skippedSum =
         (options.include_shacl ? shaclSkipped : 0) +
         (options.include_low_confidence ? lowSkipped : 0) +
         (options.include_entity_label_clusters ? clusterSkipped : 0) +
+        (options.include_unmapped_entity_types ? unmappedSkipped : 0) +
         (options.include_graph_dedup ? graphDedupSkipped : 0);
       setGovernorDialogOpen(false);
       const openCount = await load();
@@ -382,6 +390,8 @@ export function ReviewQueuePanel({
             lowSkipped: formatLocaleNumber(locale as Locale, lowSkipped),
             clusterCreated: formatLocaleNumber(locale as Locale, clusterCreated),
             clusterSkipped: formatLocaleNumber(locale as Locale, clusterSkipped),
+            unmappedCreated: formatLocaleNumber(locale as Locale, unmappedCreated),
+            unmappedSkipped: formatLocaleNumber(locale as Locale, unmappedSkipped),
             graphDedupCreated: formatLocaleNumber(locale as Locale, graphDedupCreated),
             graphDedupSkipped: formatLocaleNumber(locale as Locale, graphDedupSkipped),
           }) +
@@ -494,6 +504,8 @@ export function ReviewQueuePanel({
     if (kind === 'shacl_violation') return r.kind_shacl;
     if (kind === 'low_confidence') return r.kind_low_confidence;
     if (kind === 'entity_cluster') return r.kind_entity_cluster;
+    if (kind === 'unmapped_entity_type') return r.kind_unmapped_entity_type;
+    if (kind === 'vocabulary_alignment_change') return r.kind_vocabulary_alignment_change;
     if (kind === 'connector_writeback') return r.kind_writeback;
     if (kind === 'entity_merge') return r.kind_merge;
     return kind;
@@ -628,6 +640,8 @@ export function ReviewQueuePanel({
                 const isRemember = item.kind === 'statement_remember';
                 const isShacl = item.kind === 'shacl_violation';
                 const isLowConfidence = item.kind === 'low_confidence';
+                const isUnmappedEntityType = item.kind === 'unmapped_entity_type';
+                const isVocabularyAlignment = item.kind === 'vocabulary_alignment_change';
                 const isEntityCluster = item.kind === 'entity_cluster';
                 const isWriteback = item.kind === 'connector_writeback';
                 const isEntityMerge = item.kind === 'entity_merge';
@@ -639,9 +653,11 @@ export function ReviewQueuePanel({
                   ? r.approve_import
                   : isMapping
                     ? r.approve_mapping
+                    : isVocabularyAlignment
+                      ? r.approve_vocabulary_alignment
                     : isRemember
                       ? r.approve_fact
-                      : isShacl
+                      : isShacl || isUnmappedEntityType
                           ? r.acknowledge
                           : isLowConfidence
                           ? r.confirm_low_confidence
@@ -696,6 +712,84 @@ export function ReviewQueuePanel({
                                     predicate: String(item.payload.surface_phrase ?? emptyCell),
                                   })}
                                 </span>
+                                {(() => {
+                                  const qualityHref = reviewItemQualityHref(
+                                    workspaceId,
+                                    item.kind,
+                                    item.payload as Record<string, unknown>,
+                                  );
+                                  const labelKey = reviewItemQualityLinkLabelKey(
+                                    item.kind,
+                                    item.payload as Record<string, unknown>,
+                                  );
+                                  if (!qualityHref || !labelKey) return null;
+                                  return (
+                                    <Button size="sm" variant="outline" className="h-7 w-fit text-xs" asChild>
+                                      <Link to={qualityHref} data-testid={`review-quality-link-${item.id}`}>
+                                        {r[labelKey]}
+                                      </Link>
+                                    </Button>
+                                  );
+                                })()}
+                              </span>
+                            )
+                          : isVocabularyAlignment
+                            ? (
+                              <span className="flex flex-col gap-2 text-xs text-muted-foreground">
+                                <span className="font-mono text-[11px] leading-snug">
+                                  {reviewItemSummaryLine(
+                                    item,
+                                    r,
+                                    locale as Locale,
+                                    labels,
+                                    emptyCell,
+                                  )}
+                                </span>
+                                {(() => {
+                                  const qualityHref = reviewItemQualityHref(
+                                    workspaceId,
+                                    item.kind,
+                                    item.payload as Record<string, unknown>,
+                                  );
+                                  const labelKey = reviewItemQualityLinkLabelKey(
+                                    item.kind,
+                                    item.payload as Record<string, unknown>,
+                                  );
+                                  if (!qualityHref || !labelKey) return null;
+                                  return (
+                                    <Button size="sm" variant="outline" className="h-7 w-fit text-xs" asChild>
+                                      <Link to={qualityHref} data-testid={`review-quality-link-${item.id}`}>
+                                        {r[labelKey]}
+                                      </Link>
+                                    </Button>
+                                  );
+                                })()}
+                              </span>
+                            )
+                          : isUnmappedEntityType
+                            ? (
+                              <span className="flex flex-col gap-2 text-xs text-muted-foreground">
+                                <span>
+                                  {fmt(r.unmapped_entity_type_line, {
+                                    label: String(
+                                      (item.payload as Record<string, unknown>).label ?? emptyCell,
+                                    ),
+                                  })}
+                                </span>
+                                {(() => {
+                                  const suggestions = (item.payload as Record<string, unknown>)
+                                    .vocabulary_alignment_suggestions;
+                                  if (!Array.isArray(suggestions) || suggestions.length === 0) {
+                                    return null;
+                                  }
+                                  return (
+                                    <span className="text-[10px]">
+                                      {fmt(r.unmapped_entity_type_l1_hint, {
+                                        count: formatLocaleNumber(locale as Locale, suggestions.length),
+                                      })}
+                                    </span>
+                                  );
+                                })()}
                                 {(() => {
                                   const qualityHref = reviewItemQualityHref(
                                     workspaceId,
@@ -907,7 +1001,7 @@ export function ReviewQueuePanel({
                     {isMapping ? (
                       <div className="mt-2">
                         <Link
-                          to={workspacePath(workspaceId, 'mappings')}
+                          to={workspaceOntologyHubPath(workspaceId, 'statement')}
                           className="text-[11px] text-foreground underline-offset-2 hover:underline"
                         >
                           {r.open_mappings}

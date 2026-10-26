@@ -369,10 +369,42 @@ export async function seedStatementConflictViaApi(
   };
 }
 
+export async function seedUnmappedEntityTypeViaApi(
+  page: Page,
+  workspaceId: string,
+  options?: { label?: string; withL1Hint?: boolean },
+): Promise<{ reviewItemId: string; label: string; l1Uri?: string | null }> {
+  const token = await bearerToken(page);
+  const response = await page.request.post(e2eWorkspaceApiPath(workspaceId, '_e2e/unmapped-entity-type'), {
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    data: {
+      label: options?.label,
+      with_l1_hint: options?.withL1Hint ?? false,
+    },
+  });
+  if (response.status() === 404) {
+    throw new Error('e2e_unmapped_entity_type_unavailable');
+  }
+  expect(response.ok()).toBeTruthy();
+  const body = (await response.json()) as {
+    review_item_id?: string | null;
+    label?: string;
+    l1_uri?: string | null;
+  };
+  if (!body.review_item_id || !body.label) {
+    throw new Error('e2e unmapped-entity-type did not return review_item_id / label');
+  }
+  return {
+    reviewItemId: body.review_item_id,
+    label: body.label,
+    l1Uri: body.l1_uri ?? null,
+  };
+}
+
 export async function seedOntologyProposalViaApi(
   page: Page,
   workspaceId: string,
-): Promise<{ proposalId: string; summary: string }> {
+): Promise<{ proposalId: string; ontologyUri: string; summary: string }> {
   const token = await bearerToken(page);
   const response = await page.request.post(e2eWorkspaceApiPath(workspaceId, '_e2e/ontology-proposal'), {
     headers: { Authorization: `Bearer ${token}` },
@@ -381,14 +413,38 @@ export async function seedOntologyProposalViaApi(
     throw new Error('e2e_ontology_proposal_unavailable');
   }
   expect(response.ok()).toBeTruthy();
-  const body = (await response.json()) as { proposal_id?: string; summary?: string };
-  if (!body.proposal_id) {
-    throw new Error('e2e ontology-proposal did not return proposal_id');
+  const body = (await response.json()) as {
+    proposal_id?: string;
+    ontology_uri?: string;
+    summary?: string;
+  };
+  if (!body.proposal_id || !body.ontology_uri) {
+    throw new Error('e2e ontology-proposal did not return proposal_id / ontology_uri');
   }
   return {
     proposalId: body.proposal_id,
+    ontologyUri: body.ontology_uri,
     summary: body.summary ?? '',
   };
+}
+
+export async function approveAndPublishOntologyProposalViaApi(
+  page: Page,
+  workspaceId: string,
+  proposalId: string,
+): Promise<void> {
+  const token = await bearerToken(page);
+  const headers = { Authorization: `Bearer ${token}` };
+  const approve = await page.request.post(
+    e2eWorkspaceApiPath(workspaceId, `ontology/proposals/${proposalId}/approve`),
+    { headers },
+  );
+  expect(approve.ok(), `approve failed: ${approve.status()} ${await approve.text()}`).toBeTruthy();
+  const publish = await page.request.post(
+    e2eWorkspaceApiPath(workspaceId, `ontology/proposals/${proposalId}/publish`),
+    { headers },
+  );
+  expect(publish.ok(), `publish failed: ${publish.status()} ${await publish.text()}`).toBeTruthy();
 }
 
 /** Ensures the user belongs to an org (creates a workspace + org when needed). */
@@ -533,6 +589,46 @@ export async function waitForLedgerSurfacePhrases(
     )
     .toBe(true);
   return phrases;
+}
+
+export async function submitMappingsCreateDialog(
+  page: Page,
+  options?: { targetUri?: string },
+): Promise<void> {
+  const dialog = page.getByTestId('mappings-create-dialog');
+  await expect(dialog).toBeVisible();
+  if (options?.targetUri) {
+    const uriInput = dialog.getByPlaceholder(/Search classes|搜索类/);
+    const current = await uriInput.inputValue();
+    if (!current.trim()) {
+      await uriInput.fill(options.targetUri);
+    }
+  }
+  await dialog.getByRole('button', { name: /Submit proposal|提交提案/i }).click();
+  await expect(dialog).toBeHidden({ timeout: 30_000 });
+}
+
+export async function expectNoOpenUnmappedEntityTypeReviews(
+  page: Page,
+  workspaceId: string,
+): Promise<void> {
+  const token = await bearerToken(page);
+  await expect
+    .poll(
+      async () => {
+        const response = await page.request.get(e2eWorkspaceApiPath(workspaceId, 'review/items'), {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { kind: 'unmapped_entity_type', status: 'open' },
+        });
+        if (!response.ok()) {
+          return -1;
+        }
+        const body = (await response.json()) as { items?: unknown[] };
+        return body.items?.length ?? 0;
+      },
+      { timeout: 60_000 },
+    )
+    .toBe(0);
 }
 
 export async function createProposedRelationMappingViaUi(

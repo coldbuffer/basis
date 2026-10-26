@@ -10,6 +10,7 @@ const ONTOLOGY_TAB_SEGMENT: Record<OntologyHubTab, string> = {
   editor: 'ontology',
   health: 'ontology',
   versions: 'ontology',
+  statement: 'mappings',
   alignments: 'ontology',
 };
 

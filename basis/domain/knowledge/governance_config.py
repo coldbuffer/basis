@@ -26,14 +26,17 @@ class GovernanceConfig:
     governance_ontology_uri: str | None = None
     governance_shacl_turtle: str | None = None
     entity_type_surface_phrases_json: str | None = None
+    vocabulary_alignment_requires_review: bool = False
 
     def entity_type_surface_phrases(self) -> list[str]:
         return filter_type_phrases(entity_type_surface_phrases_from_config(self))
 
+    def interpretation_dict(self) -> dict[str, Any]:
+        return {"entity_type_surface_phrases": self.entity_type_surface_phrases()}
+
     def public_dict(self) -> dict[str, Any]:
         data = asdict(self)
         data.pop("entity_type_surface_phrases_json", None)
-        data["entity_type_surface_phrases"] = self.entity_type_surface_phrases()
         return data
 
 

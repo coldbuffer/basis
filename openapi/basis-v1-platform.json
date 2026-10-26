@@ -5345,20 +5345,17 @@
             "title": "Governance Ontology Uri",
             "description": "Ontology URI for Hub SHACL during conflict scans (empty clears)."
           },
-          "entity_type_surface_phrases": {
+          "vocabulary_alignment_requires_review": {
             "anyOf": [
               {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
+                "type": "boolean"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Entity Type Surface Phrases",
-            "description": "Relation phrases treated as rdf:type for class mapping scans (e.g. 是, is_a). Omit to keep stored value; empty list clears override."
+            "title": "Vocabulary Alignment Requires Review",
+            "description": "When true, vocabulary alignment upsert/delete enqueue review before publish. Omit to leave unchanged."
           }
         },
         "type": "object",
@@ -5436,6 +5433,12 @@
             "type": "boolean",
             "title": "Include Graph Dedup",
             "description": "Enqueue graph semantic duplicate pairs (requires graph runtime).",
+            "default": true
+          },
+          "include_unmapped_entity_types": {
+            "type": "boolean",
+            "title": "Include Unmapped Entity Types",
+            "description": "Enqueue taxonomic object labels without a confirmed class mapping (L2).",
             "default": true
           }
         },
@@ -5621,6 +5624,20 @@
           "doc_id"
         ],
         "title": "IngestTextRequest"
+      },
+      "InterpretationConfigRequest": {
+        "properties": {
+          "entity_type_surface_phrases": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Entity Type Surface Phrases",
+            "description": "Relation phrases treated as rdf:type for class mapping materialization (e.g. 是, is_a). Use GET/PUT …/governance/interpretation (L2 alignment policy)."
+          }
+        },
+        "type": "object",
+        "title": "InterpretationConfigRequest"
       },
       "InvalidateEntitiesRequest": {
         "properties": {

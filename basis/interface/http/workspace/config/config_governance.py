@@ -18,6 +18,7 @@ from basis.domain.knowledge.services.governor_graph_dedup import (
     DEFAULT_GOVERNOR_DEDUP_THRESHOLD,
     scan_graph_semantic_dedup_clusters,
 )
+from basis.domain.ontology.hub.scoped_state import merged_governor_align_store
 from basis.domain.knowledge.store import KnowledgeStore
 from basis.interface.http.shared.deps import (
     get_current_user,
@@ -39,11 +40,21 @@ class GovernanceConfigRequest(BaseModel):
         default=None,
         description="Ontology URI for Hub SHACL during conflict scans (empty clears).",
     )
-    entity_type_surface_phrases: list[str] | None = Field(
+    vocabulary_alignment_requires_review: bool | None = Field(
         default=None,
         description=(
-            "Relation phrases treated as rdf:type for class mapping scans "
-            "(e.g. 是, is_a). Omit to keep stored value; empty list clears override."
+            "When true, vocabulary alignment upsert/delete enqueue review before publish. "
+            "Omit to leave unchanged."
+        ),
+    )
+
+
+class InterpretationConfigRequest(BaseModel):
+    entity_type_surface_phrases: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Relation phrases treated as rdf:type for class mapping materialization "
+            "(e.g. 是, is_a). Use GET/PUT …/governance/interpretation (L2 alignment policy)."
         ),
     )
 
@@ -81,6 +92,10 @@ class GovernorRunRequest(BaseModel):
         default=True,
         description="Enqueue graph semantic duplicate pairs (requires graph runtime).",
     )
+    include_unmapped_entity_types: bool = Field(
+        default=True,
+        description="Enqueue taxonomic object labels without a confirmed class mapping (L2).",
+    )
 
 
 @router.post("/{workspace_id}/governance/governor/run")
@@ -103,6 +118,7 @@ Governance Governor Run. Batch conflict scan and low-confidence review enqueue (
             req.include_low_confidence,
             req.include_entity_label_clusters,
             req.include_graph_dedup,
+            req.include_unmapped_entity_types,
         )
     ):
         raise AdminError(422, "governor_scan_empty", "至少选择一项治理扫描范围")
@@ -111,6 +127,9 @@ Governance Governor Run. Batch conflict scan and low-confidence review enqueue (
         req.dedup_threshold if req.dedup_threshold is not None else DEFAULT_GOVERNOR_DEDUP_THRESHOLD
     )
     scan_ctx = build_conflict_scan_context(request, workspace_id, knowledge)
+    align_store: dict[str, Any] | None = None
+    if req.include_unmapped_entity_types:
+        align_store = merged_governor_align_store(request, workspace_id)
     result = run_governor_pass(
         knowledge,
         workspace_id,
@@ -119,6 +138,8 @@ Governance Governor Run. Batch conflict scan and low-confidence review enqueue (
         include_shacl=req.include_shacl,
         include_low_confidence=req.include_low_confidence,
         include_entity_label_clusters=req.include_entity_label_clusters,
+        include_unmapped_entity_types=req.include_unmapped_entity_types,
+        align_store=align_store,
     )
     graph_dedup: dict[str, Any] = {"created": 0, "skipped": 0}
     if req.include_graph_dedup:
@@ -150,11 +171,50 @@ async def get_governance_config(
     knowledge: KnowledgeStore = Depends(get_knowledge_store),
 ) -> dict[str, Any]:
     """
-Governance Config. Per-workspace governor schedule and confidence threshold (F-GOV-04). Requires workspace viewer+.
+Governance Config. Validation policy: governor schedule, confidence, SHACL ontology URI (F-GOV-04). Requires workspace viewer+.
     """
     get_workspace_for_viewer(request, user, workspace_id, store)
     config = knowledge.get_governance_config(workspace_id)
     return {"config": config.public_dict()}
+
+
+@router.get("/{workspace_id}/governance/interpretation")
+async def get_interpretation_config(
+    workspace_id: str,
+    request: Request,
+    user: User = Depends(get_current_user),
+    store: AdminStore = Depends(get_store),
+    knowledge: KnowledgeStore = Depends(get_knowledge_store),
+) -> dict[str, Any]:
+    """
+Interpretation Config. Alignment policy: surface phrases for entity class (rdf:type) mapping. Requires workspace viewer+.
+    """
+    get_workspace_for_viewer(request, user, workspace_id, store)
+    config = knowledge.get_governance_config(workspace_id)
+    return {"interpretation": config.interpretation_dict()}
+
+
+@router.put("/{workspace_id}/governance/interpretation")
+async def update_interpretation_config(
+    workspace_id: str,
+    request: Request,
+    body: InterpretationConfigRequest,
+    user: User = Depends(get_current_user),
+    store: AdminStore = Depends(get_store),
+    knowledge: KnowledgeStore = Depends(get_knowledge_store),
+) -> dict[str, Any]:
+    """
+Interpretation Config Update. Set type-mapping relation phrases (semantic alignment). Requires workspace editor+.
+    """
+    get_workspace_for_editor(request, user, workspace_id, store)
+    try:
+        config = knowledge.update_interpretation_config(
+            workspace_id,
+            entity_type_surface_phrases=body.entity_type_surface_phrases,
+        )
+    except ValueError as exc:
+        raise AdminError(422, "validation_error", str(exc)) from exc
+    return {"interpretation": config.interpretation_dict()}
 
 
 @router.put("/{workspace_id}/governance/config")
@@ -178,7 +238,7 @@ Governance Config Update. Enable scheduled governor passes (requires BASIS_GOVER
             governor_confidence_min=body.governor_confidence_min,
             governance_ontology_uri=body.governance_ontology_uri,
             clear_governance_ontology_uri=body.governance_ontology_uri == "",
-            entity_type_surface_phrases=body.entity_type_surface_phrases,
+            vocabulary_alignment_requires_review=body.vocabulary_alignment_requires_review,
         )
     except ValueError as exc:
         raise AdminError(422, "validation_error", str(exc)) from exc
