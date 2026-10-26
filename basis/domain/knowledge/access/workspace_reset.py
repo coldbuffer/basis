@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from datetime import datetime, timezone
 from typing import Any
 
 from basis.domain.knowledge.blob_store import BlobStore
@@ -20,7 +21,9 @@ from basis.domain.knowledge.services.workspace_reset_scopes import (
     normalize_reset_scopes,
     scopes_for_api,
 )
-from basis.domain.tenancy.admin.admin_types import utc_now_iso
+
+def _utc_now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
 
 
 class WorkspaceResetAccess:
@@ -78,7 +81,7 @@ class WorkspaceResetAccess:
                     "duplicate": True,
                 }
             job_id = str(uuid.uuid4())
-            now = utc_now_iso()
+            now = _utc_now_iso()
             insert_workspace_reset_job(
                 conn,
                 job_id=job_id,
