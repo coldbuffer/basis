@@ -1,6 +1,6 @@
 """Add governance_configs.vocabulary_alignment_requires_review (L1 publish gate).
 
-Revision ID: 0011_vocabulary_alignment_requires_review
+Revision ID: 0011_vocab_align_review
 """
 
 from __future__ import annotations
@@ -10,7 +10,7 @@ from sqlalchemy import text
 
 from basis.infra.tooling.db.connector_vault_migrations import _table_has_column
 
-revision = "0011_vocabulary_alignment_requires_review"
+revision = "0011_vocab_align_review"
 down_revision = "0010_entity_type_surface_phrases"
 branch_labels = None
 depends_on = None

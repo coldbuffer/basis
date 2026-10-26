@@ -9,7 +9,7 @@ from alembic import op
 from sqlalchemy import text
 
 revision = "0012_vocabulary_alignments_table"
-down_revision = "0011_vocabulary_alignment_requires_review"
+down_revision = "0011_vocab_align_review"
 branch_labels = None
 depends_on = None
 
