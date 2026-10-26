@@ -66,7 +66,9 @@ export function OntologyPage() {
   }, [workspaceId, caps]);
 
   const showVocabularyAlignmentTab =
-    registeredOntologyCount !== null && registeredOntologyCount >= 2;
+    registeredOntologyCount === null
+      ? rawTabParam === 'alignments'
+      : registeredOntologyCount >= 2;
 
   if (!id) {
     return null;

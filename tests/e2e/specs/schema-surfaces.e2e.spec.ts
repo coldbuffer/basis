@@ -1,6 +1,11 @@
 import { expect, test } from '@playwright/test';
 
-import { bearerToken, defaultWorkspaceId, registerFreshUser } from '../helpers.js';
+import {
+  bearerToken,
+  defaultWorkspaceId,
+  registerFreshUser,
+  skipUnlessWorkspaceGraphWrite,
+} from '../helpers.js';
 import { e2eWorkspaceApiPath } from '../api-v1-path.js';
 
 test('statement mappings page shows extraction-focused chrome', async ({ page }) => {
@@ -36,6 +41,7 @@ test('ontology hub alignments tab', async ({ page }) => {
 
   await registerFreshUser(page);
   const workspaceId = await defaultWorkspaceId(page);
+  await skipUnlessWorkspaceGraphWrite(page, workspaceId);
   const token = await bearerToken(page);
   const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
   for (const [name, namespace] of [
@@ -50,9 +56,7 @@ test('ontology hub alignments tab', async ({ page }) => {
   }
 
   await page.goto(`/workspaces/${workspaceId}/ontology?tab=alignments`);
-  await expect(page.getByRole('tab', { name: /Vocabulary alignment|词汇对齐/i })).toHaveAttribute(
-    'data-state',
-    'active',
-    { timeout: 60_000 },
-  );
+  const alignTab = page.getByRole('tab', { name: /Vocabulary alignment|词汇对齐/i });
+  await expect(alignTab).toBeVisible({ timeout: 60_000 });
+  await expect(alignTab).toHaveAttribute('data-state', 'active', { timeout: 60_000 });
 });

@@ -11,6 +11,8 @@ type SurfacePhraseComboboxProps = {
   emptySearchLabel: string;
   emptyPhrasesLabel: string;
   className?: string;
+  id?: string;
+  inputTestId?: string;
 };
 
 /** Inline searchable list (no portal) so wheel scroll works inside Radix Dialog. */
@@ -23,6 +25,8 @@ export function SurfacePhraseCombobox({
   emptySearchLabel,
   emptyPhrasesLabel,
   className,
+  id,
+  inputTestId = 'mappings-create-signature-input',
 }: SurfacePhraseComboboxProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
@@ -55,6 +59,8 @@ export function SurfacePhraseCombobox({
     }
     return (
       <Input
+        id={id}
+        data-testid={inputTestId}
         value={value}
         placeholder={placeholder}
         disabled={disabled}
@@ -69,6 +75,8 @@ export function SurfacePhraseCombobox({
   return (
     <div ref={rootRef} className={cn('relative w-full', className)}>
       <Input
+        id={id}
+        data-testid={inputTestId}
         value={displayValue}
         placeholder={placeholder}
         disabled={disabled}
