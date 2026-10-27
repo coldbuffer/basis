@@ -35,7 +35,7 @@ import { workspaceApiClient } from '@/modules/search/lib/api-client.js';
 import { formatUserFacingApiError } from '@/lib/errors/api-error-message.js';
 import { useWorkspaceCatalog } from '@/lib/workspace/context.js';
 import { useWorkspaceCapabilities } from '@/lib/workspace/capabilities.js';
-import type { LedgerEntityHit } from '@/modules/entities/components/ledger-entity-browser.js';
+import type { LedgerEntityHit } from '@/components/app/shared/workspace/ledger-entity-browser.js';
 import { useWorkspaceNodeLabels } from '@/lib/workspace/node-labels.js';
 import { graphPath } from '@/modules/graph/lib/graph-url-state.js';
 import { workspacePath } from '@/lib/nav/nav-config.js';

@@ -2,12 +2,19 @@
 
 from __future__ import annotations
 
+import asyncio
 from typing import Any
 
 from fastapi import APIRouter, Depends, Query, Request
 
 from basis.application.connectors import connections
-from basis.application.connectors.operations import op_invoke_connector_primitive
+from basis.application.connectors.operations import (
+    op_check_connector_connection,
+    op_delete_connector_connection,
+    op_discover_connector_schema,
+    op_invoke_connector_primitive,
+    op_upsert_connector_connection,
+)
 from basis.application.kernel import CoreError
 from basis.interface.http.shared.operation_http import (
     http_exception_from_core,
@@ -69,14 +76,17 @@ async def upsert_connector_connection(
             store=store,
             require_editor=True,
         )
-        return connections.upsert_connection(
+        return await asyncio.to_thread(
+            op_upsert_connector_connection,
             ctx,
-            service=service,
-            connection_scope=body.connection_scope,
-            subject_id=body.subject_id,
-            auth_type=body.auth_type,
-            connection_config=body.connection_config,
-            credentials=body.credentials,
+            {
+                "service": service,
+                "connection_scope": body.connection_scope,
+                "subject_id": body.subject_id,
+                "auth_type": body.auth_type,
+                "connection_config": body.connection_config,
+                "credentials": body.credentials,
+            },
         )
     except CoreError as exc:
         raise http_exception_from_core(exc) from exc
@@ -101,11 +111,14 @@ async def delete_connector_connection(
             store=store,
             require_editor=True,
         )
-        return connections.delete_connection(
+        return await asyncio.to_thread(
+            op_delete_connector_connection,
             ctx,
-            service=service,
-            connection_scope=connection_scope,
-            subject_id=subject_id,
+            {
+                "service": service,
+                "connection_scope": connection_scope,
+                "subject_id": subject_id,
+            },
         )
     except CoreError as exc:
         raise http_exception_from_core(exc) from exc
@@ -130,11 +143,14 @@ async def check_connector_connection(
             store=store,
             require_editor=True,
         )
-        return connections.check_connection(
+        return await asyncio.to_thread(
+            op_check_connector_connection,
             ctx,
-            service=service,
-            connection_scope=connection_scope,
-            subject_id=subject_id,
+            {
+                "service": service,
+                "connection_scope": connection_scope,
+                "subject_id": subject_id,
+            },
         )
     except CoreError as exc:
         raise http_exception_from_core(exc) from exc
@@ -157,13 +173,16 @@ async def discover_connector_schema(
         ctx = build_workspace_core_context(
             request, workspace_id=workspace_id, user=user, store=store
         )
-        return connections.discover_schema(
+        return await asyncio.to_thread(
+            op_discover_connector_schema,
             ctx,
-            service=service,
-            connection_scope=connection_scope,
-            subject_id=subject_id,
-            stream_name=stream_name,
-            external_table=external_table,
+            {
+                "service": service,
+                "connection_scope": connection_scope,
+                "subject_id": subject_id,
+                "stream_name": stream_name,
+                "external_table": external_table,
+            },
         )
     except CoreError as exc:
         raise http_exception_from_core(exc) from exc

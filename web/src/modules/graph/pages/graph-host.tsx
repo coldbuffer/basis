@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { WorkspaceHostProvider } from '@/lib/workspace/ws-http.js';
 import { buildWorkspaceHttpConfig } from '@/lib/workspace/ws-host.js';
 import { GraphDiffPreviewBar } from '../components/graph-diff-preview-bar.js';
-import { GraphRebuildButton } from '@/modules/graph/components/graph-rebuild-button.js';
+import { GraphRebuildButton } from '@/components/app/shared/workspace/graph-rebuild-button.js';
 import { graphDiffOverlayFromResponse, emptyGraphDiffOverlay } from '@/modules/graph/lib/graph-diff-overlay.js';
 import {
   applyGraphDiffMergePick,
@@ -25,7 +25,7 @@ import {
   readGraphStagingDraft,
   writeGraphStagingDraft,
 } from '@/modules/graph/lib/graph-staging-draft.js';
-import { ImportExportDialog } from '@/modules/graph/components/import-export/import-export-dialog.js';
+import { ImportExportDialog } from '@/components/app/shared/workspace/import-export/import-export-dialog.js';
 import { useWorkspaceCapabilities } from '@/lib/workspace/capabilities.js';
 import { WorkspaceUnavailable } from '@/components/app/shared/workspace/frame/ws-unavailable.js';
 import { Button } from '@/components/ui/button.js';

@@ -25,9 +25,9 @@ Each folder is one **menu / URL capability** (flat peers — no `kb/` or `platfo
 
 - Only code for **this** capability; no `_shared` / `_shell` under `modules/`.
 - Do **not** import UI from another module — use `components/app/shared/workspace/*` or `components/app/shared/*`.
-- **`connectors` vs `integration`:** keep separate `lib/` and `components/` even when BOCP forms look alike (playground is not a shared UI layer on top of the connectors console).
+- **`connectors` vs `integration`:** keep separate `lib/` and `components/` even when BOCP forms look alike (playground is not a shared UI layer on top of the connectors console). Backend packages: `domain/connector` + `application/connectors` (UI segment `integration` is not the Python module name).
 - Put **this segment’s** screens/panels under `components/`.
-- **Exceptions** (narrow imports only): `settings` → `modules/graph/components/` (import-export, `graph-rebuild-button`, `graph-audit-event-links`); `review` → `entity-resolution/components/entity-merge-property-diff`; `library` → `processing/components/processing-options-snapshot`; `search` → `entities/components/ledger-entity-browser`; `entities/components/ledger-entity-browser` → `entities/components/derived-facts-panel` (`DerivedFactCard`).
+- Cross-segment `components/` imports are **forbidden** (CI: `scripts/audit/audit-web-module-cross-ui.py`). Use `components/app/shared/workspace/*` or keep UI in the owning module (e.g. `data-quality/components/`).
 - May import `lib/workspace`, `lib/openapi`, `lib/errors`, `app/shared/workspace/*`.
 - Other modules’ `lib/` (e.g. `@/modules/graph/lib/graph-url-state.js`) for shared URL helpers — not UI.
 

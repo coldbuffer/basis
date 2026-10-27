@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { ConsolePageLayout } from '@/components/app/shared/console/index.js';
-import { GovernanceConfigPanel } from '@/modules/settings/components/governance-config-panel.js';
-import { OntologyShaclPanel } from '@/modules/ontology/components/ontology-hub-panels.js';
+import { GovernanceConfigPanel } from '@/modules/data-quality/components/governance-config-panel.js';
+import { OntologyShaclPanel } from '@/components/app/shared/workspace/ontology-shacl-panel.js';
 import { Button } from '@/components/ui/button.js';
 import {
   Dialog,

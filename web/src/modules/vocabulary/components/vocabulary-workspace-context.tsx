@@ -6,7 +6,7 @@ import { messagesForLocale } from "@/i18n/pick-locale.js";
 import {
   vocabularyApiSuffix,
   vocabularyPath as buildVocabularyPath,
-} from "@/modules/ontology/components/ontology-workspace-context.js";
+} from '@/components/app/shared/workspace/ontology-workspace-context.js';
 
 export { vocabularyApiSuffix };
 

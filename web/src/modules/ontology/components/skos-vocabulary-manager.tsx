@@ -10,7 +10,7 @@ import {
   ontologyApiSuffix,
   useOntologyWorkspaceId,
   vocabularyApiSuffix,
-} from "./ontology-workspace-context";
+} from '@/components/app/shared/workspace/ontology-workspace-context.js';
 import { cn } from "@/lib/utils.js";
 import {
   ontErrorBanner,

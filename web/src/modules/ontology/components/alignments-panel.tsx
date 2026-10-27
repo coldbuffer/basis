@@ -51,7 +51,7 @@ import {
   saveAlignment,
   suggestAlignments,
 } from '../lib/api.js';
-import { useOntologyWorkspaceId } from "./ontology-workspace-context";
+import { useOntologyWorkspaceId } from '@/components/app/shared/workspace/ontology-workspace-context.js';
 import { workspaceReviewPath } from '@/lib/nav/nav-config.js';
 import { wsApiErrorMessage } from '@/lib/workspace/ws-api-error';
 import type { LocaleMessages } from "@/i18n/en.js";

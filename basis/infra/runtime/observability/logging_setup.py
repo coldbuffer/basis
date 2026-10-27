@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from basis.interface.http.request_id import install_request_id_logging
+from basis.interface.http.shared.request_id import install_request_id_logging
 from basis.infra.runtime.config import Settings
 from basis.infra.runtime.observability.json_logging import install_json_logging
 from basis.infra.runtime.observability.uvicorn_logging import build_uvicorn_log_config

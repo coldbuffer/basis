@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { GraphAuditEventLinks } from '@/modules/graph/components/graph-audit-event-links.js';
+import { GraphAuditEventLinks } from '@/components/app/shared/workspace/graph-audit-event-links.js';
 import {
   DataPanel,
   DataPanelBody,

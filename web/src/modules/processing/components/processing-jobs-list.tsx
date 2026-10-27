@@ -14,7 +14,7 @@ import {
   processingJobStatusLabel,
   statusIsProcessing,
 } from '@/modules/processing/lib/processing-job.js';
-import { ProcessingOptionsSnapshot } from '@/modules/processing/components/processing-options-snapshot.js';
+import { ProcessingOptionsSnapshot } from '@/components/app/shared/workspace/processing-options-snapshot.js';
 import { workspaceAlertsPath, processingAlertEpisodeKey } from '@/modules/alerts/lib/alerts-url.js';
 import { workspacePath } from '@/lib/nav/nav-config.js';
 import { sourcesDocumentPath } from '@/modules/library/lib/sources-url-state.js';

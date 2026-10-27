@@ -8,7 +8,10 @@ import {
   throwIfWsNotOk,
 } from '@/lib/workspace/ws-api-error';
 import { workspaceOpenApiResponse } from '@/lib/openapi/client.js';
-import { ontologyApiSuffix, useOntologyWorkspaceId } from "./ontology-workspace-context";
+import {
+  ontologyApiSuffix,
+  useOntologyWorkspaceId,
+} from '@/components/app/shared/workspace/ontology-workspace-context.js';
 import { OntologyLoader } from "./ontology-loader";
 import { OntologySearch } from "./ontology-search";
 import { SKOSVocabularyManager } from "./skos-vocabulary-manager";

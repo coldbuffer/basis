@@ -2,7 +2,10 @@ import { PublicIcon } from "@/components/app/shared/primitives/public-icon.js";
 import { useRef, useState } from "react";
 import { wsApiErrorMessage } from '@/lib/workspace/ws-api-error';
 import { workspaceOpenApiPOST } from '@/lib/openapi/client.js';
-import { ontologyApiSuffix, useOntologyWorkspaceId } from "./ontology-workspace-context";
+import {
+  ontologyApiSuffix,
+  useOntologyWorkspaceId,
+} from '@/components/app/shared/workspace/ontology-workspace-context.js';
 import {
   Dialog,
   DialogContent,

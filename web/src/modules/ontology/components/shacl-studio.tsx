@@ -20,7 +20,7 @@ import {
   validateShacl,
 } from '../lib/api.js';
 import { toast } from 'sonner';
-import { useOntologyWorkspaceId } from "./ontology-workspace-context";
+import { useOntologyWorkspaceId } from '@/components/app/shared/workspace/ontology-workspace-context.js';
 import { wsApiErrorMessage } from '@/lib/workspace/ws-api-error';
 import type { OntologyEntry, ShaclShapeSummary, ShaclValidationResponse } from '../lib/types.js';
 

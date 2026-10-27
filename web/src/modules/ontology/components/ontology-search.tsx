@@ -4,7 +4,10 @@ import { PublicIcon } from "@/components/app/shared/primitives/public-icon.js";
 import { useEffect, useRef, useState } from "react";
 import { wsApiErrorMessage, wsGetJson, parseWsJson } from '@/lib/workspace/ws-api-error';
 import { workspaceOpenApiResponse } from '@/lib/openapi/client.js';
-import { ontologyApiSuffix, useOntologyWorkspaceId } from "./ontology-workspace-context";
+import {
+  ontologyApiSuffix,
+  useOntologyWorkspaceId,
+} from '@/components/app/shared/workspace/ontology-workspace-context.js';
 import { useI18n } from "@/i18n/context.js";
 import { fmt, formatLocaleNumber, pickCountForm } from "@/i18n/format.js";
 import type { Locale } from "@/i18n/locale.js";

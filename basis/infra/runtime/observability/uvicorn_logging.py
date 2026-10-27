@@ -56,7 +56,7 @@ def build_uvicorn_log_config() -> dict[str, Any]:
         },
         "filters": {
             "request_id": {
-                "()": "basis.interface.http.request_id.RequestIdLogFilter",
+                "()": "basis.interface.http.shared.request_id.RequestIdLogFilter",
             },
         },
         "handlers": {

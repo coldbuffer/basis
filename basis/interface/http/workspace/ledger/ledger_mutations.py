@@ -8,7 +8,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, Field
 
-from basis.application.knowledge.operations import op_invalidate_entities
+from basis.application.knowledge.operations import op_delete_entity, op_invalidate_entities
 from basis.domain.tenancy.admin.store import AdminStore, User
 from basis.interface.http.shared.core_context import build_workspace_core_context
 from basis.interface.http.shared.deps import (
@@ -20,6 +20,7 @@ from basis.interface.http.shared.deps import (
 )
 from basis.domain.knowledge.services.graph_audit import audit_graph
 from basis.domain.knowledge.store import KnowledgeStore
+from basis.interface.http.shared.operation_http import http_response_from_payload
 
 router = APIRouter(tags=["workspaces"])
 
@@ -39,9 +40,15 @@ async def invalidate_ledger_entities(
     """
 Invalidate Ledger Entities. Soft-delete entities and related ledger rows (temporal invalidated_at). Editor only.
     """
-    get_workspace_for_editor(request, user, workspace_id, store)
-    ctx = build_workspace_core_context(request, workspace_id=workspace_id, user=user, store=store)
-    return await asyncio.to_thread(op_invalidate_entities, ctx, body.model_dump())
+    ctx = build_workspace_core_context(
+        request,
+        workspace_id=workspace_id,
+        user=user,
+        store=store,
+        require_editor=True,
+    )
+    payload = await asyncio.to_thread(op_invalidate_entities, ctx, body.model_dump())
+    return http_response_from_payload(payload)
 
 
 @router.delete("/{workspace_id}/ledger/entities/{entity_id}")
@@ -51,27 +58,32 @@ async def delete_ledger_entity(
     request: Request,
     user: User = Depends(get_current_user),
     store: AdminStore = Depends(get_store),
-    knowledge: KnowledgeStore = Depends(get_knowledge_store),
 ) -> dict[str, Any]:
     """
 Delete Ledger Entity. Evidence ledger: documents, chunks, statements, entities. Requires workspace membership (session) or workspace API token with read/write scope. All paths are scoped to `{workspace_id}`.
     """
-    get_workspace_for_editor(request, user, workspace_id, store)
-    outcome = knowledge.delete_entity(workspace_id, entity_id)
-    projection = await asyncio.to_thread(rebuild_graph_projection, request, workspace_id)
+    ctx = build_workspace_core_context(
+        request,
+        workspace_id=workspace_id,
+        user=user,
+        store=store,
+        require_editor=True,
+    )
+    payload = await asyncio.to_thread(op_delete_entity, ctx, {"entity_id": entity_id})
+    result = http_response_from_payload(payload)
     audit_graph(
         store,
         user,
         workspace_id,
         "workspace.ledger.entity_delete",
         extra={
-            "entity_id": outcome["entity_id"],
-            "canonical_label": outcome["canonical_label"],
-            "statements_removed": outcome["statements_removed"],
-            "projection": projection,
+            "entity_id": result["entity_id"],
+            "canonical_label": result["canonical_label"],
+            "statements_removed": result["statements_removed"],
+            "projection": result.get("projection"),
         },
     )
-    return {"ok": True, **outcome, "projection": projection}
+    return result
 
 @router.post("/{workspace_id}/ledger/entity-merges/{merge_id}/revert")
 async def revert_entity_merge_route(

@@ -8,7 +8,7 @@ import { Spinner } from '@/components/ui/spinner.js';
 import { useI18n } from '@/i18n/context.js';
 import { cn } from '@/lib/utils.js';
 import { govEmbeddedPanelShell } from '@/lib/ui-classes/governance-ui.js';
-import { OntologyWorkspaceCatalogProvider } from '@/modules/ontology/components/ontology-workspace-context.js';
+import { OntologyWorkspaceCatalogProvider } from '@/components/app/shared/workspace/ontology-workspace-context.js';
 
 const VocabularyScreen = lazy(() =>
   import('@/modules/vocabulary/pages/screen.js').then((module) => ({

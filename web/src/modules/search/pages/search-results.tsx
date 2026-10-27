@@ -4,7 +4,7 @@ import { EmptyState } from '@/components/app/shared/console/index.js';
 import {
   ledgerEntityId,
   type LedgerEntityHit,
-} from '@/modules/entities/components/ledger-entity-browser.js';
+} from '@/components/app/shared/workspace/ledger-entity-browser.js';
 import { fmt, formatLocaleFixedDecimals } from '@/i18n/format.js';
 import type { Locale } from '@/i18n/locale.js';
 import type { LocaleMessages } from '@/i18n/en.js';

@@ -26,10 +26,7 @@ from basis.domain.ontology.hub.load_write import load_ontology as load_ontology_
 from basis.domain.ontology.browse.preview_read import preview_ontology as preview_ontology_read
 from basis.domain.ontology.browse.health_read import ontology_health as ontology_health_read
 from basis.domain.ontology.hub.refresh_write import refresh_ontology as refresh_ontology_write
-from basis.domain.ontology.hub.registry_write import (
-    remove_ontology as remove_ontology_write,
-    toggle_ontology as toggle_ontology_write,
-)
+from basis.domain.ontology.hub.registry_write import remove_ontology as remove_ontology_write
 from basis.domain.ontology.shacl.shacl_read import (
     generate_shacl as generate_shacl_read,
     list_shacl_shapes as list_shacl_shapes_read,
@@ -414,14 +411,16 @@ Remove Ontology. Ontology hub (SKOS, alignments) via workspace graph session. Re
         """
 Toggle Ontology. Ontology hub (SKOS, alignments) via workspace graph session. Requires workspace membership (session) or workspace API token with read/write scope. All paths are scoped to `{workspace_id}`.
         """
-        get_workspace_for_role(request, user, workspace_id, store, min_role("PATCH"))
-        with OntologyHubState(request, workspace_id):
-            registry = request.app.state.ontology_registries[workspace_id]
-            result = await asyncio.to_thread(toggle_ontology_write, registry, ontology_uri)
-            from basis.interface.http.shared.deps import rebuild_graph_projection
-
-            rebuild_graph_projection(request, workspace_id)
-            return result
+        return await run_ontology_operation(
+            request,
+            workspace_id,
+            user,
+            store,
+            ontology_ops.op_toggle_ontology,
+            {"ontology_uri": ontology_uri},
+            http_method="PATCH",
+            require_editor=True,
+        )
 
     router.add_api_route("/{workspace_id}/ontology/{ontology_uri:path}/toggle", _ont_15_toggle_ontology, methods=["PATCH"], name="_ont_15_toggle_ontology")
 

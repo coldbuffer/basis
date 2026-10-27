@@ -10,8 +10,11 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, File, Form, Query, Request, UploadFile
 
+from basis.application.knowledge.operations import op_delete_document
 from basis.domain.errors import AdminError
 from basis.domain.tenancy.admin.store import AdminStore, User
+from basis.interface.http.shared.core_context import build_workspace_core_context
+from basis.interface.http.shared.operation_http import http_response_from_payload
 from basis.interface.http.shared.deps import (
     get_chunk_search,
     get_current_user,
@@ -210,22 +213,23 @@ async def delete_document(
     request: Request,
     user: User = Depends(get_current_user),
     store: AdminStore = Depends(get_store),
-    chunk_search: ChunkSearchService = Depends(get_chunk_search),
 ) -> dict[str, Any]:
     """
 Delete Document. Requires workspace membership (session) or workspace API token with read/write scope. All paths are scoped to `{workspace_id}`.
     """
-    get_workspace_for_editor(request, user, workspace_id, store)
-    knowledge = get_knowledge_store(request)
-    context = knowledge.resolve_document_ref(workspace_id, document_id)
-    if context is None:
-        raise AdminError(404, "not_found", "文档不存在")
-    outcome = knowledge.hard_delete_document(workspace_id, context["document_id"])
-    chunk_ids = outcome.get("chunk_ids") or []
-    if chunk_ids:
-        await asyncio.to_thread(chunk_search.delete_chunk_vectors, workspace_id, chunk_ids)
-    projection = await asyncio.to_thread(rebuild_graph_projection, request, workspace_id)
-    return {"ok": True, **outcome, "projection": projection}
+    ctx = build_workspace_core_context(
+        request,
+        workspace_id=workspace_id,
+        user=user,
+        store=store,
+        require_editor=True,
+    )
+    payload = await asyncio.to_thread(
+        op_delete_document,
+        ctx,
+        {"document_id": document_id},
+    )
+    return http_response_from_payload(payload)
 
 
 @router.get("/{workspace_id}/documents")

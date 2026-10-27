@@ -11,7 +11,7 @@ import {
 } from '@/components/app/shared/console/index.js';
 import { DataTable, type DataTableColumn } from '@/components/app/shared/console/DataTable.js';
 import { EntityRefLine } from '@/components/app/shared/workspace/entity-ref-line.js';
-import { DerivedFactCard } from '@/modules/entities/components/derived-facts-panel.js';
+import { DerivedFactCard } from '@/components/app/shared/workspace/derived-fact-card.js';
 import { Badge } from '@/components/ui/badge.js';
 import { Button } from '@/components/ui/button.js';
 import { Input } from '@/components/ui/input.js';

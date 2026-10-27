@@ -8,7 +8,10 @@ import {
   parseWsJson,
 } from '@/lib/workspace/ws-api-error';
 import { workspaceOpenApiResponse } from '@/lib/openapi/client.js';
-import { ontologyApiSuffix, useOntologyWorkspaceId } from "./ontology-workspace-context";
+import {
+  ontologyApiSuffix,
+  useOntologyWorkspaceId,
+} from '@/components/app/shared/workspace/ontology-workspace-context.js';
 import { workspaceOntologyProposalPath } from "@/lib/nav/nav-config.js";
 import { readOntologyUrlState, writeProposalSelection } from '../lib/ontology-url-state.js';
 import { cn } from "@/lib/utils.js";

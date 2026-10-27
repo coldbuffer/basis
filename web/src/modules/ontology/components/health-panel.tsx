@@ -11,7 +11,7 @@ import { useI18n } from "@/i18n/context.js";
 import type { Locale } from "@/i18n/locale.js";
 import { wsApiErrorMessage } from '@/lib/workspace/ws-api-error';
 import { loadOntologyHealth, loadOntologyRegistry } from '../lib/api.js';
-import { useOntologyWorkspaceId } from "./ontology-workspace-context";
+import { useOntologyWorkspaceId } from '@/components/app/shared/workspace/ontology-workspace-context.js';
 import type { OntologyEntry, OntologyHealthResponse, HealthIssue } from '../lib/types.js';
 import {
   ontCard,

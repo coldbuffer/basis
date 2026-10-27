@@ -10,7 +10,7 @@ import {
   workspaceOpenApiResponse,
 } from '@/lib/openapi/client.js';
 import type { OntologyEditorDraftDiff } from './ontology-editor-draft.js';
-import { ontologyApiSuffix } from '../components/ontology-workspace-context.js';
+import { ontologyApiSuffix } from '@/components/app/shared/workspace/ontology-workspace-context.js';
 import type {
   AlignmentRelation,
   AlignmentSuggestion,

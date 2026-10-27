@@ -18,7 +18,7 @@ from basis.interface.http.shared.deps import (
 )
 from basis.domain.graph.session.guard import require_graph_session
 from basis.domain.knowledge.store import KnowledgeStore
-from basis.interface.http.review import (
+from basis.interface.http.workspace.review import (
     CreateEntityMergeReviewRequest,
     propose_entity_merge,
 )

@@ -70,7 +70,7 @@ import {
   processingPath,
   parseProcessingUrlState,
 } from '@/modules/processing/lib/processing-url-state.js';
-import { ProcessingOptionsSnapshot } from '@/modules/processing/components/processing-options-snapshot.js';
+import { ProcessingOptionsSnapshot } from '@/components/app/shared/workspace/processing-options-snapshot.js';
 import { type ProcessingJob, jobIsActive, statusIsProcessing } from '@/modules/processing/lib/processing-job.js';
 import { parseSourcesUrlState } from '@/modules/library/lib/sources-url-state.js';
 import { formatByteSize } from '@/modules/library/lib/format-byte-size.js';

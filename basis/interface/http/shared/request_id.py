@@ -18,7 +18,6 @@ from basis.infra.runtime.observability.request_context import (
 
 REQUEST_ID_HEADER = "X-Request-ID"
 
-# Re-export for callers that already import from basis.interface.http.request_id.
 __all__ = [
     "REQUEST_ID_HEADER",
     "RequestIdLogFilter",

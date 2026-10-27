@@ -37,7 +37,7 @@ import {
 } from '../lib/ontology-editor-draft.js';
 import { OntologyEditorDraftPanel } from './ontology-editor-draft-panel.js';
 import { OntologyEditorPropertyDialog } from './ontology-editor-property-dialog.js';
-import { useOntologyWorkspaceId } from "./ontology-workspace-context";
+import { useOntologyWorkspaceId } from '@/components/app/shared/workspace/ontology-workspace-context.js';
 import type { OntologyGraphEdge, OntologyGraphNode } from '../lib/api.js';
 import {
   isEditableEntityType,

@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useBasisSession } from '@/lib/session/basis-session.js';
-import { ImportExportDialog } from '@/modules/graph/components/import-export/import-export-dialog.js';
+import { ImportExportDialog } from '@/components/app/shared/workspace/import-export/import-export-dialog.js';
 import { GraphAuditRecent } from './graph-audit-recent.js';
-import { GraphRebuildButton } from '@/modules/graph/components/graph-rebuild-button.js';
+import { GraphRebuildButton } from '@/components/app/shared/workspace/graph-rebuild-button.js';
 import { Button } from '@/components/ui/button.js';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card.js';
 import { Spinner } from '@/components/ui/spinner.js';

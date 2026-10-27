@@ -8,7 +8,7 @@ Instructions for AI coding agents working in this repository. Humans can skim th
 
 | Area | Path | Stack |
 |------|------|--------|
-| API | `basis/` Python package (layered; see [package-layout.md](./docs/architecture/package-layout.md)) | Python 3.10+, FastAPI, Semantica SDK |
+| API | `basis/` Python package (layered; see [package-layout.md](./docs/architecture/package-layout.md), [directory rollout](./docs/architecture/directory-optimization-implementation-plan.md)) | Python 3.10+, FastAPI, Semantica SDK |
 | Web | `web/` | Vite, React, React Router, Tailwind v4, shadcn |
 | Workspace console | `web/src/modules/<segment>/` + `app/shared/workspace/` + `lib/workspace/` | Feature modules; layout frame in `app/shared/workspace/` |
 
@@ -122,7 +122,7 @@ Run relevant checks after substantive edits; say if something was not run.
 
 ## Python / API
 
-- Package layout: [package-layout.md](./docs/architecture/package-layout.md) — `interface/`, `application/`, `domain/`, `infra/` (CI: `audit-legacy-package-imports.py`, `audit-mcp-http-decouple.py`, `audit-connector-http-duplication.py`, `audit-knowledge-connector-imports.py`, `audit-knowledge-persistence-stubs.py`, `audit-knowledge-persistence-imports.py`, `audit-http-shared-stubs.py`, `audit-http-mount-v1.py`, `audit-http-mount-workspace.py`, `audit-http-mount-platform.py`, `lint-imports`).
+- Package layout: [package-layout.md](./docs/architecture/package-layout.md) — `interface/`, `application/`, `domain/`, `infra/` (CI: `audit-legacy-package-imports.py`, `audit-mcp-http-decouple.py`, `audit-connector-http-duplication.py`, `audit-knowledge-connector-imports.py`, `audit-knowledge-persistence-stubs.py`, `audit-knowledge-persistence-imports.py`, `audit-http-shared-stubs.py`, `audit-http-mount-v1.py`, `audit-http-mount-workspace.py`, `audit-http-mount-platform.py`, `audit-web-module-cross-ui.py`, `lint-imports`). Web modules: `web/src/modules/README.md` + same cross-UI audit.
 - **Application layer (`basis/application/`)**: `kernel/` (`WorkspaceCoreContext`, `CoreError`, workspace gates, search limits); `schema_base.py` (`ExtraAllowedModel` for BC tool schemas); `tool_catalog/` (handlers in `catalog.py`, MCP descriptions in `mcp_metadata.py`, list schemas + `run` in `run.py`); each BC may expose `schemas.py` for tool arg/response Pydantic models; domain packages — `connectors/`, `workspace/`, `graph/`, `knowledge/`, `reasoning/`, `review/` (`operations.py` each; connector HTTP may also call `catalog.py` helpers such as `list_catalog_detailed` where the response shape differs from MCP). **HTTP** routes call BC `operations` directly; **MCP** uses `interface/mcp/dispatch.py` over the same handlers (catalog-owned schemas, not HTTP OpenAPI). Workspace **connector HTTP** (`interface/http/workspace/connectors/`) must import `basis.application.connectors` only (not `domain.connector` orchestration). Operation `{error}` → HTTP status: `interface/http/operation_http.py`.
 - **Semantica 线 1：** 新后端逻辑放在 `basis/domain/*`（L3）：`knowledge` · `ontology` · `graph`（`projection/` + `session/` / `reads/` / …）· `connector` · `tenancy`。图域见 `basis/domain/graph/README.md`；本体 Hub 见 `basis/domain/ontology/README.md`。分层见 [package-layout.md](./docs/architecture/package-layout.md)。
 - CLI entry: `pyproject.toml` (`basis` → `basis.cli:main`); app factory `basis.interface.http.app:create_app`.

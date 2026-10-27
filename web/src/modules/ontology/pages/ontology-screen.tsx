@@ -2,7 +2,7 @@ import { HealthPanel } from '../components/health-panel.js';
 import { OntologyManager } from '../components/ontology-manager.js';
 import { OntologyEditor } from '../components/ontology-editor.js';
 import { writeEntitySelection } from '../lib/ontology-url-state.js';
-import { OntologyWorkspaceCatalogProvider } from '../components/ontology-workspace-context.js';
+import { OntologyWorkspaceCatalogProvider } from '@/components/app/shared/workspace/ontology-workspace-context.js';
 import { cn } from "@/lib/utils.js";
 import { wsPage } from "@/lib/ui-classes/console-ws.js";
 

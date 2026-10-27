@@ -13,7 +13,7 @@ from basis.interface.http.platform.platform_info import router as platform_info_
 from basis.interface.http.platform.reasoning import router as reasoning_router
 from basis.interface.http.platform.settings import router as settings_router
 from basis.interface.http.platform.users import router as users_router
-from basis.interface.http.platform_auth import router as auth_router
+from basis.interface.http.platform.auth_mount import router as auth_router
 
 # (router, suffix under api root — empty string mounts at root, e.g. users)
 _PLATFORM_ROUTERS: tuple[tuple[APIRouter, str], ...] = (

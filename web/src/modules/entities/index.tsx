@@ -1,7 +1,7 @@
 import { useParams, useSearchParams } from 'react-router-dom';
 import { ConsolePageLayout } from '@/components/app/shared/console/index.js';
 import { DerivedFactsPanel } from '@/modules/entities/components/derived-facts-panel.js';
-import { LedgerEntityBrowser } from '@/modules/entities/components/ledger-entity-browser.js';
+import { LedgerEntityBrowser } from '@/components/app/shared/workspace/ledger-entity-browser.js';
 import { useI18n } from '@/i18n/context.js';
 import { useWorkspaceCatalog } from '@/lib/workspace/context.js';
 import { parseEntitiesUrlState } from '@/modules/entities/lib/entities-url-state.js';

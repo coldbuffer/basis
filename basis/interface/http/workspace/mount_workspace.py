@@ -4,15 +4,15 @@ from __future__ import annotations
 
 from fastapi import APIRouter, FastAPI
 
-from basis.interface.http.connectors import router as connectors_router
-from basis.interface.http.documents import router as documents_router
-from basis.interface.http.graph import router as graph_router
-from basis.interface.http.ledger import router as ledger_router
-from basis.interface.http.ontology import router as ontology_router
-from basis.interface.http.resources import router as resources_router
-from basis.interface.http.review import router as review_router
-from basis.interface.http.sources import router as sources_router
-from basis.interface.http.tokens import router as tokens_router
+from basis.interface.http.workspace.connectors import router as connectors_router
+from basis.interface.http.workspace.documents import router as documents_router
+from basis.interface.http.workspace.graph import router as graph_router
+from basis.interface.http.workspace.ledger import router as ledger_router
+from basis.interface.http.workspace.ontology import router as ontology_router
+from basis.interface.http.workspace.resources import router as resources_router
+from basis.interface.http.workspace.review import router as review_router
+from basis.interface.http.workspace.sources import router as sources_router
+from basis.interface.http.workspace.tokens import router as tokens_router
 from basis.interface.http.workspace.config.config_alerts import router as alerts_router
 from basis.interface.http.workspace.config.config_governance import router as governance_router
 from basis.interface.http.workspace.config.config_mappings import router as mappings_router

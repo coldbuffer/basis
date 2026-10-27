@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { GraphAuditEventLinks } from '@/modules/graph/components/graph-audit-event-links.js';
+import { GraphAuditEventLinks } from '@/components/app/shared/workspace/graph-audit-event-links.js';
 import {
   formatGraphAuditAction,
   formatGraphAuditDetail,

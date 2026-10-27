@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { PublicIcon } from '@/components/app/shared/primitives/public-icon.js';
-import { EntityMergePropertyDiff } from '@/modules/entity-resolution/components/entity-merge-property-diff.js';
+import { EntityMergePropertyDiff } from '@/components/app/shared/workspace/entity-merge-property-diff.js';
 import { ReviewDecisionNarrative } from './review-decision-narrative.js';
 import {
   GovernanceScanDialog,
