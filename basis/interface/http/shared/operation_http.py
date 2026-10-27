@@ -31,6 +31,7 @@ _ERROR_MAP: dict[str, tuple[int, str]] = {
     "rule_id is required": (422, "validation_error"),
     "rule not found": (404, "not_found"),
     "not_found": (404, "not_found"),
+    "processing_active": (409, "processing_active"),
     "validation_error": (400, "validation_error"),
     "confirmation_required": (422, "confirmation_required"),
     "invalid_scopes": (422, "invalid_scopes"),
