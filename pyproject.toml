@@ -59,6 +59,10 @@ include = ["basis*"]
 "basis.domain.connector" = ["providers/*.yaml", "providers/*.yml"]
 "basis.domain.connector.synthesis" = ["batches/*.yaml", "executors-index.json"]
 
+[tool.uv]
+# Committed lockfile must use the default index so CI (GitHub-hosted) can fetch wheels.
+index-url = "https://pypi.org/simple"
+
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = [

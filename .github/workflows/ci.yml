@@ -5,6 +5,10 @@ on:
     branches: [main]
   pull_request:
 
+env:
+  UV_INDEX_URL: https://pypi.org/simple
+  UV_DEFAULT_INDEX: https://pypi.org/simple
+
 jobs:
   postgres:
     runs-on: ubuntu-latest
