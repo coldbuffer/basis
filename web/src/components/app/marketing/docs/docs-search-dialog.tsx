@@ -18,7 +18,12 @@ import {
 } from '@/modules/docs/lib/product-docs-search-index.js';
 import { cn } from '@/lib/utils.js';
 
-export function DocsSearchDialog() {
+type DocsSearchDialogProps = {
+  /** Distinguishes sidebar vs mobile triggers (both mount in the DOM). */
+  triggerTestId?: string;
+};
+
+export function DocsSearchDialog({ triggerTestId = 'docs-search-open' }: DocsSearchDialogProps) {
   const { t, locale } = useI18n();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
@@ -61,7 +66,7 @@ export function DocsSearchDialog() {
         size="sm"
         className="h-8 w-full justify-start gap-2 text-muted-foreground font-normal"
         onClick={openSearch}
-        data-testid="docs-search-open"
+        data-testid={triggerTestId}
       >
         <Search className="size-3.5 shrink-0" aria-hidden />
         <span className="truncate">{t.docs.page.search_placeholder}</span>

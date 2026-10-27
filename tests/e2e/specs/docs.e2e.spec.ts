@@ -24,7 +24,7 @@ test('docs overview links navigate into the reading path', async ({ page }) => {
     '/docs/connectors-basis',
   );
 
-  await article.getByRole('link', { name: 'Quickstart' }).click();
+  await article.locator('a[href="/docs/quickstart"]').first().click();
 
   await expect(page).toHaveURL(/\/docs\/quickstart$/);
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Quickstart');
@@ -32,7 +32,7 @@ test('docs overview links navigate into the reading path', async ({ page }) => {
 
 test('docs search finds pages by title', async ({ page }) => {
   await page.goto('/docs');
-  await page.getByTestId('docs-search-open').click();
+  await page.getByTestId('docs-search-open-sidebar').click();
   const input = page.getByTestId('docs-search-input');
   await expect(input).toBeVisible();
   await input.fill('workspace reset');

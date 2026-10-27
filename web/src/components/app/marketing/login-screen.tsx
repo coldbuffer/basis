@@ -107,10 +107,7 @@ export function LoginScreen() {
     return () => cancelAnimationFrame(frame);
   }, [location.hash]);
 
-  const heroTitleSize =
-    locale === 'zh'
-      ? 'text-[2.5rem] sm:text-[2.75rem] lg:text-[3.4rem]'
-      : 'text-[1.65rem] sm:text-4xl lg:text-[2.65rem]';
+  const heroTitleSize = 'text-[2.25rem] sm:text-[2.625rem] lg:text-[3rem]';
 
   function openAuth(mode: 'login' | 'register') {
     setSearchParams({ mode }, { replace: true });
@@ -184,38 +181,39 @@ export function LoginScreen() {
 
           <div className="pointer-events-none relative z-10 flex min-w-0 flex-1 flex-col overflow-visible px-5 py-4 sm:py-5 sm:pl-8 sm:pr-[54%] lg:pr-[50%]">
             <div className="pointer-events-auto flex min-h-0 min-w-0 flex-1 flex-col items-start justify-center">
-              <div className="min-w-0 w-full max-w-2xl">
-                <p className="max-w-xl text-xs leading-relaxed text-pretty text-muted-foreground sm:text-[13px]">
+              <div className="min-w-0 w-full max-w-xl">
+                <p
+                  className={cn(
+                    'text-[11px] font-medium text-muted-foreground sm:text-xs',
+                    locale === 'en' ? 'tracking-[0.04em] uppercase' : 'tracking-wide',
+                  )}
+                >
                   {m.hero_eyebrow}
                 </p>
                 <h1
                   className={cn(
-                    'mt-5 min-w-0 max-w-full font-semibold leading-[1.1] tracking-[-0.035em] sm:mt-5',
+                    'mt-4 min-w-0 max-w-full font-semibold tracking-[-0.03em] sm:mt-5',
+                    'leading-none',
                     heroTitleSize,
                   )}
                   aria-label={`${m.hero_headline} ${m.hero_headline_rest}`}
                 >
-                  <span className="relative block w-fit max-w-full">
-                    {m.hero_headline}
-                    <BotAvatar
-                      type="drop"
-                      state="default"
-                      size={64}
-                      color={isDark ? '#d4f0c8' : '#5fbf8a'}
-                      ink="#111111"
-                      shading="fabric"
-                      theme={isDark ? 'dark' : 'light'}
-                      className="pointer-events-auto absolute -right-3 bottom-full z-20 sm:-right-4"
-                    />
-                  </span>
-                  <span className="mt-1 block text-[var(--login-gold)] sm:mt-2">
+                  <span className="block w-fit max-w-full">{m.hero_headline}</span>
+                  <span className="-mt-1 block text-[var(--login-gold)] sm:-mt-1.5">
                     {m.hero_headline_rest}
                   </span>
                 </h1>
-              <p className="mt-5 max-w-xl text-[13px] leading-relaxed text-pretty text-muted-foreground sm:mt-6 sm:text-sm">
+              <p
+                className={cn(
+                  'mt-6 max-w-[34rem] text-pretty text-muted-foreground sm:mt-7',
+                  locale === 'zh'
+                    ? 'text-sm leading-[1.75] sm:text-[15px] sm:leading-[1.7]'
+                    : 'text-sm leading-[1.65] sm:text-[15px]',
+                )}
+              >
                 {m.hero_subhead}
               </p>
-              <div className="mt-5 flex flex-wrap items-center justify-start gap-2.5 sm:mt-6 sm:gap-3">
+              <div className="mt-7 flex flex-wrap items-center justify-start gap-2.5 sm:mt-8 sm:gap-3">
                 <Button
                   type="button"
                   size="default"
@@ -237,7 +235,7 @@ export function LoginScreen() {
                   </Link>
                 </Button>
               </div>
-              <ul className="mt-6 flex flex-wrap justify-start gap-x-4 gap-y-2 border-t border-border/60 pt-4 text-[11px] leading-relaxed text-muted-foreground sm:mt-7 sm:pt-5 sm:text-xs">
+              <ul className="mt-8 flex flex-wrap justify-start gap-x-5 gap-y-2.5 border-t border-border/50 pt-5 text-xs leading-relaxed text-muted-foreground sm:mt-9 sm:pt-6">
                 {i18nIndexedList(m.trust).map((item) => (
                   <li key={item.label}>
                     {'external' in item && item.external ? (
@@ -273,6 +271,18 @@ export function LoginScreen() {
       </main>
 
       <ProductSiteFooter />
+
+      <BotAvatar
+        type="drop"
+        state="default"
+        size={48}
+        color={isDark ? '#d4f0c8' : '#5fbf8a'}
+        ink="#111111"
+        shading="fabric"
+        theme={isDark ? 'dark' : 'light'}
+        aria-hidden
+        className="pointer-events-auto fixed bottom-5 left-5 z-20 sm:bottom-8 sm:left-8"
+      />
 
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="flex max-h-[calc(100%-1rem)] flex-col gap-0 overflow-hidden border-black/10 bg-white p-0 shadow-[0_24px_64px_-20px_rgb(0_0_0_/_0.45)] sm:max-w-[24.5rem] data-[state=closed]:[--tw-exit-scale:1] data-[state=open]:[--tw-enter-scale:1] dark:border-white/10 dark:bg-[#141a22] [&_[data-slot=dialog-close]]:top-3.5 [&_[data-slot=dialog-close]]:right-3.5">
