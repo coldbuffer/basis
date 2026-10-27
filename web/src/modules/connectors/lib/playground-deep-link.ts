@@ -15,11 +15,3 @@ export function workspaceConnectorsAuthorizationHref(
   }
   return `${workspaceConnectorHomePath(workspaceId)}?${params.toString()}`;
 }
-
-/** @deprecated Use workspaceConnectorsAuthorizationHref */
-export function workspaceConnectorsPlaygroundHref(
-  workspaceId: string,
-  opts?: { subjectId?: string; service?: string },
-): string {
-  return workspaceConnectorsAuthorizationHref(workspaceId, opts);
-}

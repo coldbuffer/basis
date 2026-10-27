@@ -28,7 +28,7 @@ PLATFORM_IMPORT_RE = re.compile(
     r"from basis\.interface\.http\.platform\.([a-z0-9_]+) import router\b",
 )
 PLATFORM_AUTH_IMPORT_RE = re.compile(
-    r"from basis\.interface\.http\.platform_auth import router",
+    r"from basis\.interface\.http\.platform\.auth_mount import router\b",
 )
 
 
@@ -39,6 +39,8 @@ def main() -> int:
         return 1
     text = MOUNT.read_text(encoding="utf-8")
     imported = {match.group(1) for match in PLATFORM_IMPORT_RE.finditer(text)}
+    # Auth mounts via ``platform/auth_mount.py`` (not a sibling ``platform/*.py`` route file).
+    imported.discard("auth_mount")
     missing = sorted(REQUIRED_PLATFORM_MODULES - imported)
     extra = sorted(imported - REQUIRED_PLATFORM_MODULES)
     if missing:
@@ -46,7 +48,7 @@ def main() -> int:
     if extra:
         errors.append(f"mount_platform.py unexpected platform imports: {', '.join(extra)}")
     if not PLATFORM_AUTH_IMPORT_RE.search(text):
-        errors.append("mount_platform.py must import router from platform_auth")
+        errors.append("mount_platform.py must import router from platform.auth_mount")
     if "_PLATFORM_ROUTERS" not in text:
         errors.append("mount_platform.py must define _PLATFORM_ROUTERS")
     if "users_router" not in text or "mount_platform_e2e_helpers" not in text:

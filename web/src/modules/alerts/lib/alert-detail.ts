@@ -78,19 +78,3 @@ export function groupAlertsByEpisode(
     return { episodeKey, kind: group[0]!.kind, alerts: group };
   });
 }
-
-/** @deprecated Prefer `groupAlertsByEpisode`. */
-export function groupAlertsByKind(
-  alerts: WorkspaceAlertStreamItem[],
-): Array<{ kind: string; alerts: WorkspaceAlertStreamItem[] }> {
-  const order: string[] = [];
-  const map = new Map<string, WorkspaceAlertStreamItem[]>();
-  for (const alert of alerts) {
-    if (!map.has(alert.kind)) {
-      map.set(alert.kind, []);
-      order.push(alert.kind);
-    }
-    map.get(alert.kind)!.push(alert);
-  }
-  return order.map((kind) => ({ kind, alerts: map.get(kind)! }));
-}
