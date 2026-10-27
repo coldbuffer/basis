@@ -1,0 +1,50 @@
+---
+title: "架构概览"
+sidebarTitle: "架构"
+description: "证据账本、投影、服务端分层与客户端面（OpenAPI + MCP）。"
+---
+
+## 规范态与投影
+
+**证据账本**保存陈述、实体与溯源，是权威状态。
+
+**图谱**与**搜索**索引是**投影**，可从账本与本体配置重建。控制台图谱 UI 读投影；改变语义的写入经账本操作，并常进入**审核**。
+
+```text
+资料源 / 连接器 ──► 摄入与映射 ──► 证据账本
+                                      │
+              ┌───────────────────────┼───────────────────────┐
+              ▼                       ▼                       ▼
+        图谱投影                 chunk / 向量检索            导出与审计
+```
+
+## 服务端结构（概念）
+
+Basis 由 Python API（`basis` 包）与 React 控制台（`web/`）组成。HTTP 路由调用 **application** 操作；领域逻辑在 **domain**（knowledge、graph、ontology、connector、tenancy 等）。持久化与工具在 **infra**。
+
+控制台不依赖未文档化的私有 HTTP——与外部集成方一样使用 **OpenAPI v1**。
+
+## 两类 API 范围
+
+| 范围 | 路径前缀 | 示例 |
+|------|----------|------|
+| 平台 | `/api/v1/…`（非工作区） | 鉴权、用户、工作区列表、管理设置 |
+| 工作区 | `/api/v1/workspaces/{workspace_id}/…` | 摄入、账本、检索、图谱、本体、连接器、MCP |
+
+OpenAPI 同样分 [平台](/openapi/v1/platform.json)、[工作区](/openapi/v1/workspaces.json) 与完整契约。
+
+## 智能体：MCP 与 REST
+
+**MCP** 在每个工作区提供 JSON-RPC 工具面，与 OpenAPI 所描述操作对齐。运行时已支持 MCP 时优先 MCP；否则用 REST。
+
+连接器 **BOCP** Manifest 与消费者无关：一份 `connector.yaml` 同时服务定时账本同步与 Agent 直接原语（见 [连接器（Basis）](/docs/connectors-basis)）。
+
+## 写入路径上的治理
+
+智能体提案（记忆、写回、合并等）进入**审核队列**；批准后执行校验（冲突、SHACL、连接器 outbox）。读 API 与 MCP 检索工具不能绕过生产写入门控。
+
+## 延伸阅读
+
+- [核心概念](/docs/concepts) — 更短的心智模型
+- [REST API](/docs/rest-api) — 版本与鉴权入口
+- [控制台导览](/docs/console-tour) — 功能在 UI 中的位置

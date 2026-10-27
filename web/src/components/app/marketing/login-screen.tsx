@@ -183,7 +183,7 @@ export function LoginScreen() {
           </div>
 
           <div className="pointer-events-none relative z-10 flex min-w-0 flex-1 flex-col overflow-visible px-5 py-4 sm:py-5 sm:pl-8 sm:pr-[54%] lg:pr-[50%]">
-            <div className="pointer-events-auto flex min-h-0 min-w-0 flex-1 flex-col justify-center">
+            <div className="pointer-events-auto flex min-h-0 min-w-0 flex-1 flex-col items-start justify-center">
               <div className="min-w-0 w-full max-w-2xl">
                 <p className="max-w-xl text-xs leading-relaxed text-pretty text-muted-foreground sm:text-[13px]">
                   {m.hero_eyebrow}
@@ -215,7 +215,7 @@ export function LoginScreen() {
               <p className="mt-5 max-w-xl text-[13px] leading-relaxed text-pretty text-muted-foreground sm:mt-6 sm:text-sm">
                 {m.hero_subhead}
               </p>
-              <div className="mt-5 flex flex-wrap items-center gap-2.5 sm:mt-6 sm:gap-3">
+              <div className="mt-5 flex flex-wrap items-center justify-start gap-2.5 sm:mt-6 sm:gap-3">
                 <Button
                   type="button"
                   size="default"
@@ -237,7 +237,7 @@ export function LoginScreen() {
                   </Link>
                 </Button>
               </div>
-              <ul className="mt-6 flex flex-wrap gap-x-4 gap-y-2 border-t border-border/60 pt-4 text-[11px] leading-relaxed text-muted-foreground sm:mt-7 sm:pt-5 sm:text-xs">
+              <ul className="mt-6 flex flex-wrap justify-start gap-x-4 gap-y-2 border-t border-border/60 pt-4 text-[11px] leading-relaxed text-muted-foreground sm:mt-7 sm:pt-5 sm:text-xs">
                 {i18nIndexedList(m.trust).map((item) => (
                   <li key={item.label}>
                     {'external' in item && item.external ? (

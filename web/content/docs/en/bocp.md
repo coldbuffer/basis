@@ -1,6 +1,6 @@
 ---
 title: BOCP v2.0 — connector manifests
-sidebarTitle: BOCP
+sidebarTitle: BOCP spec
 description: Normative BOCP v2.0 specification plus a reader's guide for newcomers (manifest, primitives, operations, hosts).
 ---
 
@@ -26,7 +26,7 @@ Runtimes expose **CHECK**, **DISCOVER**, **LIST**, **MUTATE**, and **INVOKE**. C
 
 Wire `version` **MUST** be `"2.0"`. Other versions are not accepted.
 
-**New readers:** start with [Section 1.6](#16-readers-guide-start-here) and [Appendix D](#appendix-d-tutorial-from-zero-to-a-list-call) before the normative sections.
+**New readers:** start with the [BOCP guide](/docs/bocp-guide), then [Section 1.6](#16-readers-guide-start-here) and [Appendix D](#appendix-d-tutorial-from-zero-to-a-list-call) in this specification.
 
 ---
 

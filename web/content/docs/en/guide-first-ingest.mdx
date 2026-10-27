@@ -1,0 +1,37 @@
+---
+title: "Guide: first ingest and search"
+sidebarTitle: "First ingest"
+description: "Upload a source, wait for processing, and verify search in the console."
+---
+
+**Goal:** One document in a workspace, a completed ingest job, and a successful chunk search.
+
+**Prerequisites:** [Quickstart](/docs/quickstart) completed; you can sign in and open a workspace.
+
+## Steps
+
+1. Open **Knowledge → Sources** for your workspace.
+2. Upload a text or PDF file (stay within upload limits — see [Limits & errors](/docs/limits-and-errors)).
+3. Open **Knowledge → Processing** and wait until the job shows **completed** (refresh or use job deep links from Sources on failure).
+4. Open **Explore → Search**, run a query that should match the uploaded content.
+5. Optional: open **Explore → Graph** or **Entities** to see projection updates after processing.
+
+## Verify via API
+
+With a session or workspace token:
+
+- `GET /api/v1/workspaces/{workspace_id}/ingest/jobs` — list jobs
+- Search endpoints documented in [workspace OpenAPI](/openapi/v1/workspaces.json)
+
+## Troubleshooting
+
+| Symptom | Check |
+|---------|--------|
+| Job failed | Processing tab error message; file size / extract limits |
+| Empty search | Job not completed; wrong workspace; query too strict |
+| Stale graph | Projection rebuild may lag; check processing completion |
+
+## Next
+
+- [Ontology & mappings](/docs/ontology-and-mappings)
+- [Agent workflows](/docs/agent-workflows)

@@ -1,0 +1,45 @@
+---
+title: "指南：在 Cursor 中使用 MCP"
+sidebarTitle: "Cursor MCP"
+description: "将工作区 MCP 地址与 API 令牌配置到 Cursor。"
+---
+
+**目标：** Cursor 通过 HTTP MCP 与 Bearer 令牌访问工作区。
+
+## 1. 创建令牌
+
+1. 打开 `/workspaces/{workspace_id}/integration`。
+2. **访问令牌** → 创建（需 owner/admin）。
+3. 立即复制密钥（仅创建时显示）。
+
+## 2. 复制 MCP 地址
+
+在 **MCP** 标签复制端点 URL 与可选 Cursor JSON 片段。
+
+## 3. Cursor 配置
+
+在 Cursor **设置 → MCP**（或 `mcp.json`）添加：
+
+```json
+{
+  "mcpServers": {
+    "basis": {
+      "url": "https://your-host/api/v1/workspaces/YOUR_WORKSPACE_ID/mcp",
+      "headers": {
+        "Authorization": "Bearer YOUR_TOKEN"
+      }
+    }
+  }
+}
+```
+
+本地开发端口与代理见 [快速开始](/docs/quickstart)。
+
+## 4. 冒烟测试
+
+在 [完成摄入](/docs/guide-first-ingest) 后让 Agent 调用只读工具（如 chunk 搜索）。生产写入应进入**审核**队列。
+
+## 相关
+
+- [MCP](/docs/mcp)
+- [智能体工作流](/docs/agent-workflows)

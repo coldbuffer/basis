@@ -1,0 +1,31 @@
+---
+title: "Guide: export pack and workspace reset"
+sidebarTitle: "Export & reset"
+description: "Export graph packs before destructive operations; understand workspace reset scopes."
+---
+
+## Export pack
+
+**Goal:** Download a portable snapshot for migration or backup before major changes.
+
+1. Open workspace **Settings**.
+2. Use the **Graph** section **export** action (also linked from graph diff / integration OpenAPI hints).
+3. Store the artifact outside the cluster per your retention policy.
+
+Export covers projection-oriented packs documented in workspace OpenAPI — not a substitute for database-level backups in production.
+
+## Workspace reset (dangerous)
+
+**Workspace reset** clears selected ledger/projection data while keeping workspace id, members, and settings. It is **not** the same as deleting the workspace.
+
+1. **Settings → Dangerous actions → Reset workspace** (owner/admin).
+2. Review **preview** counts (`GET …/workspaces/{id}/reset`).
+3. Choose **scopes** (ledger, blobs, graph, ontology hub, connectors, …).
+4. Confirm with the workspace **name**; default execution is **async** via ingest jobs — poll job status.
+
+Prefer reset over bulk `delete_node` MCP calls for full clean-slate scenarios.
+
+## Related
+
+- [Production checklist](/docs/production-checklist) — Postgres backups
+- [Limits & errors](/docs/limits-and-errors)

@@ -10,4 +10,10 @@ MCP 工具映射与 OpenAPI v1 相同的操作。客户端已支持 MCP 时优�
 
 ## 配置概要
 
-在侧栏「系统 → 集成」的「访问令牌」标签页创建令牌，在 MCP 标签页复制端点 URL；在 Agent 主机中以 Bearer 配置令牌。
+在侧栏「系统 → 集成」打开集成页（`/workspaces/{workspace_id}/integration`）。页面有三个标签：**MCP**（默认）、**OpenAPI**、**访问令牌**：
+
+1. 在 **访问令牌** 中创建工作区令牌（需 owner/admin）。
+2. 在 **MCP** 中复制 HTTP MCP 地址与可选的 Cursor 配置片段。
+3. 在 Agent 主机中对 MCP（及 REST）请求设置 `Authorization: Bearer <令牌>`。
+
+Cursor 步骤：[指南：Cursor MCP](/docs/guide-mcp-cursor)。典型读写闭环：[智能体工作流](/docs/agent-workflows)。

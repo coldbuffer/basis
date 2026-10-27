@@ -1,0 +1,50 @@
+---
+title: "Guide: MCP in Cursor"
+sidebarTitle: "MCP in Cursor"
+description: "Connect a workspace MCP URL and API token to Cursor."
+---
+
+**Goal:** Cursor talks to your Basis workspace over HTTP MCP with a workspace-scoped token.
+
+## 1. Create a token
+
+1. Open `/workspaces/{workspace_id}/integration`.
+2. Tab **Access tokens** → create token (workspace **owner** or **admin**).
+3. Copy the secret once — it is shown only at creation.
+
+## 2. Copy MCP URL
+
+On the **MCP** tab, copy:
+
+- MCP endpoint URL (HTTP JSON-RPC base for the workspace)
+- Optional **Cursor** JSON snippet if shown in the panel
+
+## 3. Cursor configuration
+
+In Cursor **Settings → MCP** (or your `mcp.json`), add a server entry pointing at the MCP URL. Set headers:
+
+```json
+{
+  "mcpServers": {
+    "basis": {
+      "url": "https://your-host/api/v1/workspaces/YOUR_WORKSPACE_ID/mcp",
+      "headers": {
+        "Authorization": "Bearer YOUR_TOKEN"
+      }
+    }
+  }
+}
+```
+
+Use your real host, workspace id, and token. For local dev, match [Quickstart](/docs/quickstart) ports and `VITE_BASIS_API_URL` / same-origin proxy.
+
+## 4. Smoke test
+
+Ask the agent to call a read-only tool (for example chunk search) after you have [ingested data](/docs/guide-first-ingest).
+
+Writes that change production state should create **review** items — approve in the console.
+
+## Related
+
+- [MCP](/docs/mcp) — tabs and security notes
+- [Agent workflows](/docs/agent-workflows)

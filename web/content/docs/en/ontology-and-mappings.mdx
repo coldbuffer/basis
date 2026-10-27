@@ -1,0 +1,47 @@
+---
+title: "Ontology, vocabulary, and mappings"
+sidebarTitle: "Ontology & mappings"
+description: "OWL hub workflows, statement mappings, and vocabulary alignment in the studio."
+---
+
+Basis separates **what things mean** (ontology, vocabulary, mappings) from **what was observed** (evidence ledger). Graph and search reflect both after projection jobs run.
+
+## Ontology hub
+
+Under **Schema → Ontology** (`/workspaces/{id}/ontology`):
+
+- Load the published OWL graph, edit a **draft** (classes, properties, individuals, edges).
+- **Propose** changes; approvers publish versions that apply to the ledger projection.
+- **Versions** tab: compare releases, restore a version into draft (still goes through propose/publish — not a silent rollback).
+
+Use the hub when business concepts (customer, order, policy) must be stable URIs shared across sources and agents.
+
+## Statement mappings
+
+Workspace **mappings** (ontology statement tab / dedicated routes) connect natural language or extracted **relation phrases** and **type labels** to ontology properties and classes:
+
+- **Relation mappings** (`target_kind=property`) — subject–predicate–object patterns → OWL properties.
+- **Type mappings** (`target_kind=class`) — phrases like “is a” → `rdf:type` to a class URI.
+
+**Type relation phrases** are edited under **Govern → Data quality** scan configuration; the mappings UI links there for the active phrase list.
+
+Materialization jobs scan the ledger and can open **review** items when governance requires human confirmation.
+
+## Vocabulary alignments
+
+**Schema → Vocabulary** holds term alignments used when reconciling labels across sources. Published alignments are stored in SQL; governance can require review before they take effect (`vocabulary_alignment_requires_review`).
+
+Unmapped entity types may surface as governance scan findings with suggested class URIs — confirming a mapping can close the review loop.
+
+## Practical order
+
+1. Sketch or import ontology structure in the hub.
+2. Configure mappings for your domain language.
+3. Ingest sources; let processing extract candidates.
+4. Resolve review items for mapping and alignment changes.
+
+## Related
+
+- [Core concepts](/docs/concepts) — ledger vs projections
+- [Governance & review](/docs/governance-and-review) — approval gates
+- [Console tour](/docs/console-tour) — sidebar zones

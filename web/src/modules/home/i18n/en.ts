@@ -21,7 +21,7 @@ export default {
       },
       "2": {
         label: "Declarative connectors",
-        to: "/docs/bocp",
+        to: "/docs/bocp-guide",
       },
       "3": {
         label: "OpenAPI + MCP",
@@ -45,7 +45,7 @@ export default {
         protocol: "BOCP Engine · DB & SaaS",
         body: "Built-in SQL adapters and declarative SaaS connectors auto-discover schemas, sync incrementally, and map to objects.",
         code: "BOCP discover_schema() → sync_stream(watermark, row_hash)",
-        href: "/docs/bocp",
+        href: "/docs/bocp-guide",
       },
       "2": {
         index: "03",

@@ -11,7 +11,7 @@ Vite + React front end for the Basis platform and per-workspace Explorer screens
 | `src/components/app/shared/` | Layout, page patterns, workspace frame — [README](src/components/app/shared/README.md) |
 | `src/components/` | React UI — three roots: **`ui`**, **`admin`**, **`app`** (see below). |
 | `src/lib/` | Subdirs: `openapi/`, `session/`, `workspace/`, `nav/`, … + root `utils.ts`; see [lib/README.md](src/lib/README.md). |
-| `content/docs/` | **Product docs** (`/docs/*`) — Fumadocs MDX (`en/`, `zh/`). IA: `{locale}/meta.json`; page chrome: frontmatter `title`, `description`, optional `sidebarTitle`; prev/next from sidebar order. Long-form pages (`bocp.md`, `connectors-basis.md`, …) are edited here directly. |
+| `content/docs/` | **Product docs** (`/docs/*`) — Fumadocs MDX (`en/`, `zh/`). IA: `{locale}/meta.json`; slugs in `src/modules/docs/lib/product-docs-nav.ts`. Long-form pages (`bocp.md`, …) edited directly. **MCP tools index:** `npm run gen:mcp-tools-docs` (CI: `generate-product-docs-mcp-tools.py --check`). |
 | `source.config.ts` | Fumadocs MDX config; `postinstall` runs `fumadocs-mdx` → `.source/` (gitignored). |
 | `server/` | **Hono web layer** — production static + `/api` reverse proxy (`server/prod.ts`); dev entry `server/dev.ts` (Hono + Vite middleware). Playground LLM config is browser-local. |
 | `src/styles/` | Vendor overrides (e.g. Swagger UI); global chrome in root [`src/styles.css`](src/styles.css). |

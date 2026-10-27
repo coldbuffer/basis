@@ -1,0 +1,49 @@
+---
+title: "Guide: enterprise SSO"
+sidebarTitle: "Enterprise SSO"
+description: "Configure organization OIDC or SAML for console login."
+---
+
+**Goal:** Users in an organization sign in through your IdP; API tokens and MCP stay unchanged.
+
+## Prerequisites
+
+- Platform **admin** account
+- Public **site URL** correct under **Admin → Settings → Login** (callbacks derive from it)
+
+## Configure IdP
+
+1. Open **Admin → Settings → Organization SSO**.
+2. Select the organization (owners/admins of that org may also manage depending on deployment).
+3. Add **OIDC** or **SAML** configuration:
+   - OIDC: client id/secret, issuer, scopes as required by your IdP
+   - SAML: metadata URL or XML, ACS URL shown in the UI
+4. Save and note the callback URLs displayed (must match IdP allowlists).
+
+## Sign-in behavior
+
+The login page calls:
+
+- `GET /api/v1/auth/org-sso-options` — available org SSO buttons
+- `GET /api/v1/auth/org-sso-hint?email=…` — domain-based routing
+
+Browser redirects:
+
+- OIDC: `GET /api/v1/auth/oidc/{slug}/start`
+- SAML: routes under `/api/v1/auth/saml/*` (metadata, start, ACS, logout)
+
+When SSO is required for an email domain, password login may be hidden for those users.
+
+## Operations checklist
+
+| Item | Action |
+|------|--------|
+| Clock skew | Keep API and IdP time synced |
+| HTTPS | Terminate TLS at reverse proxy in production |
+| Logout | Configure SAML SLO if your IdP supports it |
+| Break-glass | Keep a local admin account policy per your org |
+
+## Related
+
+- [Authentication](/docs/auth) — sessions, tokens, roles
+- [Security](/docs/security) — high-level threat notes

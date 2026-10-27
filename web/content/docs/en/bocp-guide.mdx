@@ -1,0 +1,112 @@
+---
+title: "BOCP reader's guide"
+sidebarTitle: "BOCP guide"
+description: "Plain-language introduction to Basis Open Connector Protocol manifests, primitives, and your first LIST call."
+---
+
+**BOCP** (Basis Open Connector Protocol) is a YAML **manifest per external product** (a *provider*). It answers: how to authenticate, which logical *actions* exist, and how the host reaches upstream APIs or SQL.
+
+Secrets never live in the manifest — users save **connections** (tokens, DSNs, scope) in the host at runtime.
+
+Normative rules: [BOCP v2.0 specification](/docs/bocp). Basis host behavior: [Connectors (Basis)](/docs/connectors-basis).
+
+## Three layers
+
+| Layer | What it is | Example |
+|-------|------------|---------|
+| **Manifest** | Shipped `connector.yaml` for provider `github` | Declares `auth` + `actions[].rest.operations` |
+| **Connection** | Per-tenant saved link | PAT or OAuth token + `connection_config` (`owner`, `repo`) |
+| **Primitive call** | One runtime operation | LIST on `action_id: issues` |
+
+```text
+Author ships connector.yaml → User saves Connection → App/agent calls CHECK / LIST / MUTATE / …
+```
+
+## Five primitives
+
+| Primitive | Applies to | Meaning |
+|-----------|------------|---------|
+| **CHECK** | Connection | Validate credentials |
+| **DISCOVER** | Entity action | Describe fields |
+| **LIST** | Entity action | Read a batch (pagination / cursor) |
+| **MUTATE** | Entity action | `create` / `update` / `upsert` / `delete` |
+| **INVOKE** | Procedure action | RPC-style calls |
+
+Entity actions use DISCOVER, LIST, MUTATE. Procedure actions use INVOKE.
+
+## `actions[]` in one glance
+
+Each entry has `kind` (`entity` | `procedure`), stable `id`, and **one** executor block (`rest` or `sql`) with an `operations` map:
+
+```yaml
+rest:
+  operations:
+    list:   { method: GET,  path: /repos/{{config.owner}}/{{config.repo}}/issues }
+    create: { method: POST, path: /…, body: … }
+```
+
+Operation keys (`list`, `create`, …) tell the runtime which primitive to run.
+
+**Scope:** `connection_config` on the connection fills `{{config.*}}` in paths. Per-call `action_params` only supply keys that are **missing** on the connection — they must not override `connection_config`.
+
+## One manifest, two consumers
+
+The same YAML supports:
+
+1. **Ledger / ontology hosts** — scheduled sync, table mappings, approved write-back.
+2. **Agents** — direct LIST / MUTATE without configuring an internal mapping row.
+
+BOCP requires LIST to work without ledger mapping. How tool names appear on MCP is host-specific ([Connectors (Basis)](/docs/connectors-basis)).
+
+## Tutorial: LIST GitHub issues
+
+Informative walkthrough; exact HTTP/MCP names depend on the host.
+
+### 1. Roles
+
+- **Connector author** — maintains `providers/github/connector.yaml`.
+- **Host operator** — loads bundles, platform allowlists.
+- **End user** — creates a **connection** in a workspace.
+- **Consumer** — UI, job, or agent calling primitives.
+
+### 2. User connection (conceptual)
+
+```json
+{
+  "service": "github",
+  "connection_name": "default",
+  "auth_type": "api_key",
+  "credentials": { "personal_access_token": "…" },
+  "connection_config": { "owner": "acme-corp", "repo": "api" }
+}
+```
+
+### 3. LIST inputs
+
+| Input | Value |
+|-------|--------|
+| `service` | `github` |
+| `action_id` | `issues` |
+| Primitive | LIST |
+| `action_params` | `{ "owner": "…", "repo": "…" }` if not in `connection_config` |
+| `limit` | optional cap on records returned |
+
+Output shape: `{ "records": [ … ], "next_cursor_value": "…", "has_more": false }` (host may page upstream to satisfy `limit`).
+
+### 4. MUTATE create (sketch)
+
+| Input | Value |
+|-------|--------|
+| Primitive | MUTATE |
+| `operation` | `create` |
+| `changes` | `{ "title": "…", "body": "…" }` |
+
+For `update`, include `external_id` and `operation: update`.
+
+## Where to go next
+
+| Goal | Document |
+|------|----------|
+| Full normative spec | [BOCP v2.0](/docs/bocp) |
+| Basis HTTP/MCP paths & UI | [Connectors (Basis)](/docs/connectors-basis) |
+| Agent setup | [MCP](/docs/mcp) |

@@ -1,0 +1,42 @@
+---
+title: "指南：企业 SSO"
+sidebarTitle: "企业 SSO"
+description: "为组织配置 OIDC 或 SAML 控制台登录。"
+---
+
+**目标：** 组织用户通过 IdP 登录；API 令牌与 MCP 不变。
+
+## 前提
+
+- 平台**管理员**
+- **管理 → 设置 → 登录** 中对外站点 URL 正确（回调据此生成）
+
+## 配置 IdP
+
+1. **管理 → 设置 → 组织 SSO**。
+2. 选择组织。
+3. 添加 **OIDC** 或 **SAML**（客户端 ID/密钥、issuer，或 SAML 元数据）。
+4. 保存并将回调 URL 填入 IdP 白名单。
+
+## 登录行为
+
+- `GET /api/v1/auth/org-sso-options`
+- `GET /api/v1/auth/org-sso-hint?email=…`
+- OIDC：`/api/v1/auth/oidc/{slug}/start`
+- SAML：`/api/v1/auth/saml/*`
+
+域策略要求 SSO 时，可能对相应用户隐藏密码登录。
+
+## 运维检查
+
+| 项 | 说明 |
+|----|------|
+| 时间同步 | API 与 IdP 时钟 |
+| HTTPS | 生产环境 TLS |
+| 登出 | 按需配置 SAML SLO |
+| 应急账号 | 按组织策略保留本地管理员 |
+
+## 相关
+
+- [鉴权与访问](/docs/auth)
+- [安全](/docs/security)

@@ -1,18 +1,61 @@
 ---
-title: "Self-host & configuration"
+title: "Self-host & deployment"
 sidebarTitle: "Self-host"
-description: "Environment variables and production-oriented notes."
+description: "Local dev, Docker production compose, and reverse proxy notes."
 ---
 
-## Core settings
+## Local development
 
-Typical production toggles:
+Two processes (see [Quickstart](/docs/quickstart)):
 
-- `BASIS_HOST` / `BASIS_PORT` — API bind
-- `BASIS_DATA_DIR` — SQLite, blobs, graph JSON (default)
-- `BASIS_DATABASE_URL` — PostgreSQL for production
-- `VITE_BASIS_API_URL` — browser API base when not same-origin
+1. **API** — repository root: `uv run basis` (default `:8090`)
+2. **Web** — `web/`: `npm run dev` (default `:5173`, proxies API via `BASIS_API_URL`)
 
-## Reverse proxy
+Configure via root `.env` and `web/.env`. Full variable list: [Configuration](/docs/configuration).
 
-Serve the web bundle and proxy `/api`, `/openapi`, and WebSocket paths to the API process. Docker and nginx examples live in the repository under `docker/production/`.
+## Docker production (recommended)
+
+The reference stack runs **API + Hono web** in one image, **PostgreSQL** for SQL state, and a volume for `BASIS_DATA_DIR`.
+
+```bash
+cd docker/production
+cp .env.example .env
+# set POSTGRES_PASSWORD and optional BASIS_HTTP_PORT
+docker compose -f compose.yml up -d --build
+```
+
+Open `http://localhost:8080` (or your `BASIS_HTTP_PORT`). First registered user becomes platform admin.
+
+Traffic flow:
+
+```text
+Browser → :8080 (Hono)
+           ├─ /           → SPA
+           ├─ /console/*  → BFF
+           └─ /api/*      → 127.0.0.1:8090 (FastAPI, incl. WebSockets)
+```
+
+Image build only:
+
+```bash
+docker build -f docker/production/Dockerfile -t basis:local .
+```
+
+Details, GHCR release tags, and env tables: `docker/production/README.md` in the repository.
+
+## Reverse proxy (custom)
+
+When not using the bundled compose nginx/Hono setup:
+
+- Serve the web static bundle and proxy **`/api`**, **`/openapi`**, and **WebSocket** paths to the API process
+- Set public login URL in **Admin → Settings → Login** so OAuth/SSO callbacks match
+
+## Desktop profile
+
+Basis also ships a desktop packaging path (see repository `desktop/README.md`) — separate from Docker `v*` releases.
+
+## Next steps
+
+- [Production checklist](/docs/production-checklist)
+- [Security](/docs/security)
+- [Configuration](/docs/configuration)

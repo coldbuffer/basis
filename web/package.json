@@ -19,6 +19,7 @@
     "test:workspace-ws-client": "node src/lib/workspace/ws-client.test.mjs",
     "gen:openapi-types": "openapi-typescript ../openapi/basis-v1.json -o src/lib/openapi/schema.d.ts && openapi-typescript ../openapi/basis-v1-workspaces.json -o src/lib/openapi/schema-workspaces.d.ts",
     "gen:product-docs-mdx": "node scripts/generate-product-docs-mdx.mjs",
+    "gen:mcp-tools-docs": "cd .. && uv run python scripts/docs/generate-product-docs-mcp-tools.py",
     "postinstall": "fumadocs-mdx",
     "preview": "vite preview",
     "clean": "rm -rf ../dist/web"

@@ -76,12 +76,12 @@ export function ProductSiteHeader({ activeKey, onGetStarted }: ProductSiteHeader
           <span className="font-display text-base font-semibold tracking-tight">{m.brand}</span>
         </Link>
 
-        <div className="hidden min-w-0 flex-1 items-center justify-center gap-3 lg:flex">
-          <ProductSiteNav activeKey={activeKey} />
-          {!(ready && user) ? <div className="shrink-0">{getStartedControl}</div> : null}
-        </div>
+        <div className="ml-auto flex items-center gap-2 sm:gap-3">
+          <div className="hidden items-center gap-2 lg:flex lg:gap-3">
+            <ProductSiteNav activeKey={activeKey} />
+            {!(ready && user) ? <div className="shrink-0">{getStartedControl}</div> : null}
+          </div>
 
-        <div className="ml-auto flex items-center gap-0.5 sm:gap-1">
           {ready && user ? (
             <Button type="button" variant="ghost" size="sm" className="hidden md:inline-flex" asChild>
               <Link to={homePath}>{m.open_console}</Link>

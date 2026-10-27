@@ -1,0 +1,40 @@
+---
+title: "Limits and errors"
+sidebarTitle: "Limits & errors"
+description: "HTTP status conventions, legacy API gate, and configurable runtime limits."
+---
+
+## API versioning
+
+- Normative routes: `/api/v1/*`
+- Unversioned `/api/*` returns **410** unless `BASIS_LEGACY_API_ENABLED=1` (debug only)
+
+## Operation errors
+
+Application operations return structured `{ "error": "…" }` payloads mapped to HTTP status by the server (for example validation → 400, forbidden → 403, not found → 404). Integrations should read the `error` code string and consult OpenAPI response schemas in [Swagger](/swagger).
+
+## MCP
+
+- `BASIS_MCP_MAX_INFLIGHT` — concurrent tool calls
+- `BASIS_MCP_TIMEOUT_SECONDS` — tool execution timeout
+- Clients may see rate/busy responses when limits are exceeded — retry with backoff
+
+## Upload and ingest
+
+Defaults are documented in `.env.example` (upload/import max bytes, extract character cap, chunk count, job timeout). The Sources UI validates oversized uploads client-side where applicable.
+
+## Graph and search pagination
+
+List/search endpoints enforce maximum `limit` values (configurable via `BASIS_*_MAX_LIMIT` variables). Request smaller pages for interactive UIs.
+
+## Client tips
+
+| HTTP | Typical meaning |
+|------|-----------------|
+| 401 | Missing or expired session/token |
+| 403 | Role or workspace gate |
+| 409 | Conflict — may surface as review-required in domain flows |
+| 410 | Legacy route disabled |
+| 429 | Throttling / MCP busy |
+
+Full contract: [OpenAPI v1](/openapi/v1.json).

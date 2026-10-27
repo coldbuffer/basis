@@ -1,6 +1,6 @@
 ---
 title: BOCP v2.0 — 连接器 Manifest 协议
-sidebarTitle: BOCP
+sidebarTitle: BOCP 规范
 description: BOCP v2.0 规范性说明 + 零基础读者指南（Manifest、原语、operations、宿主），与英文版同步。
 ---
 
@@ -26,7 +26,7 @@ Manifest 声明 **`auth`** 与 **`actions`**。每条动作为 **entity**（DISC
 
 线上 `version` **必须** 为 `"2.0"`；其他版本不接受。
 
-**首次阅读：** 请先读 [§1.6 读者指南](#16-读者指南从这里开始) 与 [附录 D](#附录-d-教程从零到一次-list-调用)，再读规范性章节。
+**首次阅读：** 请先读 [BOCP 导读](/docs/bocp-guide)，再读本规范中的 [§1.6 读者指南](#16-读者指南从这里开始) 与 [附录 D](#附录-d-教程从零到一次-list-调用)。
 
 ---
 

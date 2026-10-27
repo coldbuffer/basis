@@ -1,0 +1,38 @@
+---
+title: "限制与错误"
+sidebarTitle: "限制与错误"
+description: "HTTP 状态、旧版 API 开关与可配置运行时上限。"
+---
+
+## 版本化
+
+- 规范路由：`/api/v1/*`
+- 未版本化 `/api/*` 默认 **410**；调试可设 `BASIS_LEGACY_API_ENABLED=1`
+
+## 业务错误
+
+操作返回 `{ "error": "…" }`，映射为 HTTP 状态（校验 400、禁止 403、未找到 404 等）。详见 [Swagger](/swagger) 与 OpenAPI。
+
+## MCP
+
+`BASIS_MCP_MAX_INFLIGHT`、`BASIS_MCP_TIMEOUT_SECONDS`；超限可能 busy/超时，请退避重试。
+
+## 上传与摄入
+
+默认值在 `.env.example`；Sources UI 可能对超大文件做客户端校验。
+
+## 分页
+
+列表/搜索 `limit` 有上限（可通过 `BASIS_*_MAX_LIMIT` 调整）。
+
+## 常见 HTTP
+
+| 状态 | 含义 |
+|------|------|
+| 401 | 未登录或令牌无效 |
+| 403 | 角色或工作区门控 |
+| 409 | 冲突，可能需审核 |
+| 410 | 旧路由关闭 |
+| 429 | 限流 / MCP 繁忙 |
+
+契约：[OpenAPI v1](/openapi/v1.json)。

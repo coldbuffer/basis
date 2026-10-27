@@ -1,0 +1,62 @@
+---
+title: "指南：编写 BOCP Manifest"
+sidebarTitle: "BOCP Manifest"
+description: "交付含鉴权、实体 action 与 LIST 的最小提供方包。"
+---
+
+**目标：** 有效的 `connector.yaml`（`version: "2.0"`）、至少一个 **entity** action 与 **LIST** operation。
+
+先读 [BOCP 导读](/docs/bocp-guide)。
+
+## 1. 目录结构
+
+```text
+providers/my_saas/
+  connector.yaml
+```
+
+在宿主目录/白名单中注册 `service` 名。
+
+## 2. 最小示例
+
+```yaml
+version: "2.0"
+service: my_saas
+display_name: My SaaS
+
+auth:
+  modes:
+    - id: api_key
+      fields:
+        - key: api_token
+          label: API token
+          secret: true
+  check:
+    rest:
+      operations:
+        check: { method: GET, path: /v1/me }
+
+actions:
+  - kind: entity
+    id: items
+    display_name: Items
+    rest:
+      operations:
+        list:
+          method: GET
+          path: /v1/items
+```
+
+路径按上游 API 调整；作用域用 `{{config.*}}`。
+
+## 3. 控制台验证
+
+1. 在 **连接与同步** 创建连接并填写令牌。
+2. 运行连接 **CHECK**（若 UI 提供）。
+3. 通过 playground 或 MCP 原语执行 **LIST**。
+
+## 4. 可选 MUTATE
+
+添加 `create`/`update`；若同步进账本，写回经**审核**。
+
+规范全文：[BOCP v2.0](/docs/bocp)。Basis 宿主：[连接器（Basis）](/docs/connectors-basis)。

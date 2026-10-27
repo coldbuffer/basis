@@ -1,0 +1,40 @@
+---
+title: "Security overview"
+sidebarTitle: "Security"
+description: "Tokens, SSO, data residency, and operational hygiene for self-hosted deployments."
+---
+
+Basis is **self-hosted**: your data stays in infrastructure you control. Security posture depends on deployment choices.
+
+## Authentication surfaces
+
+| Surface | Notes |
+|---------|--------|
+| Console users | Session cookies + optional Bearer; [Enterprise SSO](/docs/guide-enterprise-sso) for orgs |
+| API tokens | Platform and workspace-scoped; treat secrets like passwords |
+| MCP | Same Bearer tokens; never embed in client-side code |
+
+## Authorization
+
+Workspace routes enforce **roles** (viewer, editor, owner, …). Platform admin routes are separate under `/admin/*`.
+
+## Connectors
+
+Connection credentials are stored server-side per workspace. BOCP manifests do not contain secrets — only field definitions.
+
+## Transport
+
+Use HTTPS in production. Terminate TLS at your proxy; forward `/api` and WebSocket upgrades to the API process.
+
+## Audit
+
+Platform **audit** and workspace activity/decision logs support forensics. Enable log aggregation (`BASIS_LOG_JSON`) when shipping to SIEM.
+
+## Reporting issues
+
+Report vulnerabilities through your organization's channel or the GitHub repository security policy if published.
+
+## Related
+
+- [Authentication](/docs/auth)
+- [Production checklist](/docs/production-checklist)

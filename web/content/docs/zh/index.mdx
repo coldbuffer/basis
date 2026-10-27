@@ -1,24 +1,56 @@
 ---
 title: "Basis 开发者文档"
 sidebarTitle: "概述"
-description: "本体驱动的智能体上下文服务：证据账本、业务本体、声明式连接器，以及标准 OpenAPI v1 与 MCP 接口。"
+description: "本体驱动的智能体上下文：证据账本、业务本体、声明式连接器，以及 OpenAPI v1 与 MCP。"
 ---
 
-## 可依赖的能力
+## 从这里开始
 
-Basis 提供 `/api/v1/*` 版本化 REST、按工作区路由 `/api/v1/workspaces/{workspace_id}/*`，以及在 `/openapi/v1.json` 发布的 OpenAPI。每个工作区可开启 HTTP MCP。
+按角色选路径；若尚未在本地跑通 API 与控制台，请先完成 [快速开始](/docs/quickstart)。
 
-- 平台 API — 用户、工作区、模型、审计、设置
-- 工作区 API — 摄入、账本、检索、图谱、本体、问答
-- MCP — 与 OpenAPI 对齐的工具面
+### 平台运维
 
-## 建议阅读顺序
+部署实例、管理用户、配置企业登录。
 
-本地跑通后，先理解核心概念再对接生产环境。
+- [快速开始](/docs/quickstart) — 本地 API + Web 控制台
+- [鉴权与访问](/docs/auth) — 会话、API 令牌、组织 SSO
+- [自托管](/docs/deployment) — 环境变量与生产说明
 
-- [快速开始](/docs/quickstart) — 启动 API 与 Web 控制台
+### 知识与本体工程
+
+摄入资料、建模语义、在控制台治理事实。
+
+- [控制台导览](/docs/console-tour) — 工作区侧栏分区
 - [核心概念](/docs/concepts) — 账本与投影
-- [REST API](/docs/rest-api) — 路径、鉴权与面
-- [BOCP](/docs/bocp) — 连接器 Manifest 协议（外部系统）
-- [连接器（Basis）](/docs/connectors-basis) — Basis 如何承载 BOCP
-- [API 参考](/docs/api-reference) — OpenAPI 交互文档
+- [架构](/docs/architecture) — 分层与数据流
+- [本体与映射](/docs/ontology-and-mappings) — Hub、映射、词汇
+- [治理与审核](/docs/governance-and-review) — 写入门控
+
+### 集成工程
+
+对接外部系统并调用版本化 HTTP API。
+
+- [REST API](/docs/rest-api) — `/api/v1`、OpenAPI 分面、鉴权模型
+- [连接器概览](/docs/connectors-overview) — 同步与 Agent 原语
+- [BOCP 导读](/docs/bocp-guide) — 连接器 Manifest 通俗说明
+- [连接器（Basis）](/docs/connectors-basis) — 参考宿主如何运行 BOCP
+
+### 智能体 / AI 工程
+
+将工作区挂载到 Cursor 等 MCP 运行时。
+
+- [MCP](/docs/mcp) — 令牌、MCP 地址、Bearer 凭证
+- [智能体工作流](/docs/agent-workflows) — 检索、记忆与审核闭环
+- [API 参考](/docs/api-reference) — OpenAPI 交互文档（`/swagger`）
+
+### 任务指南
+
+- [首次摄入](/docs/guide-first-ingest) · [Cursor MCP](/docs/guide-mcp-cursor) · [企业 SSO](/docs/guide-enterprise-sso) · [导出与重置](/docs/guide-export-backup)
+
+## 可依赖的接口面
+
+- **平台 API** — 用户、工作区、模型、审计、设置（工作区外的 `/api/v1/*`）
+- **工作区 API** — 摄入、账本、检索、图谱、本体、连接器（`/api/v1/workspaces/{workspace_id}/*`）
+- **MCP** — 与 OpenAPI 同源的操作，按工作区 HTTP JSON-RPC 暴露
+
+规范 HTTP 契约：[`/openapi/v1.json`](/openapi/v1.json)、[`/openapi/v1/platform.json`](/openapi/v1/platform.json)、[`/openapi/v1/workspaces.json`](/openapi/v1/workspaces.json)。

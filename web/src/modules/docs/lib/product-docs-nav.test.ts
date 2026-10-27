@@ -46,5 +46,7 @@ describe('product docs slugs', () => {
     expect(docsPath('overview')).toBe('/docs');
     expect(docsPath('connectors-basis')).toBe('/docs/connectors-basis');
     expect(docsPath('bocp')).toBe('/docs/bocp');
+    expect(docsPath('bocp-guide')).toBe('/docs/bocp-guide');
+    expect(docsPath('console-tour')).toBe('/docs/console-tour');
   });
 });

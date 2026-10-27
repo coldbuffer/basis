@@ -1,0 +1,112 @@
+---
+title: "BOCP 导读"
+sidebarTitle: "BOCP 导读"
+description: "Basis 开放连接器协议 Manifest、原语与首次 LIST 调用的通俗说明。"
+---
+
+**BOCP**（Basis Open Connector Protocol）是每个外部产品（*provider*）一份 YAML **Manifest**：如何鉴权、有哪些逻辑 *action*、宿主如何访问上游 REST 或 SQL。
+
+密钥不写在 Manifest 里——用户在宿主运行时保存 **连接**（令牌、DSN、作用域）。
+
+规范全文：[BOCP v2.0 规范](/docs/bocp)。Basis 宿主行为：[连接器（Basis）](/docs/connectors-basis)。
+
+## 三层模型
+
+| 层 | 含义 | 示例 |
+|----|------|------|
+| **Manifest** | 随包发布的 `connector.yaml` | 声明 `auth` 与 `actions[].rest.operations` |
+| **连接** | 租户级保存的链路 | PAT/OAuth + `connection_config`（`owner`、`repo`） |
+| **原语调用** | 一次运行时操作 | 对 `action_id: issues` 执行 LIST |
+
+```text
+作者发布 connector.yaml → 用户保存连接 → 应用/智能体调用 CHECK / LIST / MUTATE / …
+```
+
+## 五种原语
+
+| 原语 | 适用于 | 含义 |
+|------|--------|------|
+| **CHECK** | 连接 | 校验凭证 |
+| **DISCOVER** | 实体 action | 描述字段 |
+| **LIST** | 实体 action | 读取一批（分页 / 游标） |
+| **MUTATE** | 实体 action | `create` / `update` / `upsert` / `delete` |
+| **INVOKE** | 过程 action | RPC 类调用 |
+
+实体 action 用 DISCOVER、LIST、MUTATE；过程 action 用 INVOKE。
+
+## `actions[]` 速览
+
+每项含 `kind`（`entity` | `procedure`）、稳定 `id`，以及**唯一**执行块（`rest` 或 `sql`）与 `operations` 映射：
+
+```yaml
+rest:
+  operations:
+    list:   { method: GET,  path: /repos/{{config.owner}}/{{config.repo}}/issues }
+    create: { method: POST, path: /…, body: … }
+```
+
+`list`、`create` 等键告诉运行时执行哪种原语。
+
+**作用域：** 连接上的 `connection_config` 填充路径中的 `{{config.*}}`。单次调用的 `action_params` 仅补充连接上**缺失**的键，不得覆盖 `connection_config`。
+
+## 一份 Manifest，两类消费者
+
+同一份 YAML 同时支持：
+
+1. **账本 / 本体宿主** — 定时同步、表映射、审批后写回。
+2. **智能体** — 无需配置内部映射行即可 LIST / MUTATE。
+
+BOCP 要求 LIST 在无账本映射时仍可用。MCP 工具命名由宿主定义（见 [连接器（Basis）](/docs/connectors-basis)）。
+
+## 教程：LIST GitHub Issues
+
+以下为说明性流程；具体 HTTP/MCP 名称因宿主而异。
+
+### 1. 角色
+
+- **连接器作者** — 维护 `providers/github/connector.yaml`。
+- **宿主运维** — 加载包、平台白名单。
+- **终端用户** — 在工作区创建**连接**。
+- **消费者** — UI、任务或调用原语的 Agent。
+
+### 2. 用户连接（概念）
+
+```json
+{
+  "service": "github",
+  "connection_name": "default",
+  "auth_type": "api_key",
+  "credentials": { "personal_access_token": "…" },
+  "connection_config": { "owner": "acme-corp", "repo": "api" }
+}
+```
+
+### 3. LIST 输入
+
+| 输入 | 值 |
+|------|-----|
+| `service` | `github` |
+| `action_id` | `issues` |
+| 原语 | LIST |
+| `action_params` | 若 `connection_config` 未含 owner/repo 则传入 |
+| `limit` | 可选，限制本次返回记录数 |
+
+输出概念形态：`{ "records": [ … ], "next_cursor_value": "…", "has_more": false }`（宿主可向上游翻页以满足 `limit`）。
+
+### 4. MUTATE create（概要）
+
+| 输入 | 值 |
+|------|-----|
+| 原语 | MUTATE |
+| `operation` | `create` |
+| `changes` | `{ "title": "…", "body": "…" }` |
+
+`update` 需 `external_id` 与 `operation: update`。
+
+## 下一步
+
+| 目标 | 文档 |
+|------|------|
+| 完整规范 | [BOCP v2.0](/docs/bocp) |
+| Basis HTTP/MCP 与控制台 | [连接器（Basis）](/docs/connectors-basis) |
+| Agent 配置 | [MCP](/docs/mcp) |

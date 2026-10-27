@@ -1,0 +1,43 @@
+---
+title: "智能体工作流"
+sidebarTitle: "智能体工作流"
+description: "典型 MCP 闭环：检索、实体上下文、记忆提案与连接器原语。"
+---
+
+智能体通过工作区 **MCP**（HTTP JSON-RPC）与 **Bearer 令牌**集成（见 [MCP](/docs/mcp)）。工具与 OpenAPI 操作对齐。
+
+## 读路径（RAG）
+
+1. **`search_chunks`** — 混合检索已摄入文档。
+2. **`find_entities` / `get_entity_context`** — 实体与周围陈述。
+3. 可选图谱工具（邻居、路径等）。
+
+需要时点读取时使用 OpenAPI 中的时间查询参数。
+
+## 写路径（受治理）
+
+1. MCP 提案（导入陈述、**remember** 等）。
+2. **治理 → 审核** 出现待办项。
+3. 人工**批准**后更新账本与投影；写回可进入 outbox。
+
+提案不等于已提交生产态。
+
+## 连接器原语
+
+对 SaaS/SQL 使用 connector primitive 工具或 HTTP `invoke-primitive`。LIST 无需表映射行；同步作业通过映射使用同一 Manifest。
+
+## 建议步骤
+
+| 步骤 | 操作 |
+|------|------|
+| 1 | [创建工作区令牌](/docs/mcp) |
+| 2 | 在 Cursor 等主机配置 MCP URL + Bearer |
+| 3 | 对真实数据跑读工具 |
+| 4 | 试 remember 提案并在控制台批准 |
+
+Cursor 详细步骤：[指南：Cursor MCP](/docs/guide-mcp-cursor)。
+
+## 相关
+
+- [API 参考](/docs/api-reference)
+- [治理与审核](/docs/governance-and-review)

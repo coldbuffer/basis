@@ -1,0 +1,50 @@
+---
+title: "Agent workflows"
+sidebarTitle: "Agent workflows"
+description: "Typical MCP loops: search, entity context, remember proposals, and connector primitives."
+---
+
+Agents integrate through **workspace MCP** (HTTP JSON-RPC) with a **Bearer token** from [Integration](/docs/mcp). Tools align with OpenAPI operations — no parallel undocumented API.
+
+## Read path (RAG-style)
+
+A common loop:
+
+1. **`search_chunks`** — hybrid lexical + vector search over ingested documents.
+2. **`find_entities` / `get_entity_context`** — resolve graph/ledger entities and surrounding statements.
+3. Optional graph tools (`query_graph`, neighbors, paths) when structure matters more than raw text.
+
+Pass temporal filters when you need point-in-time reads (see OpenAPI search/graph query params).
+
+## Write path (governed)
+
+Agents do not silently commit production facts:
+
+1. Propose changes with MCP tools (for example statement import or **remember** proposals).
+2. A **review item** appears in **Govern → Review**.
+3. After human **approve**, ledger and projections update; connector write-backs may enqueue outbox work.
+
+Use review APIs or the console for status — do not assume propose = committed.
+
+## Connector primitives
+
+For live SaaS or SQL systems, call **connector primitive** tools (or HTTP `invoke-primitive`) with `service`, `action_id`, and primitive name. LIST works without a table mapping row; sync jobs use the same manifest via mappings.
+
+See [Connectors overview](/docs/connectors-overview).
+
+## Suggested setup
+
+| Step | Action |
+|------|--------|
+| 1 | [Create a workspace token](/docs/mcp) |
+| 2 | Configure Cursor or your host with MCP URL + Bearer |
+| 3 | Run read tools against real ingested data |
+| 4 | Test a remember propose → approve in the console |
+
+Detailed Cursor steps: [Guide: MCP in Cursor](/docs/guide-mcp-cursor).
+
+## Related
+
+- [API reference](/docs/api-reference) — Swagger for exact schemas
+- [Governance & review](/docs/governance-and-review)
+- [REST API](/docs/rest-api) — when MCP is not available

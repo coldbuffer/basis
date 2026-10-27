@@ -1,0 +1,44 @@
+---
+title: "Governance and review"
+sidebarTitle: "Governance & review"
+description: "Review queues, write-backs, conflicts, decisions, and alerts."
+---
+
+Production **writes** that change canonical ledger state usually pass through **review**. Reads (search, graph, MCP list tools) do not replace that gate for mutating production data.
+
+## Review queue
+
+**Govern → Review** lists pending items: statement imports, merges, mapping confirmations, **remember** proposals from agents, connector **write-backs**, and conflict resolutions.
+
+Typical flow:
+
+1. An operation creates a review item (UI action, ingest pipeline, or MCP tool).
+2. A reviewer inspects diffs, linked sources, and optional decision history.
+3. **Approve** runs validation (SHACL, conflict scan) and executes side effects (ledger commit, outbox to connector).
+4. **Reject** discards the proposal without mutating production state.
+
+Agent **remember** flows use MCP propose tools; approval uses the same queue as human-submitted changes.
+
+## Conflicts and rules
+
+Approving some statements triggers **conflict detection** against existing facts. Reviewers may pick a keeper statement or send items back for rework.
+
+**Reasoning rules** can derive facts; derived edges appear in ledger reads and entity views. Rule trials live under **Analyze** without bypassing review for production writes.
+
+## Decisions and activity log
+
+**Govern → Activity log** and decisions APIs expose **decision chains** for approved changes — useful for audit and support. Deep links (`?decision=`) open a focused narrative in the console.
+
+## Alerts
+
+Workspace **alerts** (account menu) include governance events (for example tripped impact gates). The Integration **OpenAPI** tab notes alert REST endpoints for automation.
+
+## Connector write-back
+
+Approved entity changes can enqueue **outbox** operations on BOCP connections. The review UI shows upstream-oriented diffs before execution.
+
+## Related
+
+- [Architecture](/docs/architecture) — write path overview
+- [Agent workflows](/docs/agent-workflows) — MCP remember loop
+- [Connectors overview](/docs/connectors-overview) — sync vs agent primitives

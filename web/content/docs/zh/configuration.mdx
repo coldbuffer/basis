@@ -1,0 +1,42 @@
+---
+title: "配置参考"
+sidebarTitle: "配置"
+description: "API 与 Web 常用 BASIS_* 环境变量。"
+---
+
+本地 API：复制仓库根目录 `.env.example`；Web 开发：复制 `web/.env.example`。
+
+## API 进程
+
+| 变量 | 说明 |
+|------|------|
+| `BASIS_HOST` / `BASIS_PORT` | 监听地址（默认 `127.0.0.1:8090`） |
+| `BASIS_DATA_DIR` | SQLite、blob、图谱 JSON |
+| `BASIS_DATABASE_URL` | 生产推荐 PostgreSQL |
+| `BASIS_DB_POOL_*` | 连接池 |
+| `BASIS_MCP_MAX_INFLIGHT` / `BASIS_MCP_TIMEOUT_SECONDS` | MCP 并发与超时 |
+| `BASIS_LEGACY_API_ENABLED` | 未版本化 `/api/*`（默认关，410） |
+| `BASIS_HTTP_POLL_TICK_SECONDS` | HTTP 拉取连接器 tick（`0` 关） |
+| `BASIS_GOVERNOR_TICK_SECONDS` | 治理扫描 tick |
+| `BASIS_LOG_JSON` | 结构化日志 |
+
+## 摄入与上传
+
+见 `.env.example`：`BASIS_UPLOAD_MAX_BYTES`、`BASIS_INGEST_*`、`BASIS_PROCESSING_JOB_TIMEOUT_SECONDS` 等。
+
+## 图谱与检索上限
+
+`BASIS_GRAPH_PAGE_MAX_NODES`、`BASIS_CHUNK_SEARCH_MAX_LIMIT` 等 — 见 [限制与错误](/docs/limits-and-errors) 与 `basis.limits.RuntimeLimits`。
+
+## Web
+
+| 变量 | 说明 |
+|------|------|
+| `BASIS_API_URL` | 开发代理目标 |
+| `VITE_BASIS_API_URL` | 浏览器跨源 API 基址 |
+
+登录与 OAuth 回调主要在 **管理 → 设置 → 登录** 配置。
+
+## Docker
+
+见 [私有化部署](/docs/deployment) 与 `docker/production/.env.example`。

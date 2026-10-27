@@ -140,6 +140,7 @@ The **`docs/`** directory is listed in **`.gitignore`** — local working copies
 | Task | Read |
 |------|------|
 | Web structure / workspace modules | [web/README.md](./web/README.md) |
+| **Product docs site** (`/docs`, Fumadocs) | [web/src/modules/docs/README.md](./web/src/modules/docs/README.md), content in `web/content/docs/`; MCP index via `scripts/docs/generate-product-docs-mcp-tools.py` |
 | Explorer layout | [web/src/modules/README.md](./web/src/modules/README.md), [web/src/routes/README.md](./web/src/routes/README.md), [web/src/components/app/shared/README.md](./web/src/components/app/shared/README.md), [web/src/lib/workspace/README.md](./web/src/lib/workspace/README.md) |
 | Docs (features / progress / architecture) | [docs/README.md](./docs/README.md) |
 | OpenAPI v1 (platform + workspace surfaces) | [docs/architecture/openapi-v1.md](./docs/architecture/openapi-v1.md), live `/openapi/v1.json`; snapshots `openapi/basis-v1*.json` |

@@ -57,6 +57,9 @@ jobs:
       - name: Sync Python dependencies
         run: uv sync --extra dev
 
+      - name: Product docs MCP tools index (drift)
+        run: uv run python scripts/docs/generate-product-docs-mcp-tools.py --check
+
       - name: Regenerate OpenAPI v1 JSON
         run: uv run python scripts/openapi/generate-openapi-v1.py --data-dir /tmp/basis-openapi-gen
 

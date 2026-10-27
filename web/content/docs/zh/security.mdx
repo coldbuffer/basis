@@ -1,0 +1,36 @@
+---
+title: "安全概览"
+sidebarTitle: "安全"
+description: "令牌、SSO、数据驻留与运维习惯。"
+---
+
+Basis 为**自托管**，数据留在你的基础设施内；具体安全取决于部署方式。
+
+## 鉴权面
+
+| 面 | 说明 |
+|----|------|
+| 控制台用户 | Cookie 会话；组织 [企业 SSO](/docs/guide-enterprise-sso) |
+| API 令牌 | 平台级与工作区级，等同密码保管 |
+| MCP | 同一 Bearer，勿写入前端代码 |
+
+## 授权
+
+工作区**角色**门控；平台管理在 `/admin/*`。
+
+## 连接器
+
+连接密钥存于服务端；Manifest 不含密钥。
+
+## 传输
+
+生产使用 HTTPS；反代转发 `/api` 与 WebSocket。
+
+## 审计
+
+平台审计与工作区活动/决策日志；可开 `BASIS_LOG_JSON` 对接 SIEM。
+
+## 相关
+
+- [鉴权与访问](/docs/auth)
+- [生产检查清单](/docs/production-checklist)

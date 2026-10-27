@@ -1,0 +1,48 @@
+---
+title: "Configuration reference"
+sidebarTitle: "Configuration"
+description: "Common BASIS_* environment variables for API and web."
+---
+
+Copy `.env.example` at the repository root for local API settings; copy `web/.env.example` for the Vite dev server.
+
+## API process
+
+| Variable | Purpose |
+|----------|---------|
+| `BASIS_HOST` / `BASIS_PORT` | Bind address (default `127.0.0.1:8090`) |
+| `BASIS_DATA_DIR` | SQLite file, blobs, graph JSON when not using external DB |
+| `BASIS_DATABASE_URL` | PostgreSQL (or other) — preferred in production |
+| `BASIS_DB_POOL_*` | SQLAlchemy pool sizing |
+| `BASIS_MCP_MAX_INFLIGHT` / `BASIS_MCP_TIMEOUT_SECONDS` | MCP concurrency and timeouts |
+| `BASIS_LEGACY_API_ENABLED` | Unversioned `/api/*` (default off, returns 410) |
+| `BASIS_HTTP_POLL_TICK_SECONDS` | HTTP poll connector scheduler (`0` = off) |
+| `BASIS_GOVERNOR_TICK_SECONDS` | Governance scan tick (`0` = off; needs workspace governor enabled) |
+| `BASIS_LOG_JSON` | JSON logs for `basis.*` loggers |
+
+## Ingest and uploads
+
+| Variable | Purpose |
+|----------|---------|
+| `BASIS_UPLOAD_MAX_BYTES` / `BASIS_IMPORT_MAX_BYTES` | Upload caps |
+| `BASIS_INGEST_MAX_INFLIGHT` / `BASIS_INGEST_MAX_PENDING` | Job concurrency |
+| `BASIS_INGEST_MAX_EXTRACT_CHARS` / `BASIS_INGEST_MAX_CHUNKS` | Extraction limits |
+| `BASIS_PROCESSING_JOB_TIMEOUT_SECONDS` | Job timeout |
+| `BASIS_INGEST_INLINE` | Debug: run ingest inline (not for production) |
+
+## Graph and search limits
+
+Optional caps such as `BASIS_GRAPH_PAGE_MAX_NODES`, `BASIS_CHUNK_SEARCH_MAX_LIMIT`, `BASIS_GRAPH_NODE_SEARCH_MAX_LIMIT` — see `basis.limits.RuntimeLimits` and [Limits & errors](/docs/limits-and-errors).
+
+## Web / console
+
+| Variable | Purpose |
+|----------|---------|
+| `BASIS_API_URL` | Dev proxy target (`web/` server) |
+| `VITE_BASIS_API_URL` | Browser API base when API is on another origin |
+
+Login and OAuth redirect URLs are configured in **Admin → Settings → Login**, not only via env.
+
+## Docker production
+
+See [Self-host](/docs/deployment) and `docker/production/.env.example` for `POSTGRES_*`, `BASIS_HTTP_PORT`, and compose-specific values.

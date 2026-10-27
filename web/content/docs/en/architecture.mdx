@@ -1,0 +1,50 @@
+---
+title: "Architecture overview"
+sidebarTitle: "Architecture"
+description: "Evidence ledger, projections, server layers, and client surfaces (OpenAPI + MCP)."
+---
+
+## Canonical vs projection
+
+**Evidence ledger** stores statements, entities, and provenance. That state is authoritative.
+
+**Graph** and **search** indexes are **projections**. They can be rebuilt from ledger and ontology configuration. The studio graph UI reads projections; writes that change meaning go through ledger operations and often **review**.
+
+```text
+Sources / connectors ──► ingest & mapping ──► evidence ledger
+                                                    │
+                    ┌───────────────────────────────┼───────────────────────────────┐
+                    ▼                               ▼                               ▼
+              graph projection              chunk / vector search            exports & audit
+```
+
+## Server shape (conceptual)
+
+Basis ships as a Python API (`basis` package) and a React console (`web/`). HTTP handlers call **application** operations; domain logic lives under **domain** packages (knowledge, graph, ontology, connector, tenancy). Persistence and tooling sit in **infra**.
+
+Clients never depend on a private HTTP layer in the SPA — the console uses the same **OpenAPI v1** contract as external integrators.
+
+## Two API scopes
+
+| Scope | Path prefix | Examples |
+|-------|-------------|----------|
+| Platform | `/api/v1/…` (non-workspace) | Auth, users, workspaces list, admin settings |
+| Workspace | `/api/v1/workspaces/{workspace_id}/…` | Ingest, ledger, search, graph, ontology, connectors, MCP |
+
+Published OpenAPI mirrors that split: full, [platform](/openapi/v1/platform.json), and [workspace](/openapi/v1/workspaces.json) documents.
+
+## Agents: MCP and REST
+
+**MCP** exposes a JSON-RPC tool surface per workspace. Tool handlers align with the same operations documented in OpenAPI — choose MCP when the runtime already speaks the protocol; use REST otherwise.
+
+Connector **BOCP** manifests are consumer-neutral: one `connector.yaml` feeds both scheduled ledger sync and direct agent primitives on the reference host ([Connectors (Basis)](/docs/connectors-basis)).
+
+## Governance on the write path
+
+Agent proposals (remember, write-back, merges) become **review items**. Approval triggers validated execution (conflict checks, SHACL, outbox to connectors). Read APIs and MCP search tools do not bypass that gate for production writes.
+
+## Related reading
+
+- [Core concepts](/docs/concepts) — shorter mental model
+- [REST API](/docs/rest-api) — versioning and auth entrypoints
+- [Console tour](/docs/console-tour) — where features appear in the UI

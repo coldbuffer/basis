@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/select.js';
 import { useI18n } from '@/i18n/context.js';
 import { DocsSidebarNav, useProductDocsFlatPages } from '@/components/app/marketing/docs/docs-sidebar-nav.js';
+import { DocsSearchDialog } from '@/components/app/marketing/docs/docs-search-dialog.js';
 import { docsPath, type DocSlug } from '@/modules/docs/lib/product-docs-nav.js';
 
 type DocsShellProps = {
@@ -37,17 +38,21 @@ export function DocsShell({ activeSlug, children }: DocsShellProps) {
     <div className="flex h-dvh max-h-dvh flex-col overflow-hidden bg-background text-foreground">
       <ProductSiteHeader />
       <div className="flex min-h-0 flex-1 border-t border-border">
-        <aside className="w-60 shrink-0 border-r border-border max-lg:hidden">
+        <aside className="flex w-60 shrink-0 flex-col border-r border-border max-lg:hidden">
+          <div className="shrink-0 px-5 pt-5 sm:px-8">
+            <DocsSearchDialog />
+          </div>
           <ScrollShadow
             hideScrollBar
-            className="h-full py-6 pl-5 pr-3 sm:pl-8 sm:pr-4"
+            className="min-h-0 flex-1 py-4 pl-5 pr-3 sm:pl-8 sm:pr-4"
             fadeColor="var(--background)"
           >
             <DocsSidebarNav />
           </ScrollShadow>
         </aside>
         <main className="min-h-0 min-w-0 flex-1 overflow-y-auto px-5 py-8 sm:px-8">
-          <div className="mb-6 lg:hidden">
+          <div className="mb-6 space-y-3 lg:hidden">
+            <DocsSearchDialog />
             <Select
               value={activeSlug ? docsPath(activeSlug) : ''}
               onValueChange={(url) => navigate(url)}

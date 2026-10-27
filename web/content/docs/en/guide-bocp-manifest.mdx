@@ -1,0 +1,67 @@
+---
+title: "Guide: author a BOCP manifest"
+sidebarTitle: "BOCP manifest"
+description: "Ship a minimal provider bundle with auth, one entity action, and LIST operations."
+---
+
+**Goal:** A valid `connector.yaml` with `version: "2.0"`, one **entity** action, and a working **LIST** operation.
+
+Read [BOCP guide](/docs/bocp-guide) first for layers and primitives.
+
+## 1. Bundle layout
+
+```text
+providers/my_saas/
+  connector.yaml
+  # optional: openapi attachment under spec.openapi
+```
+
+Register the provider in your host catalog (Basis: platform connector allowlist + bundle path).
+
+## 2. Minimal `connector.yaml` sketch
+
+```yaml
+version: "2.0"
+service: my_saas
+display_name: My SaaS
+
+auth:
+  modes:
+    - id: api_key
+      fields:
+        - key: api_token
+          label: API token
+          secret: true
+  check:
+    rest:
+      operations:
+        check: { method: GET, path: /v1/me }
+
+actions:
+  - kind: entity
+    id: items
+    display_name: Items
+    rest:
+      operations:
+        list:
+          method: GET
+          path: /v1/items
+```
+
+Adjust paths to your upstream API. Use `{{config.*}}` templates when paths need per-connection scope.
+
+## 3. Validate in the console
+
+1. Create a **connection** under **Connections & sync** with your API token.
+2. Run **CHECK** (connection test) if the UI offers it.
+3. Call **LIST** via connector playground or MCP primitive tools.
+
+## 4. Add MUTATE (optional)
+
+Add `create` / `update` operations under the same action; test write-back through **review** if targeting production ledger sync.
+
+## Normative details
+
+Field names, operation keys, and conformance rules: [BOCP v2.0 specification](/docs/bocp).
+
+Basis host wiring: [Connectors (Basis)](/docs/connectors-basis).

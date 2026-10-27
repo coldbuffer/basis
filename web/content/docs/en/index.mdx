@@ -1,24 +1,56 @@
 ---
 title: "Basis developer documentation"
 sidebarTitle: "Overview"
-description: "Ontology-driven agent context service: evidence ledger, ontologies, declarative connectors, OpenAPI v1, and MCP."
+description: "Ontology-driven agent context: evidence ledger, ontologies, declarative connectors, OpenAPI v1, and MCP."
 ---
 
-## What you can build on
+## Start here
 
-Basis exposes versioned REST under `/api/v1/*`, per-workspace routes under `/api/v1/workspaces/{workspace_id}/*`, and OpenAPI documents at `/openapi/v1.json`. Agents can use HTTP MCP on each workspace.
+Pick a path by role, or run [Quickstart](/docs/quickstart) first if the API and console are not on your machine yet.
 
-- Platform API — users, workspaces, models, audit, settings
-- Workspace API — ingest, ledger, search, graph, ontology, MCP
-- MCP — tool surface aligned with the same operations as OpenAPI
+### Platform operator
 
-## Recommended path
+Deploy Basis, manage users, and wire enterprise login.
 
-Start locally, then read concepts before calling production APIs.
+- [Quickstart](/docs/quickstart) — local API + web console
+- [Authentication](/docs/auth) — sessions, API tokens, organization SSO
+- [Self-host](/docs/deployment) — environment variables and production notes
 
-- [Quickstart](/docs/quickstart) — run API + web console
-- [Concepts](/docs/concepts) — ledger vs projections
-- [REST API](/docs/rest-api) — paths, auth, and surfaces
-- [BOCP](/docs/bocp) — connector manifest protocol (external systems)
-- [Connectors (Basis)](/docs/connectors-basis) — how Basis hosts BOCP
-- [API reference](/docs/api-reference) — interactive OpenAPI explorer
+### Knowledge & ontology engineer
+
+Ingest sources, shape meaning, and govern facts in the studio.
+
+- [Console tour](/docs/console-tour) — workspace sidebar map
+- [Core concepts](/docs/concepts) — ledger vs projections
+- [Architecture](/docs/architecture) — how layers fit together
+- [Ontology & mappings](/docs/ontology-and-mappings) — hub, mappings, vocabulary
+- [Governance & review](/docs/governance-and-review) — approval gates
+
+### Integration engineer
+
+Connect external systems and call versioned HTTP APIs.
+
+- [REST API](/docs/rest-api) — `/api/v1`, OpenAPI surfaces, auth models
+- [Connectors overview](/docs/connectors-overview) — sync vs agent primitives
+- [BOCP guide](/docs/bocp-guide) — connector manifests in plain language
+- [Connectors (Basis)](/docs/connectors-basis) — how the reference host runs BOCP
+
+### AI / agent engineer
+
+Mount a workspace into Cursor or any MCP-capable runtime.
+
+- [MCP](/docs/mcp) — tokens, MCP URL, Bearer credentials
+- [Agent workflows](/docs/agent-workflows) — search, remember, review loop
+- [API reference](/docs/api-reference) — interactive OpenAPI explorer (`/swagger`)
+
+### Task guides
+
+- [First ingest](/docs/guide-first-ingest) · [MCP in Cursor](/docs/guide-mcp-cursor) · [Enterprise SSO](/docs/guide-enterprise-sso) · [Export & reset](/docs/guide-export-backup)
+
+## Surfaces you can rely on
+
+- **Platform API** — users, workspaces, models, audit, settings (`/api/v1/*` outside workspace scope)
+- **Workspace API** — ingest, ledger, search, graph, ontology, connectors (`/api/v1/workspaces/{workspace_id}/*`)
+- **MCP** — same operations as OpenAPI, scoped per workspace over HTTP JSON-RPC
+
+Normative HTTP contracts: [`/openapi/v1.json`](/openapi/v1.json), [`/openapi/v1/platform.json`](/openapi/v1/platform.json), [`/openapi/v1/workspaces.json`](/openapi/v1/workspaces.json).

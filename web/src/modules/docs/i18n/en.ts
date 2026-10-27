@@ -11,5 +11,8 @@ export default {
     not_found_body: "No documentation page matches {path}. It may have moved, or the link may be wrong.",
     not_found_back: "Documentation overview",
     not_found_quickstart: "Quickstart",
+    search_title: "Search documentation",
+    search_placeholder: "Search docs…",
+    search_empty: "No matching pages.",
   },
 } as const;

@@ -10,4 +10,10 @@ MCP tools map to the same operations as OpenAPI v1. Prefer MCP when the client a
 
 ## Setup outline
 
-Open Integration under System in the workspace sidebar: create an access token on the Access tokens tab and copy the MCP URL on the MCP tab. Configure your agent host with the token as Bearer credentials.
+Open **Integration** under **System** in the workspace sidebar (`/workspaces/{workspace_id}/integration`). The page has three tabs — **MCP** (default), **OpenAPI**, and **Access tokens**:
+
+1. On **Access tokens**, create a workspace token (owners/admins).
+2. On **MCP**, copy the HTTP MCP URL and optional Cursor config snippet.
+3. In your agent host, send `Authorization: Bearer <token>` on MCP (and REST) calls.
+
+Cursor-specific steps: [Guide: MCP in Cursor](/docs/guide-mcp-cursor). Typical read/write loops: [Agent workflows](/docs/agent-workflows).

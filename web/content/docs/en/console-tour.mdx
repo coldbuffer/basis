@@ -1,0 +1,66 @@
+---
+title: "Workspace console tour"
+sidebarTitle: "Console tour"
+description: "How the studio sidebar is grouped — explore, knowledge, schema, govern, and system."
+---
+
+The signed-in **studio** is organized around one workspace at a time. Routes look like `/workspaces/{workspace_id}/…`. The sidebar follows five zones (top to bottom).
+
+## Explore
+
+Read and navigate the evidence projection.
+
+| Area | Route segment | Typical tasks |
+|------|---------------|---------------|
+| Graph | `graph` | Force-directed projection, temporal scrubber, archived nodes |
+| Graph diff | `graph-diff` | Compare versions, staging merges |
+| Search | `search` | Hybrid chunk search, graph-linked results |
+| Entities | `entities` | Ledger entity browser, invalidate vs delete |
+
+## Knowledge
+
+Bring data in and keep connectors in sync.
+
+| Area | Route segment | Typical tasks |
+|------|---------------|---------------|
+| Sources | `sources` | Upload documents, connector-driven ingest |
+| Processing | `processing` | Ingest jobs, failures, deep links by job id |
+| Connections & sync | `connectors` | BOCP connections, table mappings, sync |
+
+## Schema
+
+Define meaning and run analysis.
+
+| Area | Route segment | Typical tasks |
+|------|---------------|---------------|
+| Ontology | `ontology` | Hub editor, proposals, versions, statement mappings tab |
+| Vocabulary | `vocabulary` | Terms and alignments |
+| Analyze | `analyze` | Rules, reasoning trials, integration hints |
+
+## Govern
+
+Quality, human review, and traceability.
+
+| Area | Route segment | Typical tasks |
+|------|---------------|---------------|
+| Data quality | `quality` | Scans, governance configuration |
+| Review | `review` | Approve merges, imports, remember proposals, write-backs |
+| Activity log | `log` | Decisions and change narrative |
+| Lineage | `lineage` | Provenance across artifacts |
+
+## System
+
+Integration credentials and workspace lifecycle.
+
+| Area | Route segment | Typical tasks |
+|------|---------------|---------------|
+| Integration | `integration` | MCP URL, OpenAPI export hints, API tokens |
+| Settings | `settings` | Members, graph overview, export pack, dangerous actions (reset) |
+
+Platform administration (users, org SSO, connector allowlist) lives under **`/admin/*`**, not inside a workspace.
+
+## Next steps
+
+- [Core concepts](/docs/concepts) — why graph and search are projections
+- [MCP](/docs/mcp) — expose this workspace to an agent host
+- [Connectors (Basis)](/docs/connectors-basis) — BOCP in the console

@@ -21,7 +21,7 @@ export default {
       },
       "2": {
         label: "声明式连接器",
-        to: "/docs/bocp",
+        to: "/docs/bocp-guide",
       },
       "3": {
         label: "OpenAPI + MCP",
@@ -45,7 +45,7 @@ export default {
         protocol: "BOCP Engine · DB & SaaS",
         body: "内置关系型数据库直连与声明式 SaaS 连接器，自动探测表结构、增量同步并映射为统一业务对象。",
         code: "BOCP discover_schema() → sync_stream(watermark, row_hash)",
-        href: "/docs/bocp",
+        href: "/docs/bocp-guide",
       },
       "2": {
         index: "03",

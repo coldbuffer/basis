@@ -1,0 +1,37 @@
+---
+title: "生产检查清单"
+sidebarTitle: "生产清单"
+description: "PostgreSQL、TLS、备份与发布实践。"
+---
+
+在完成 [私有化部署](/docs/deployment) 后使用。
+
+## 数据
+
+- [ ] `BASIS_DATABASE_URL` 使用 **PostgreSQL**
+- [ ] `BASIS_DATA_DIR` 持久卷（blob、图谱文件）
+- [ ] 定期**数据库备份**与恢复演练
+- [ ] blob 目录纳入备份
+
+## 网络
+
+- [ ] 生产 **HTTPS**
+- [ ] `/api` 与 WebSocket 反代正确
+- [ ] IdP 回调与对外 URL 一致（[企业 SSO](/docs/guide-enterprise-sso)）
+
+## 安全
+
+- [ ] 定期轮换 API 令牌
+- [ ] 按需限制 `/admin` 访问
+- [ ] 阅读 [安全](/docs/security)
+
+## 运维
+
+- [ ] 发布时执行数据库迁移（见发行说明）
+- [ ] 监控健康与摄入/重置作业队列
+- [ ] 固定镜像 tag（`docker/production/README.md`）
+
+## 破坏性变更前
+
+- [ ] [导出包](/docs/guide-export-backup)
+- [ ] 确认重置 **scopes**

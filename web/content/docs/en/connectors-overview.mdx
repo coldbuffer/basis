@@ -1,0 +1,36 @@
+---
+title: "Connectors overview"
+sidebarTitle: "Connectors overview"
+description: "BOCP manifests, connections, ledger sync, and agent primitives on one host."
+---
+
+External systems attach to Basis through **BOCP** provider bundles (`connector.yaml`). The manifest is written once; the host exposes it to two consumers:
+
+| Consumer | Purpose | Typical entry |
+|----------|---------|----------------|
+| **Ledger / ontology** | Scheduled or manual **sync** into the evidence ledger; table mappings; approved **write-back** | Console **Connections & sync**, ingest pipelines |
+| **Agents** | **LIST / MUTATE / INVOKE** without configuring a mapping row for every call | Workspace **MCP** and `invoke-primitive` HTTP |
+
+Same runtime primitives power both paths — no forked OpenAPI per vendor endpoint.
+
+## Artifacts
+
+| Artifact | Owner | Contains secrets? |
+|----------|-------|-------------------|
+| Provider bundle | Connector author | No — only auth *fields* and `operations` |
+| Connection | Workspace user/admin | Yes — tokens, DSN, `connection_config` |
+| Table mapping | Data engineer | No — links action + scope to ledger projection |
+| Primitive call | Job or agent | Uses connection + `action_params` |
+
+## Console surfaces
+
+- **Knowledge → Connections & sync** — catalog, connections, mappings, sync status.
+- **Admin → Connectors** (platform) — which provider bundles are allowed.
+- **Integration → OpenAPI** — export and connector-related HTTP hints.
+
+## Read next
+
+- [BOCP guide](/docs/bocp-guide) — manifest mental model
+- [BOCP specification](/docs/bocp) — normative v2.0
+- [Connectors (Basis)](/docs/connectors-basis) — reference host paths and MCP tool patterns
+- [Guide: BOCP manifest](/docs/guide-bocp-manifest) — author a minimal provider

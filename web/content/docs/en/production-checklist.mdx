@@ -1,0 +1,37 @@
+---
+title: "Production checklist"
+sidebarTitle: "Production checklist"
+description: "PostgreSQL, TLS, backups, and release practices for self-hosted Basis."
+---
+
+Use this after [Self-host](/docs/deployment) compose or your own Kubernetes manifests.
+
+## Data plane
+
+- [ ] `BASIS_DATABASE_URL` points to managed **PostgreSQL** (not SQLite)
+- [ ] `BASIS_DATA_DIR` on durable volume for blobs and graph artifacts
+- [ ] Regular **database backups** and restore drill
+- [ ] Blob directory included in backup scope
+
+## Network
+
+- [ ] TLS termination at reverse proxy or ingress
+- [ ] Same-origin or correct `VITE_BASIS_API_URL` / proxy for `/api` and WebSockets
+- [ ] IdP callback URLs match public site URL ([Enterprise SSO](/docs/guide-enterprise-sso))
+
+## Security
+
+- [ ] Rotate workspace and platform API tokens on schedule
+- [ ] Restrict admin routes to trusted networks if required
+- [ ] Review [Security](/docs/security) notes
+
+## Operations
+
+- [ ] Run Alembic migrations on deploy (`basis` packaging includes upgrade entrypoints — follow release notes)
+- [ ] Monitor API health and job queue depth (ingest / workspace reset jobs)
+- [ ] Pin container image tag (`ghcr.io/.../basis:v*`) — see `docker/production/README.md`
+
+## Before destructive changes
+
+- [ ] [Export pack](/docs/guide-export-backup) from workspace settings
+- [ ] Confirm reset **scopes** if using workspace reset

@@ -1,18 +1,51 @@
 ---
-title: "私有化部署与配置"
+title: "私有化部署"
 sidebarTitle: "私有化部署"
-description: "环境变量与生产部署要点。"
+description: "本地开发、Docker 生产 compose 与反代说明。"
 ---
 
-## 常用配置
+## 本地开发
 
-生产环境常见项：
+两个进程（见 [快速开始](/docs/quickstart)）：
 
-- `BASIS_HOST` / `BASIS_PORT` — API 监听
-- `BASIS_DATA_DIR` — SQLite、blob、图谱 JSON（默认）
-- `BASIS_DATABASE_URL` — 生产 PostgreSQL
-- `VITE_BASIS_API_URL` — 非同源时浏览器 API 基址
+1. **API** — 仓库根：`uv run basis`（默认 `:8090`）
+2. **Web** — `web/`：`npm run dev`（默认 `:5173`，经 `BASIS_API_URL` 代理 API）
 
-## 反向代理
+环境变量见 [配置参考](/docs/configuration)。
 
-托管 Web 静态资源，并将 `/api`、`/openapi` 与 WebSocket 转发到 API。示例见仓库 `docker/production/`。
+## Docker 生产（推荐）
+
+单镜像内 **API + Hono Web**，**PostgreSQL** + `BASIS_DATA_DIR` 卷。
+
+```bash
+cd docker/production
+cp .env.example .env
+docker compose -f compose.yml up -d --build
+```
+
+浏览器访问 `http://localhost:8080`（或 `BASIS_HTTP_PORT`）。首个注册用户为平台管理员。
+
+```text
+浏览器 → :8080 (Hono)
+           ├─ /           → SPA
+           ├─ /console/*  → BFF
+           └─ /api/*      → 127.0.0.1:8090 (FastAPI)
+```
+
+仅构建镜像：`docker build -f docker/production/Dockerfile -t basis:local .`
+
+细节与 GHCR 标签：仓库 `docker/production/README.md`。
+
+## 自定义反代
+
+托管静态资源并转发 **`/api`**、**`/openapi`**、**WebSocket**；在 **管理 → 设置 → 登录** 配置对外 URL 以利 SSO。
+
+## 桌面版
+
+见仓库 `desktop/README.md`，与 Docker `v*` 发行分开。
+
+## 下一步
+
+- [生产检查清单](/docs/production-checklist)
+- [安全](/docs/security)
+- [配置参考](/docs/configuration)

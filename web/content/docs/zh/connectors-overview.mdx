@@ -1,0 +1,36 @@
+---
+title: "连接器概览"
+sidebarTitle: "连接器概览"
+description: "BOCP Manifest、连接、账本同步与 Agent 原语。"
+---
+
+外部系统通过 **BOCP** 提供方包（`connector.yaml`）接入。Manifest 只写一次，宿主暴露给两类消费者：
+
+| 消费者 | 用途 | 入口 |
+|--------|------|------|
+| **账本 / 本体** | 同步进证据账本；表映射；审批后写回 | **连接与同步**、摄入流水线 |
+| **智能体** | **LIST / MUTATE / INVOKE**，无需为每次调用配置映射行 | 工作区 **MCP**、`invoke-primitive` HTTP |
+
+同一套运行时原语，不按厂商拆多套 OpenAPI。
+
+## 制品
+
+| 制品 | 归属 | 含密钥？ |
+|------|------|----------|
+| 提供方包 | 连接器作者 | 否 |
+| 连接 | 工作区用户/管理员 | 是 |
+| 表映射 | 数据工程师 | 否 |
+| 原语调用 | 任务或 Agent | 使用连接 + `action_params` |
+
+## 控制台
+
+- **知识 → 连接与同步**
+- **管理 → 连接器**（平台白名单）
+- **集成 → OpenAPI**
+
+## 延伸阅读
+
+- [BOCP 导读](/docs/bocp-guide)
+- [BOCP 规范](/docs/bocp)
+- [连接器（Basis）](/docs/connectors-basis)
+- [指南：BOCP Manifest](/docs/guide-bocp-manifest)
