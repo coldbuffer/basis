@@ -69,7 +69,7 @@ flowchart TB
     agents["Agents & automation"]
   end
 
-  subgraph apiLayer["basis/interface/http · FastAPI"]
+  subgraph apiLayer["basis/routes · basis/http · FastAPI"]
     rest["OpenAPI v1 · REST"]
     mcp["MCP · JSON-RPC over HTTP"]
   end
@@ -278,9 +278,9 @@ cd web && CI=1 npm run test:e2e   # optional, Playwright + API
 
 Emergency bypass: `git push --no-verify` or `BASIS_SKIP_PREPUSH=1 git push`. Full CI still runs on GitHub.
 
-Layout for contributors is `basis/interface`, `application`, `domain`, and `infra`. See [AGENTS.md](AGENTS.md). Script index: [scripts/README.md](scripts/README.md).
+Layout for contributors is `basis/routes`, `http`, `mcp`, `services`, and `infra`. See [AGENTS.md](AGENTS.md). Script index: [scripts/README.md](scripts/README.md).
 
-**Schema migrations:** Alembic (`alembic.ini`); runtime and CLI use `BASIS_DATABASE_URL` when set. See [basis/infra/tooling/db/README.md](basis/infra/tooling/db/README.md).
+**Schema migrations:** Alembic (`alembic.ini`); runtime and CLI use `BASIS_DATABASE_URL` when set. See [basis/infra/db/README.md](basis/infra/db/README.md).
 
 ## Deployment
 
@@ -291,7 +291,7 @@ One product stack (API + studio). Pick **where** it runs. The **OpenAPI v1** and
 **Local client** (Electron) for a single machine: API sidecar + studio, data under `~/.basis`, optional **no-login** desktop profile for personal use.
 
 - **Develop:** `cd desktop && npm install && npm run dev`. See [desktop/README.md](desktop/README.md) for packaging and macOS/Windows builds.
-- **Profile:** `BASIS_DEPLOYMENT_PROFILE=desktop` (see `profiles/profile.desktop.yaml`).
+- **Profile:** `BASIS_DEPLOYMENT_PROFILE=desktop` (see `contracts/profiles/profile.desktop.yaml`).
 
 Do not run a dev API and an installed desktop app at once. They share `~/.basis/basis.db`.
 

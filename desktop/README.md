@@ -60,7 +60,7 @@ Web Desktop 产品 e2e（CI `e2e-desktop`）：在 `web/` 下
 
 ## Profile
 
-`profiles/profile.desktop.yaml` — API `server.port: 0`；数据 `~/.basis`；桌面 `auth.enabled: false`。
+`contracts/profiles/profile.desktop.yaml` — API `server.port: 0`；数据 `~/.basis`；桌面 `auth.enabled: false`。
 
 ## CI 发布（GitHub Release，与 Docker 分开）
 

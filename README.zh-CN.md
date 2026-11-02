@@ -69,7 +69,7 @@ flowchart TB
     agents["智能体与自动化"]
   end
 
-  subgraph apiLayer["basis/interface/http · FastAPI"]
+  subgraph apiLayer["basis/routes · basis/http · FastAPI"]
     rest["OpenAPI v1 · REST"]
     mcp["MCP · JSON-RPC over HTTP"]
   end
@@ -269,7 +269,9 @@ cd web && npm run typecheck && npm test
 cd web && CI=1 npm run test:e2e   # 可选，Playwright + API
 ```
 
-贡献者包结构为 `basis/interface`、`application`、`domain`、`infra`。见 [AGENTS.md](AGENTS.md)。
+贡献者包结构为 `basis/routes`、`http`、`mcp`、`services`、`infra`。见 [AGENTS.md](AGENTS.md)。
+
+**Schema 迁移：** Alembic（`alembic.ini`）；运行时与 CLI 在配置 `BASIS_DATABASE_URL` 时使用它。见 [basis/infra/db/README.md](basis/infra/db/README.md)。
 
 ## 部署方式
 
@@ -280,7 +282,7 @@ cd web && CI=1 npm run test:e2e   # 可选，Playwright + API
 **本机 Electron 应用**内嵌 API 与工作台，数据目录为 `~/.basis`。桌面配置可**免登录**，适合个人单机使用。
 
 - **开发：** `cd desktop && npm install && npm run dev`，打包与 macOS/Windows 说明见 [desktop/README.md](desktop/README.md)。
-- **配置：** `BASIS_DEPLOYMENT_PROFILE=desktop`（见 `profiles/profile.desktop.yaml`）。
+- **配置：** `BASIS_DEPLOYMENT_PROFILE=desktop`（见 `contracts/profiles/profile.desktop.yaml`）。
 
 勿与已安装的桌面版同时跑开发 API。二者共用 `~/.basis/basis.db`。
 
