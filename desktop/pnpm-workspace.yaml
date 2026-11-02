@@ -1,0 +1,4 @@
+# pnpm 10+ supply-chain: allow native/postinstall scripts required by desktop tooling.
+allowBuilds:
+  electron-winstaller: true
+  sharp: true

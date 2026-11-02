@@ -1,6 +1,6 @@
 # Basis Desktop (ADR 0004)
 
-开发：仓库根目录或本目录 `npm run dev`（API + Vite :3001 + Electron）。
+开发：仓库根目录或本目录 `npm run dev`（API + Vite :3002 + Electron）。
 
 打包对齐 Fellow `@fellow/desktop`：`build:desktop` → `stage:api` → `verify:release-resources` → `electron-builder`。
 
@@ -9,6 +9,8 @@
 ```bash
 cd desktop && npm install && npm run dev
 ```
+
+（若用 **pnpm**：先 `cd web && npm install` 供 Vite；再在 `desktop` 执行 `pnpm install && pnpm run dev`。`pnpm-workspace.yaml` 须允许 `sharp` 等 build scripts，勿保留 `approve-builds` 占位符。）
 
 不要在 `web/` 单独跑 `dev:desktop` 指望出现 Electron——那只是 Vite。
 
