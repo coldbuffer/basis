@@ -1,7 +1,7 @@
 import { createBasisSessionClient } from '@/lib/openapi/transport.js';
 
 import { basisApiBaseUrl } from '@/lib/openapi/basis-api-url.js';
-import { getToken } from '@/lib/auth/auth-token.js';
+import { getToken } from '@/lib/session/auth-token.js';
 import { ensureRequestIdHeader } from '@/lib/workspace/request-id.js';
 
 let _client: ReturnType<typeof createBasisSessionClient> | null = null;

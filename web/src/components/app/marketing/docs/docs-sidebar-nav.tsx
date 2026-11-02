@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 
 import { useI18n } from '@/i18n/context.js';
-import { productDocsPageTree } from '@/modules/docs/lib/product-docs-source.js';
+import { productDocsPageTree } from '@/modules/public/docs/lib/product-docs-source.js';
 import { cn } from '@/lib/utils.js';
 
 import type { Node, Separator as SeparatorNode } from 'fumadocs-core/page-tree';

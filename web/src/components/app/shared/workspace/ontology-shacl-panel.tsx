@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils.js';
 import { wsPage } from '@/lib/ui-classes/console-ws.js';
 
 const ShaclStudio = lazy(() =>
-  import('@/modules/ontology/components/shacl-studio.js').then((module) => ({
+  import('@/modules/workspace/ontology/components/shacl-studio.js').then((module) => ({
     default: module.ShaclStudio,
   })),
 );

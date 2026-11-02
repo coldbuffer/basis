@@ -11,7 +11,7 @@ from dataclasses import replace
 import uvicorn
 
 from basis.infra.runtime.config import Settings
-from basis.infra.runtime.observability.logging_setup import uvicorn_log_config
+from basis.infra.observability.logging_setup import uvicorn_log_config
 
 
 def _allocate_listen_port(host: str, port: int) -> int:
@@ -30,7 +30,7 @@ def _cmd_serve(settings: Settings) -> None:
     os.environ["BASIS_LISTEN_PORT_RESOLVED"] = "1"
     os.environ["BASIS_PORT"] = str(listen_port)
     uvicorn.run(
-        "basis.interface.http.app:create_app",
+        "basis.app:create_app",
         host=settings.host,
         port=listen_port,
         factory=True,
@@ -39,11 +39,11 @@ def _cmd_serve(settings: Settings) -> None:
 
 
 def _cmd_migrate_legacy_graphs(settings: Settings, args: argparse.Namespace) -> None:
-    from basis.domain.tenancy.admin.store import AdminStore
-    from basis.domain.graph.projection.snapshot_store import GraphPersistence
-    from basis.domain.knowledge.blob_store import BlobStore
-    from basis.domain.knowledge.store import KnowledgeStore
-    from basis.infra.tooling.migration.legacy_graph import migrate_all_legacy_graphs, print_reports
+    from basis.services.tenancy.admin.store import AdminStore
+    from basis.services.graph.projection.snapshot_store import GraphPersistence
+    from basis.services.knowledge.blob_store import BlobStore
+    from basis.services.knowledge.store import KnowledgeStore
+    from basis.infra.migration.legacy_graph import migrate_all_legacy_graphs, print_reports
 
     admin = AdminStore(settings.db_path)
     try:
@@ -72,8 +72,8 @@ def _cmd_migrate_legacy_graphs(settings: Settings, args: argparse.Namespace) -> 
 def _cmd_postgres_reset_schema(settings: Settings) -> None:
     from sqlalchemy import create_engine
 
-    from basis.infra.tooling.db.alembic_upgrade import upgrade_postgres_engine
-    from basis.infra.tooling.db.postgres_migrations import reset_postgres_public_schema
+    from basis.infra.db.alembic_upgrade import upgrade_postgres_engine
+    from basis.infra.db.postgres_migrations import reset_postgres_public_schema
 
     url = settings.database_url
     if not url or not url.startswith("postgres"):
@@ -90,7 +90,7 @@ def _cmd_postgres_reset_schema(settings: Settings) -> None:
 
 
 def _cmd_migrate_postgres(settings: Settings, args: argparse.Namespace) -> None:
-    from basis.infra.tooling.migration.sqlite_to_postgres import migrate_sqlite_to_postgres
+    from basis.infra.migration.sqlite_to_postgres import migrate_sqlite_to_postgres
 
     report = migrate_sqlite_to_postgres(
         settings.db_path,

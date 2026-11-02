@@ -10,9 +10,9 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
 WEB_SRC = REPO / "web" / "src"
-OPENAPI = REPO / "openapi" / "basis-v1.json"
-OUT_JSON = REPO / "openapi" / "web-openapi-operation-audit.json"
-OUT_MD = REPO / "openapi" / "web-openapi-operation-audit.md"
+OPENAPI = REPO / "contracts" / "openapi" / "basis-v1.json"
+OUT_JSON = REPO / "contracts" / "openapi" / "web-openapi-operation-audit.json"
+OUT_MD = REPO / "contracts" / "openapi" / "web-openapi-operation-audit.md"
 
 # Helpers → OpenAPI path templates (from web path utilities)
 HELPER_PATTERNS: list[tuple[str, str]] = [

@@ -2,14 +2,14 @@ import { Link } from 'react-router-dom';
 import {
   proposalIdFromGraphAuditDetail,
   reviewItemIdFromGraphAuditDetail,
-} from '@/modules/graph/lib/graph-audit.js';
+} from '@/modules/workspace/graph/lib/graph-audit.js';
 import { useI18n } from '@/i18n/context.js';
 import { workspaceOntologyProposalPath } from '@/lib/nav/nav-config.js';
 import {
   decisionIdFromDetail,
   reviewDecisionPath,
   reviewItemPath,
-} from '@/modules/review/lib/review-url-state.js';
+} from '@/modules/workspace/review/lib/review-url-state.js';
 
 const linkClass =
   'inline-block text-[11px] text-foreground underline-offset-2 hover:underline';

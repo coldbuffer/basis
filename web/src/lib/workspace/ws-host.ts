@@ -2,7 +2,7 @@ import type { WorkspaceHttpConfig } from '@/lib/workspace/ws-http.js';
 import { fmt } from '@/i18n/format.js';
 import { localeFromBrowser, type Locale } from '@/i18n/locale.js';
 import { messagesForLocale } from '@/i18n/pick-locale.js';
-import { getToken } from '@/lib/auth/auth-token.js';
+import { getToken } from '@/lib/session/auth-token.js';
 import type { ApiErrorWithMeta } from '@/lib/errors/api-error.js';
 import { errorFromApiResponse } from '@/lib/errors/api-error.js';
 import { workspaceApiRoot } from '@/lib/workspace/api-path.js';

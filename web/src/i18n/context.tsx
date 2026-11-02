@@ -7,7 +7,7 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { getStoredLocale, setStoredLocale } from '@/lib/i18n/preferences.js';
+import { getStoredLocale, setStoredLocale } from '@/i18n/preferences.js';
 import { LOCALE_HTML_LANG, type Locale } from './locale.js';
 import { en, type LocaleMessages } from './en.js';
 import { zh } from './zh.js';

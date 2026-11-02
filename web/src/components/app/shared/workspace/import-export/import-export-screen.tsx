@@ -12,7 +12,7 @@ import {
   workspaceOpenApiGET,
   workspaceOpenApiResponse,
 } from '@/lib/openapi/client.js';
-import { logEvent } from '@/modules/graph/lib/registry-store.js';
+import { logEvent } from '@/modules/workspace/graph/lib/plugins/registry-store.js';
 import { cn } from "@/lib/utils.js";
 import {
   exWsCardTitleRow,
@@ -45,11 +45,11 @@ import {
 import {
   formatGraphExportNodeIds,
   parseGraphExportNodeIds,
-} from "@/modules/graph/lib/parse-graph-export-node-ids.js";
+} from "@/modules/workspace/graph/lib/parse-graph-export-node-ids.js";
 import {
   buildGraphAuditPack,
   triggerJsonFileDownload,
-} from "@/modules/graph/lib/graph-audit-pack.js";
+} from "@/modules/workspace/graph/lib/graph-audit-pack.js";
 
 interface Toast {
   id: number;

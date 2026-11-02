@@ -15,6 +15,9 @@ FORBIDDEN_PREFIXES = (
     "basis.integration",
     "basis.platform",
     "basis.ops",
+    "basis.interface",
+    "basis.application",
+    "basis.domain",
     # Pre-layered layout (v2)
     "basis.api",
     "basis.delivery",
@@ -23,8 +26,8 @@ FORBIDDEN_PREFIXES = (
     "basis.application.mcp",
     "basis.application.registry",
     "basis.application.operation_registry",
-    "basis.interface.contract.mcp.openapi",
-    "basis.interface.contract.mcp.annotations",
+    "basis.mcp.openapi",
+    "basis.mcp.annotations",
     "basis.core",
     "basis.control",
     "basis.runtime",
@@ -33,9 +36,9 @@ FORBIDDEN_PREFIXES = (
     "basis.core.kb",
     "basis.core.ingest",
     "basis.core.graph",
-    "basis.domain.tenancy.auth",
-    "basis.domain.tenancy.models",
-    "basis.domain.graph.projection.ontology_legacy",
+    "basis.services.tenancy.auth",
+    "basis.services.tenancy.models",
+    "basis.services.graph.projection.ontology_legacy",
 )
 
 SKIP_FILES = frozenset({"basis/_legacy_imports.py"})

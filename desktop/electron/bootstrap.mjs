@@ -33,7 +33,7 @@ export async function bootstrapDesktopShell() {
     webUrl = url;
   }
   if (!webUrl) {
-    webUrl = 'http://127.0.0.1:3001';
+    webUrl = 'http://127.0.0.1:3002';
     await waitForHttp(webUrl, 5_000).catch(() => {
       throw new Error('Dev renderer not running. Use `cd desktop && npm run dev` or set BASIS_DESKTOP_WEB_URL.');
     });

@@ -3,7 +3,7 @@
 
 postgres:
   # Admin URL for CREATEDB / ephemeral test databases. Matches CI postgres service and
-  # `docker compose -f compose.postgres.yml` (connect to the `postgres` maintenance DB).
+  # `docker compose -f docker/compose.postgres.yml` (connect to the `postgres` maintenance DB).
   admin_url: postgresql://basis:basis@127.0.0.1:5432/postgres
   # Optional writable target for BOCP SQL connector tests when CREATEDB is denied.
   # sql_target_url: postgresql://basis:basis@127.0.0.1:5432/basis

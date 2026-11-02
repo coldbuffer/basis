@@ -197,7 +197,7 @@ cd web && npm install && npm run dev
 
 详见 [.env.example](.env.example)。
 
-**PostgreSQL：** `docker compose -f compose.postgres.yml up -d`，  
+**PostgreSQL：** `docker compose -f docker/compose.postgres.yml up -d`，  
 `BASIS_DATABASE_URL=postgresql://basis:basis@127.0.0.1:5432/basis`（宿主机端口 **5432**）。
 
 **备份：** `./scripts/ops/backup_basis_data.sh`（SQLite）或 `./scripts/ops/backup_basis_postgres.sh`（Postgres）。
@@ -264,7 +264,7 @@ curl -sS "http://127.0.0.1:8090/api/v1/workspaces/YOUR_WORKSPACE_ID" \
 
 ```bash
 uv run pytest -q
-uv run lint-imports --config importlinter.ini
+uv run lint-imports
 cd web && npm run typecheck && npm test
 cd web && CI=1 npm run test:e2e   # 可选，Playwright + API
 ```
@@ -289,7 +289,7 @@ cd web && CI=1 npm run test:e2e   # 可选，Playwright + API
 由**你方运维**（内网、专有云或隔离环境均可）。平台账号、组织 SSO、工作区与备份策略由你方自控。
 
 - **本地试用：** [快速开始](#快速开始)（`uv run basis` + `npm run dev`，SQLite）。
-- **生产：** PostgreSQL（`compose.postgres.yml`）、配置 `BASIS_DATABASE_URL`、反向代理 TLS 并固定发布版本。见 [配置（常用）](#配置常用)。
+- **生产：** PostgreSQL（`docker/compose.postgres.yml`）、配置 `BASIS_DATABASE_URL`、反向代理 TLS 并固定发布版本。见 [配置（常用）](#配置常用)。
 
 ### 托管云（SaaS）
 

@@ -17,7 +17,7 @@ def test_web_operation_id_audit_generates() -> None:
         check=False,
     )
     assert result.returncode == 0, result.stderr or result.stdout
-    data = json.loads((root / "openapi/web-openapi-operation-audit.json").read_text())
+    data = json.loads((root / "contracts/openapi/web-openapi-operation-audit.json").read_text())
     entries = data.get("entries") or []
     assert len(entries) >= 40
     scorable = [

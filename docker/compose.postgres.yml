@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_DB: basis
+      POSTGRES_USER: basis
+      POSTGRES_PASSWORD: basis
+    ports:
+      - "5432:5432"
+    volumes:
+      - basis_postgres_data:/var/lib/postgresql/data
+      - ./postgres/init-extensions.sql:/docker-entrypoint-initdb.d/01-extensions.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U basis -d basis"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  basis_postgres_data:

@@ -43,9 +43,9 @@ jobs:
 
       - name: PostgreSQL integration and backup restore
         run: >-
-          uv run pytest tests/integration/test_postgres_integration.py
-          tests/integration/test_postgres_backup_restore.py
-          tests/integration/test_sql_connector_integration.py::test_sql_connector_postgres_check_discover_read_mutate
+          uv run pytest tests/integration/tenancy/test_postgres_integration.py
+          tests/integration/tenancy/test_postgres_backup_restore.py
+          tests/integration/connector/test_sql_connector_integration.py::test_sql_connector_postgres_check_discover_read_mutate
           -q
 
   openapi:
@@ -68,7 +68,7 @@ jobs:
         run: uv run python scripts/openapi/generate-openapi-v1.py --data-dir /tmp/basis-openapi-gen
 
       - name: Fail on OpenAPI drift
-        run: git diff --exit-code openapi/
+        run: git diff --exit-code contracts/openapi/
 
       - uses: actions/setup-node@v4
         with:
@@ -77,7 +77,8 @@ jobs:
       - name: Spectral lint OpenAPI v1
         run: >-
           npx --yes @stoplight/spectral-cli@6.15.0 lint
-          openapi/basis-v1.json openapi/basis-v1-workspaces.json openapi/basis-v1-platform.json
+          --ruleset contracts/openapi/.spectral.yaml
+          contracts/openapi/basis-v1.json contracts/openapi/basis-v1-workspaces.json contracts/openapi/basis-v1-platform.json
 
       - name: Web ↔ OpenAPI path audit (S0)
         run: node scripts/audit/audit-web-openapi-paths.mjs
@@ -120,7 +121,7 @@ jobs:
         run: uv run python scripts/audit/audit-test-naming.py
 
       - name: Layer import contracts (import-linter)
-        run: uv run lint-imports --config importlinter.ini
+        run: uv run lint-imports
 
       - name: Line 1 import guards (explorer legacy)
         run: |
@@ -131,6 +132,7 @@ jobs:
           uv run python scripts/audit/audit-knowledge-connector-imports.py
           uv run python scripts/audit/audit-knowledge-persistence-stubs.py
           uv run python scripts/audit/audit-knowledge-persistence-imports.py
+          uv run python scripts/audit/audit-ontology-persistence-stubs.py
           uv run python scripts/audit/audit-compat-shim-imports.py
           uv run python scripts/audit/audit-legacy-package-imports.py
           uv run python scripts/audit/audit-workspace-http-aggregators.py
@@ -147,10 +149,10 @@ jobs:
       - name: Explorer compat session (default BasisGraphSession)
         run: >-
           uv run pytest -q
-          tests/integration/test_basis_graph_session.py
-          tests/integration/test_graph_session_registry.py
-          tests/integration/test_workspace_ontology.py
-          tests/integration/test_graph_session_routes.py
+          tests/integration/graph/test_basis_graph_session.py
+          tests/integration/graph/test_graph_session_registry.py
+          tests/integration/ontology/test_workspace_ontology.py
+          tests/integration/graph/test_graph_session_routes.py
 
       - name: Run tests
         run: uv run pytest -q

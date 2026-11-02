@@ -18,16 +18,28 @@ REMOVED_SHIM_FILES = (
     "basis/transport/http/openapi_v1_export.py",
     "basis/transport/http/openapi_spec.py",
     "basis/transport/http/ingest_tasks.py",
+    "basis/services/knowledge/connector_sync.py",
+    "basis/domain/graph/projection/persistence.py",
+    "basis/services/tenancy/admin/org_store.py",
+    "basis/services/tenancy/admin/desktop_store_mixin.py",
+    "basis/services/tenancy/admin/errors.py",
+    "basis/services/knowledge/services/conflict_review.py",
 )
 
 # If these paths are imported from ``basis/`` or ``tests/``, CI fails.
 FORBIDDEN_IMPORT_PREFIXES = (
-    "basis.domain.tenancy.admin.migrations",
-    "basis.domain.tenancy.admin.postgres_migrations",
-    "basis.domain.tenancy.admin.org_backfill",
+    "basis.services.tenancy.admin.migrations",
+    "basis.services.tenancy.admin.postgres_migrations",
+    "basis.services.tenancy.admin.org_backfill",
     "basis.interface.http.openapi_v1_export",
     "basis.interface.http.openapi_spec",
     "basis.interface.http.ingest_tasks",
+    "basis.services.knowledge.connector_sync",
+    "basis.services.graph.projection.persistence",
+    "basis.services.tenancy.admin.org_store",
+    "basis.services.tenancy.admin.desktop_store_mixin",
+    "basis.services.tenancy.admin.errors",
+    "basis.services.knowledge.services.conflict_review",
 )
 
 IMPORT_RE = re.compile(

@@ -4,7 +4,7 @@ import {
   diffGraphNodeFields,
   fetchWorkspaceGraphNode,
   graphNodeFieldMap,
-} from '@/modules/entity-resolution/lib/graph-node-detail.js';
+} from '@/modules/workspace/entity-resolution/lib/graph-node-detail.js';
 import { useI18n } from '@/i18n/context.js';
 import { cn } from '@/lib/utils.js';
 

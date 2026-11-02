@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-HTTP = ROOT / "basis" / "interface" / "http"
+HTTP = ROOT / "basis" / "routes"
 WORKSPACE = HTTP / "workspace"
 MOUNT = WORKSPACE / "mount_workspace.py"
 

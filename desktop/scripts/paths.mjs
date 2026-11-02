@@ -11,4 +11,4 @@ export const apiStageDir = path.join(desktopRoot, '.api-stage');
 
 export const webDistDir = path.join(repoRoot, 'dist', 'web');
 
-export const profilesDir = path.join(repoRoot, 'profiles');
+export const profilesDir = path.join(repoRoot, 'contracts', 'profiles');

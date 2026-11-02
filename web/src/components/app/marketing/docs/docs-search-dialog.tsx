@@ -15,7 +15,7 @@ import { useI18n } from '@/i18n/context.js';
 import {
   productDocsSearchEntries,
   searchProductDocs,
-} from '@/modules/docs/lib/product-docs-search-index.js';
+} from '@/modules/public/docs/lib/product-docs-search-index.js';
 import { cn } from '@/lib/utils.js';
 
 type DocsSearchDialogProps = {

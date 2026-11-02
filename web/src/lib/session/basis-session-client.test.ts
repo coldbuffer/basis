@@ -12,7 +12,7 @@ vi.mock('@/lib/openapi/basis-api-url.js', () => ({
   basisApiBaseUrl: vi.fn(() => ''),
 }));
 
-vi.mock('@/lib/auth/auth-token.js', () => ({
+vi.mock('@/lib/session/auth-token.js', () => ({
   getToken: () => null,
 }));
 

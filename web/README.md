@@ -21,7 +21,7 @@ Vite + React front end for the Basis platform and per-workspace Explorer screens
 | Root | Role |
 |------|------|
 | **`ui/`** | shadcn registry only — update with `npx shadcn add -o`, no hand edits. |
-| **`admin/`** | `/admin/*` UI — layout, section nav, org SSO, access settings; `admin/models/` for model catalog. |
+| **`admin/`** | Shared `/admin/*` layout shell (`platform-admin-layout.tsx`). Per-section admin panels live in `modules/admin-*/components/`. |
 | **`app/`** | Marketing site + cross-product shared UI (`app/shared/`). |
 
 **Dependency:** `admin/` and `app/` may import `ui/` and `app/shared/*`; `ui/` must not import `admin/` or `app/`. Feature routes live in `modules/`; workspace frame in `app/shared/workspace/`.

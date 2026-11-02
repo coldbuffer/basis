@@ -8,11 +8,11 @@ import math
 import random
 from pathlib import Path
 
-from basis.domain.tenancy.admin.store import AdminStore
+from basis.services.tenancy.admin.store import AdminStore
 from basis.infra.runtime.config import Settings
 from basis.infra.runtime.database import get_database
-from basis.domain.knowledge.blob_store import BlobStore
-from basis.domain.knowledge.store import KnowledgeStore
+from basis.services.knowledge.blob_store import BlobStore
+from basis.services.knowledge.store import KnowledgeStore
 
 KB_NAME = "Search Benchmark"
 LEGACY_KB_NAMES = {"Search Benchmark 10k", "Search Benchmark 100k"}

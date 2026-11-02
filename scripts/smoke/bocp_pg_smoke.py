@@ -32,7 +32,7 @@ from typing import Any
 import httpx
 
 from basis.infra.runtime.config import Settings
-from basis.interface.http.app import create_app
+from basis.app import create_app
 
 
 def _issue_owner_token(workspace_id: str) -> str:

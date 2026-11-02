@@ -6,10 +6,10 @@ import json
 
 from fastapi.testclient import TestClient
 
-from basis.application.tool_catalog import TOOL_NAMES
-from basis.application.tool_catalog.catalog import OPERATIONS
-from basis.interface.http.app import create_app
-from basis.interface.mcp.dispatch import get_static_tool_definitions
+from basis.mcp import TOOL_NAMES
+from basis.mcp.catalog import OPERATIONS
+from basis.app import create_app
+from basis.mcp.dispatch import get_static_tool_definitions
 from basis.infra.runtime.config import Settings
 
 

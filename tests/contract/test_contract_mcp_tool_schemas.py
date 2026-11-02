@@ -1,11 +1,11 @@
 """MCP tool list metadata (catalog-owned schemas and descriptions)."""
 
-from basis.application.tool_catalog import TOOL_NAMES
-from basis.application.tool_catalog.catalog import OPERATIONS, mcp_exposed
-from basis.application.tool_catalog.mcp_metadata import MCP_TOOL_METADATA
-from basis.application.tool_catalog.run import description_for_tool, input_schema_for_tool
-from basis.application.tool_catalog.validation import OPERATION_INPUT_MODELS
-from basis.interface.mcp.dispatch import TOOL_DEFINITIONS
+from basis.mcp import TOOL_NAMES
+from basis.mcp.catalog import OPERATIONS, mcp_exposed
+from basis.mcp.mcp_metadata import MCP_TOOL_METADATA
+from basis.mcp.run import description_for_tool, input_schema_for_tool
+from basis.mcp.validation import OPERATION_INPUT_MODELS
+from basis.mcp.dispatch import TOOL_DEFINITIONS
 
 
 def test_every_static_tool_has_pydantic_input_model() -> None:
@@ -48,8 +48,8 @@ def test_list_processing_jobs_schema_has_filters() -> None:
 
 
 def test_reasoning_run_openapi_response_includes_facts_source() -> None:
-    from basis.interface.contract.openapi.spec import _spec_app
-    from basis.interface.contract.openapi.v1_export import export_openapi_v1_workspaces
+    from basis.http.openapi.spec import _spec_app
+    from basis.http.openapi.v1_export import export_openapi_v1_workspaces
 
     spec = export_openapi_v1_workspaces(_spec_app())
     op = spec["paths"]["/api/v1/workspaces/{workspace_id}/reasoning/run"]["post"]
@@ -102,8 +102,8 @@ def test_reject_review_item_schema_merges_path_and_body() -> None:
 
 
 def test_approve_review_openapi_response_includes_decision_id() -> None:
-    from basis.interface.contract.openapi.spec import _spec_app
-    from basis.interface.contract.openapi.v1_export import export_openapi_v1_workspaces
+    from basis.http.openapi.spec import _spec_app
+    from basis.http.openapi.v1_export import export_openapi_v1_workspaces
 
     spec = export_openapi_v1_workspaces(_spec_app())
     op = spec["paths"]["/api/v1/workspaces/{workspace_id}/review/items/{item_id}/approve"]["post"]

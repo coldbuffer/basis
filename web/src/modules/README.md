@@ -6,10 +6,10 @@ Each folder is one **menu / URL capability** (flat peers — no `kb/` or `platfo
 
 | Directory | Required | Role |
 | --- | --- | --- |
-| `index.tsx` | **yes** (module root) | Route entry (`Kb*Page`, `*Page`); lazy-load `@/modules/<segment>/index.js` |
-| `pages/` | **yes** | Glue (`panel.tsx`, `host.tsx`), main `screen.tsx`, extra route screens |
-| `i18n/` | **yes** | `en.ts` + `zh.ts` + `index.ts` barrel (see [i18n-convention.md](./i18n-convention.md)) |
-| `components/` | **yes** | Feature UI pieces; `index.ts` may re-export or stay empty |
+| `index.tsx` | **yes** for route modules | Route entry (`*Page`); lazy-load `@/modules/<segment>/index.js`. Shared domain-slice modules (`decisions`, `entity-resolution`) hold `i18n/` + `lib/` only (their screens are embedded in `activity-log` and `review`/`entities`). |
+| `pages/` | when multi-screen | Glue (`panel.tsx`, `host.tsx`), main `screen.tsx`, extra route screens |
+| `i18n/` | when localized | `en.ts` + `zh.ts` + `index.ts` barrel (see [i18n-convention.md](./i18n-convention.md)) |
+| `components/` | when module has local UI | Feature UI pieces (import concrete files directly, no empty barrel `index.ts`) |
 | `hooks/` | no | `use-*.ts(x)` when the module has local hooks |
 | `lib/` | no | Non-UI helpers, API adapters, pure TS |
 

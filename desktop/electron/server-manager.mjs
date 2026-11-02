@@ -48,7 +48,7 @@ function resolveLaunch(opts) {
 export async function spawnBasisApi(opts = {}) {
   const repoRoot = opts.repoRoot ?? REPO_ROOT;
   const profilePath =
-    opts.profilePath ?? path.join(repoRoot, 'profiles', 'profile.desktop.yaml');
+    opts.profilePath ?? path.join(repoRoot, 'contracts', 'profiles', 'profile.desktop.yaml');
   const dataDir = opts.dataDir ?? path.join(os.homedir(), '.basis');
   const home = dataDir;
 

@@ -9,7 +9,7 @@ from pathlib import Path
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import make_url
 
-from basis.infra.tooling.db.sqlite_migrations import run_migrations
+from basis.infra.db.sqlite_migrations import run_migrations
 
 
 def setup_workspace_sqlite(tmp_path: Path) -> sqlite3.Connection:

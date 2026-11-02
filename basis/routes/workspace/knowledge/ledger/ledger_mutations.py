@@ -1,0 +1,110 @@
+"""Workspace ledger entity delete and merge revert."""
+
+from __future__ import annotations
+
+import asyncio
+from typing import Any
+
+from fastapi import APIRouter, Depends, Request
+from pydantic import BaseModel, Field
+
+from basis.services.knowledge.operations import op_delete_entity, op_invalidate_entities
+from basis.services.tenancy.admin.store import AdminStore, User
+from basis.http.core_context import build_workspace_core_context
+from basis.http.deps import (
+    get_current_user,
+    get_workspace_for_editor,
+    get_knowledge_store,
+    get_store,
+    rebuild_graph_projection,
+)
+from basis.services.knowledge.services.graph_audit import audit_graph
+from basis.services.knowledge.store import KnowledgeStore
+from basis.http.operation_http import http_response_from_payload
+
+router = APIRouter(tags=["workspaces"])
+
+
+class InvalidateEntitiesRequest(BaseModel):
+    entity_ids: list[str] = Field(min_length=1, max_length=200)
+
+
+@router.post("/{workspace_id}/ledger/entities/invalidate")
+async def invalidate_ledger_entities(
+    workspace_id: str,
+    body: InvalidateEntitiesRequest,
+    request: Request,
+    user: User = Depends(get_current_user),
+    store: AdminStore = Depends(get_store),
+) -> dict[str, Any]:
+    """
+Invalidate Ledger Entities. Soft-delete entities and related ledger rows (temporal invalidated_at). Editor only.
+    """
+    ctx = build_workspace_core_context(
+        request,
+        workspace_id=workspace_id,
+        user=user,
+        store=store,
+        require_editor=True,
+    )
+    payload = await asyncio.to_thread(op_invalidate_entities, ctx, body.model_dump())
+    return http_response_from_payload(payload)
+
+
+@router.delete("/{workspace_id}/ledger/entities/{entity_id}")
+async def delete_ledger_entity(
+    workspace_id: str,
+    entity_id: str,
+    request: Request,
+    user: User = Depends(get_current_user),
+    store: AdminStore = Depends(get_store),
+) -> dict[str, Any]:
+    """
+Delete Ledger Entity. Evidence ledger: documents, chunks, statements, entities. Requires workspace membership (session) or workspace API token with read/write scope. All paths are scoped to `{workspace_id}`.
+    """
+    ctx = build_workspace_core_context(
+        request,
+        workspace_id=workspace_id,
+        user=user,
+        store=store,
+        require_editor=True,
+    )
+    payload = await asyncio.to_thread(op_delete_entity, ctx, {"entity_id": entity_id})
+    result = http_response_from_payload(payload)
+    audit_graph(
+        store,
+        user,
+        workspace_id,
+        "workspace.ledger.entity_delete",
+        extra={
+            "entity_id": result["entity_id"],
+            "canonical_label": result["canonical_label"],
+            "statements_removed": result["statements_removed"],
+            "projection": result.get("projection"),
+        },
+    )
+    return result
+
+@router.post("/{workspace_id}/ledger/entity-merges/{merge_id}/revert")
+async def revert_entity_merge_route(
+    workspace_id: str,
+    merge_id: str,
+    request: Request,
+    user: User = Depends(get_current_user),
+    store: AdminStore = Depends(get_store),
+    knowledge: KnowledgeStore = Depends(get_knowledge_store),
+) -> dict[str, Any]:
+    """
+Revert Entity Merge Route. Evidence ledger: documents, chunks, statements, entities. Requires workspace membership (session) or workspace API token with read/write scope. All paths are scoped to `{workspace_id}`.
+    """
+    get_workspace_for_editor(request, user, workspace_id, store)
+    merged = knowledge.revert_entity_merge(workspace_id, merge_id, reverted_by=user.id)
+    projection = rebuild_graph_projection(request, workspace_id)
+    audit_graph(
+        store,
+        user,
+        workspace_id,
+        "workspace.ledger.entity_merge_revert",
+        extra={"merge_id": merge_id, "merge": merged, "projection": projection},
+    )
+    return {"merge": merged, "projection": projection}

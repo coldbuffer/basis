@@ -10,8 +10,8 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-CATALOG = ROOT / "basis" / "application" / "tool_catalog" / "catalog.py"
-HTTP_WORKSPACE = ROOT / "basis" / "interface" / "http" / "workspace"
+CATALOG = ROOT / "basis" / "mcp" / "catalog.py"
+HTTP_WORKSPACE = ROOT / "basis" / "routes" / "workspace"
 
 # Tools with no REST ``op_*`` twin in workspace HTTP (grep heuristic). Keep in sync with
 # docs/architecture/http-mcp-parity-gap.md — new OPERATIONS keys must align HTTP or land here.

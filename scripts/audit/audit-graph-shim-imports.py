@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Disallow new imports of ``basis.domain.graph`` compatibility shims.
+"""Disallow new imports of ``basis.services.graph`` compatibility shims.
 
 Prefer subpackages: ``graph.reads``, ``graph.session.registry``, etc.
 """
@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-GRAPH_ROOT = ROOT / "basis" / "domain" / "graph"
+GRAPH_ROOT = ROOT / "basis" / "services" / "graph"
 SCAN_DIRS = (ROOT / "basis", ROOT / "tests")
 ALLOWLIST_PATH = ROOT / "scripts" / "graph-shim-imports.allowlist"
 
@@ -28,7 +28,7 @@ SUBPACKAGES = frozenset(
 )
 
 IMPORT_RE = re.compile(
-    r"^\s*(?:from|import)\s+(basis\.domain\.graph\.[a-zA-Z0-9_.]+)",
+    r"^\s*(?:from|import)\s+(basis\.services\.graph\.[a-zA-Z0-9_.]+)",
     re.MULTILINE,
 )
 
@@ -45,7 +45,7 @@ def _shim_module_names() -> frozenset[str]:
 
 
 def _is_shim_import(target: str) -> bool:
-    prefix = "basis.domain.graph."
+    prefix = "basis.services.graph."
     if not target.startswith(prefix):
         return False
     rest = target[len(prefix) :]
@@ -64,7 +64,7 @@ def _collect() -> list[tuple[str, str]]:
             continue
         for path in sorted(base.rglob("*.py")):
             rel = path.relative_to(ROOT)
-            if rel.parts[:3] == ("basis", "domain", "graph") and len(rel.parts) == 4:
+            if rel.parts[:3] == ("basis", "services", "graph") and len(rel.parts) == 4:
                 if path.parent == GRAPH_ROOT and path.stem in shims:
                     continue
             text = path.read_text(encoding="utf-8")

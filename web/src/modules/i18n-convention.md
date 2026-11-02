@@ -89,8 +89,8 @@ Sidebar nav labels live per module (`graph.menu.graph`, …); resolve via `works
 | Script | Purpose |
 | --- | --- |
 | `scripts/audit-locale-usage.mjs` | Unused-key heuristic (`npm run audit:locale`) |
+| `scripts/refresh-module-i18n-index.mjs` | Regenerate module locale barrels and `src/i18n/module-locales.ts` |
 | `scripts/fix-i18n-snake-props.mjs` | Fix TS2551 camelCase property access on locale objects |
-| `scripts/codemod-i18n-namespace-aliases.mjs` | Bulk `t.kb*` → `t.<module>.*` rewrites |
 
 After adding a module, run `refresh-module-i18n-index.mjs` to refresh `module-locales.ts`.
 

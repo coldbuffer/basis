@@ -8,24 +8,21 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-MOUNT = ROOT / "basis" / "interface" / "http" / "workspace" / "mount_workspace.py"
+MOUNT = ROOT / "basis" / "routes" / "workspace" / "mount_workspace.py"
 
 REQUIRED_WORKSPACE_PACKAGES = frozenset(
     {
-        "connectors",
-        "documents",
+        "core",
+        "knowledge",
         "graph",
-        "ledger",
         "ontology",
         "review",
-        "sources",
-        "resources",
-        "tokens",
+        "connector",
     }
 )
 
 IMPORT_RE = re.compile(
-    r"from basis\.interface\.http\.workspace\.([a-z_]+) import router",
+    r"from basis\.routes\.workspace\.([a-z_]+) import router",
 )
 
 

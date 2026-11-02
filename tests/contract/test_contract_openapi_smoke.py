@@ -2,9 +2,9 @@
 
 from fastapi.testclient import TestClient
 
-from basis.application.tool_catalog import TOOL_NAMES
-from basis.interface.http.app import create_app
-from basis.interface.contract.openapi.spec import openapi_v1_full
+from basis.mcp import TOOL_NAMES
+from basis.app import create_app
+from basis.http.openapi.spec import openapi_v1_full
 from basis.infra.runtime.config import Settings
 
 _INTEGRATION_PATHS = (

@@ -11,11 +11,11 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from basis.domain.connector.manifest_schema import ConnectorManifest
-from basis.domain.connector.provider_bundle import write_provider_bundle
-from basis.domain.connector.synthesis.batches import load_batch, list_batch_files
-from basis.domain.connector.synthesis.generators import all_generator_services
-from basis.domain.connector.synthesis.merge import merge_service
+from basis.services.connector.manifest.manifest_schema import ConnectorManifest
+from basis.services.connector.manifest.provider_bundle import write_provider_bundle
+from basis.services.connector.synthesis.batches import load_batch, list_batch_files
+from basis.services.connector.synthesis.generators import all_generator_services
+from basis.services.connector.synthesis.merge import merge_service
 
 PROVIDERS_OUT_DIR = REPO_ROOT / "basis" / "domain" / "integration" / "providers"
 
@@ -78,7 +78,7 @@ def build_manifests(
                 )
             )
         else:
-            from basis.domain.connector.synthesis.generators import manifest_from_generator
+            from basis.services.connector.synthesis.generators import manifest_from_generator
 
             m = manifest_from_generator(service)
             if m is None:

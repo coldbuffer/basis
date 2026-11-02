@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
 import { useI18n } from '@/i18n/context.js';
-import { processingOptionsSummaryLines } from '@/modules/processing/lib/processing-options-summary.js';
+import { processingOptionsSummaryLines } from '@/modules/workspace/processing/lib/processing-options-summary.js';
 
 export function ProcessingOptionsSnapshot({
   options,

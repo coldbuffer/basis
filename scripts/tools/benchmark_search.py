@@ -11,8 +11,8 @@ from pathlib import Path
 
 from basis.infra.runtime.config import Settings
 from basis.infra.runtime.database import get_database
-from basis.domain.knowledge.blob_store import BlobStore
-from basis.domain.knowledge.store import KnowledgeStore
+from basis.services.knowledge.blob_store import BlobStore
+from basis.services.knowledge.store import KnowledgeStore
 
 
 def main() -> None:

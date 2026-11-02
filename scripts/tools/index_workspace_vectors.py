@@ -8,12 +8,12 @@ import sys
 import time
 from pathlib import Path
 
-from basis.domain.tenancy.admin.store import AdminStore
+from basis.services.tenancy.admin.store import AdminStore
 from basis.infra.runtime.config import Settings
 from basis.infra.runtime.database import get_database
-from basis.domain.knowledge.blob_store import BlobStore
-from basis.domain.knowledge.search import ChunkSearchService
-from basis.domain.knowledge.store import KnowledgeStore
+from basis.services.knowledge.blob_store import BlobStore
+from basis.services.knowledge.search import ChunkSearchService
+from basis.services.knowledge.store import KnowledgeStore
 
 
 def _pending_chunk_ids(database, workspace_id: str, limit: int) -> list[str]:

@@ -59,9 +59,9 @@ def _escape_md_cell(text: str) -> str:
 
 
 def _build_tables() -> str:
-    from basis.application.tool_catalog.catalog import OPERATIONS, mcp_exposed
-    from basis.application.tool_catalog.mcp_access import mcp_tool_access
-    from basis.application.tool_catalog.mcp_metadata import MCP_TOOL_METADATA
+    from basis.mcp.catalog import OPERATIONS, mcp_exposed
+    from basis.mcp.mcp_access import mcp_tool_access
+    from basis.mcp.mcp_metadata import MCP_TOOL_METADATA
 
     tools = sorted(name for name in OPERATIONS if mcp_exposed(name))
     missing_meta = [t for t in tools if t not in MCP_TOOL_METADATA]

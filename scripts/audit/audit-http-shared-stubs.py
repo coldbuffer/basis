@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-HTTP = ROOT / "basis" / "interface" / "http"
+HTTP = ROOT / "basis" / "routes"
 
 # Former compatibility shims — must not return at package root.
 FORBIDDEN_ROOT_STUBS = (

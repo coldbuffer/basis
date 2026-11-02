@@ -53,13 +53,13 @@ def _shipped_services() -> set[str]:
 
 def main() -> int:
     sys.path.insert(0, str(REPO))
-    from basis.domain.connector.synthesis.paths import (
+    from basis.services.connector.synthesis.paths import (
         connector_catalog_dir,
         legacy_anyconnect_catalog_dir,
         open_connector_catalog_dir,
         providers_registry_yaml,
     )
-    from basis.domain.connector.synthesis.providers_registry_auth import (
+    from basis.services.connector.synthesis.providers_registry_auth import (
         registry_auth_mode_to_bocp,
     )
 

@@ -2,7 +2,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import { useI18n } from '@/i18n/context.js';
-import type { DocsAdjacentPage } from '@/modules/docs/lib/product-docs-neighbours.js';
+import type { DocsAdjacentPage } from '@/modules/public/docs/lib/product-docs-neighbours.js';
 import { resourceCardSurfaceClass } from '@/lib/ui-classes/card-surface.js';
 import { cn } from '@/lib/utils.js';
 

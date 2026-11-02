@@ -2,9 +2,9 @@
 """Forbid cross-module UI imports under ``web/src/modules/`` (P4 guard).
 
 Rules:
-- Files under ``web/src/modules/<segment>/`` may import ``@/modules/<segment>/components/…`` only.
+- Files under ``web/src/modules/<domain>/<segment>/`` may import ``@/modules/<domain>/<segment>/components/…`` only.
 - Cross-segment ``…/components/…`` imports are errors unless listed in ``ALLOWED_CROSS_UI``.
-- Re-export shims from ``app/shared/workspace`` back under ``modules/*/components`` are forbidden.
+- Re-export shims from ``app/shared/workspace`` back under ``modules/*/*/components`` are forbidden.
 
 Other modules' ``lib/`` imports are allowed (see ``web/src/modules/README.md``).
 """
@@ -19,7 +19,7 @@ ROOT = Path(__file__).resolve().parents[2]
 MODULES = ROOT / "web" / "src" / "modules"
 
 IMPORT_RE = re.compile(
-    r"""@/modules/(?P<target>[a-z0-9-]+)/components/[^'"]+""",
+    r"""@/modules/(?P<target>(?:public|admin|workspace)/[a-z0-9-_]+)/components/[^'"]+""",
 )
 
 # (importer_segment, imported_segment) — prefer ``app/shared/workspace``; keep empty when possible.
@@ -37,9 +37,9 @@ def module_segment(path: Path) -> str | None:
     except ValueError:
         return None
     parts = rel.parts
-    if not parts:
+    if len(parts) < 2:
         return None
-    return parts[0]
+    return f"{parts[0]}/{parts[1]}"
 
 
 def scan_cross_ui() -> list[str]:

@@ -10,6 +10,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 
 INTEGRATION = re.compile(r"^test_[a-z][a-z0-9]*(_[a-z0-9]+)+\.py$")
+INTEGRATION_SUBDOMAINS = frozenset({"knowledge", "ontology", "graph", "connector", "tenancy"})
+UNIT = re.compile(r"^test_[a-z][a-z0-9]*(_[a-z0-9]+)+\.py$")
 USE_CASE = re.compile(r"^test_uc_[a-z][a-z0-9_]+\.py$")
 CONTRACT = re.compile(r"^test_contract_[a-z][a-z0-9_]+\.py$")
 VITEST = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*\.test\.ts$")
@@ -26,10 +28,29 @@ def _fail(errors: list[str]) -> None:
 def main() -> None:
     errors: list[str] = []
 
+    unit_dir = ROOT / "tests" / "unit"
+    if unit_dir.is_dir():
+        for path in sorted(unit_dir.rglob("test_*.py")):
+            if not UNIT.match(path.name):
+                errors.append(f"unit: {path.relative_to(ROOT)} (expected test_<domain>_<behavior>.py)")
+
     int_dir = ROOT / "tests" / "integration"
     for path in sorted(int_dir.glob("test_*.py")):
+        errors.append(
+            f"integration: {path.relative_to(ROOT)} (place under tests/integration/<subdomain>/)"
+        )
+    for path in sorted(int_dir.rglob("test_*.py")):
+        rel_int = path.relative_to(int_dir)
+        if len(rel_int.parts) == 2 and rel_int.parts[0] not in INTEGRATION_SUBDOMAINS:
+            errors.append(
+                f"integration: {path.relative_to(ROOT)} (subdomain must be one of {sorted(INTEGRATION_SUBDOMAINS)})"
+            )
         if not INTEGRATION.match(path.name):
             errors.append(f"integration: {path.relative_to(ROOT)} (expected test_<domain>_<behavior>.py)")
+        if path.name.startswith("test_e2e_"):
+            errors.append(
+                f"integration: {path.relative_to(ROOT)} (use test_*_playwright_*_http.py, not test_e2e_*.py)"
+            )
 
     uc_dir = ROOT / "tests" / "use_cases"
     for path in sorted(uc_dir.glob("test_*.py")):

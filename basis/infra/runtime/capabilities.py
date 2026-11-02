@@ -16,7 +16,7 @@ def platform_capabilities() -> dict[str, bool]:
 
 
 def _role_can_write(role: str) -> bool:
-    from basis.domain.knowledge.roles import ROLE_RANK
+    from basis.services.knowledge.models import ROLE_RANK
 
     return ROLE_RANK.get(role, 0) >= ROLE_RANK["editor"]
 

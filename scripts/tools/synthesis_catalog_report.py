@@ -10,14 +10,14 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from basis.domain.connector.synthesis.anyconnect_catalog import load_anyconnect_procedures
-from basis.domain.connector.synthesis.executor_index import invoke_wire_for_action
-from basis.domain.connector.synthesis.paths import (
+from basis.services.connector.synthesis.anyconnect_catalog import load_anyconnect_procedures
+from basis.services.connector.synthesis.executor_index import invoke_wire_for_action
+from basis.services.connector.synthesis.paths import (
     connector_catalog_dir,
     open_connector_catalog_dir,
     providers_registry_yaml,
 )
-from basis.domain.connector.synthesis.providers_registry_auth import (
+from basis.services.connector.synthesis.providers_registry_auth import (
     load_provider_registry_block,
 )
 

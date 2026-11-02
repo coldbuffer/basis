@@ -41,7 +41,7 @@ import { basisIsDesktopProduct } from '@/lib/runtime/basis-runtime.js';
 import { isMacDesktop } from '@/lib/shell/desktop-bridge.js';
 import { cn } from '@/lib/utils.js';
 import { useSettingsAccess } from '@/lib/shell/use-settings-access.js';
-import { useWorkspaceFailedProcessingCount } from '@/modules/processing/lib/use-failed-processing-count.js';
+import { useWorkspaceFailedProcessingCount } from '@/modules/workspace/processing/lib/use-failed-processing-count.js';
 import { Badge } from '@/components/ui/badge.js';
 
 export function BasisSidebar({ onLogout }: { onLogout: () => void }) {

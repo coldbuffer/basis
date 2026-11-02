@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from basis.application.tool_catalog.run import input_schema_for_tool
+from basis.mcp.run import input_schema_for_tool
 
 LEDGER_MAPPING_TOOLS: dict[str, set[str]] = {
     "list_mappings": set(),

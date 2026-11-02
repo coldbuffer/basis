@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-HTTP_ROOT = ROOT / "basis" / "interface" / "http"
+HTTP_ROOT = ROOT / "basis" / "routes"
 SCAN_DIRS = (ROOT / "basis", ROOT / "tests")
 
 REMOVED_FILES = (
@@ -21,11 +21,11 @@ FORBIDDEN_HTTP_SUBSTRINGS = (
     "x-basis-mcp-tool",
 )
 
-MCP_METADATA_PATH = ROOT / "basis" / "application" / "tool_catalog" / "mcp_metadata.py"
+MCP_METADATA_PATH = ROOT / "basis" / "mcp" / "mcp_metadata.py"
 
 FORBIDDEN_IMPORT_PREFIXES = (
-    "basis.interface.contract.mcp.annotations",
-    "basis.interface.contract.mcp.openapi",
+    "basis.mcp.annotations",
+    "basis.mcp.openapi",
 )
 
 IMPORT_RE = re.compile(
@@ -75,9 +75,9 @@ def _metadata_input_schema_hits() -> list[str]:
 
 def _catalog_alignment_issues() -> list[str]:
     try:
-        from basis.application.tool_catalog.catalog import OPERATIONS
-        from basis.application.tool_catalog.mcp_metadata import MCP_TOOL_METADATA
-        from basis.application.tool_catalog.validation import OPERATION_INPUT_MODELS
+        from basis.mcp.catalog import OPERATIONS
+        from basis.mcp.mcp_metadata import MCP_TOOL_METADATA
+        from basis.mcp.validation import OPERATION_INPUT_MODELS
     except Exception as exc:  # noqa: BLE001 — audit surface
         return [f"could not import tool catalog: {exc}"]
 

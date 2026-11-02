@@ -7,7 +7,7 @@ import json
 import pytest
 from fastapi.testclient import TestClient
 
-from basis.interface.http.app import create_app
+from basis.app import create_app
 from basis.infra.runtime.config import Settings
 from tests.support.demo_workspace import create_workspace_with_demo
 

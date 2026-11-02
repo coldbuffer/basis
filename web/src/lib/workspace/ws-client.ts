@@ -4,7 +4,7 @@ import { messagesForLocale } from '@/i18n/pick-locale.js';
 import type { BasisApiError } from '@/lib/openapi/transport.js';
 
 import { errorFromApiResponse } from '@/lib/errors/api-error.js';
-import { getToken } from '@/lib/auth/auth-token.js';
+import { getToken } from '@/lib/session/auth-token.js';
 import { basisApiUrl } from '@/lib/session/basis-session-fetch.js';
 import { basisSessionClient } from '@/lib/session/basis-session-client.js';
 import { workspaceApiRoot } from '@/lib/workspace/api-path.js';

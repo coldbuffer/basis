@@ -8,13 +8,13 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-MOUNT = ROOT / "basis" / "interface" / "http" / "mount_v1.py"
+MOUNT = ROOT / "basis" / "routes" / "index.py"
 MAX_LINES = 40
 ALLOWED_IMPORT_PREFIXES = (
     "from __future__ import annotations",
     "from fastapi import FastAPI",
-    "from basis.interface.http.platform.mount_platform import",
-    "from basis.interface.http.workspace.mount_workspace import",
+    "from basis.routes.admin.mount_platform import",
+    "from basis.routes.workspace.mount_workspace import",
 )
 
 

@@ -11,15 +11,15 @@ ROOT = Path(__file__).resolve().parents[2]
 SCAN_DIRS = (ROOT / "basis", ROOT / "tests")
 
 IMPORT_RE = re.compile(
-    r"^\s*(?:from|import)\s+(basis\.domain\.knowledge\.persistence(?:\.[a-zA-Z0-9_]+)*)",
+    r"^\s*(?:from|import)\s+(basis\.services\.knowledge\.persistence(?:\.[a-zA-Z0-9_]+)*)",
     re.MULTILINE,
 )
 
 ALLOWED_REL = frozenset(
     {
-        "basis/domain/knowledge/sql.py",
-        "basis/domain/knowledge/persistence/__init__.py",
-        "basis/domain/tenancy/admin/persistence/workspaces.py",
+        "basis/services/knowledge/sql.py",
+        "basis/services/knowledge/persistence/__init__.py",
+        "basis/services/tenancy/admin/persistence/workspaces.py",
     }
 )
 
@@ -28,7 +28,7 @@ def _allowed(path: Path) -> bool:
     rel = str(path.relative_to(ROOT))
     if rel in ALLOWED_REL:
         return True
-    return rel.startswith("basis/domain/knowledge/")
+    return rel.startswith("basis/services/knowledge/")
 
 
 def main() -> int:
@@ -44,7 +44,7 @@ def main() -> int:
                 rel = path.relative_to(ROOT)
                 errors.append(
                     f"{rel}: forbidden {match.group(1)!r} "
-                    "(use basis.domain.knowledge.sql or extend allowlist)"
+                    "(use basis.services.knowledge.sql or extend allowlist)"
                 )
     if errors:
         for line in sorted(set(errors)):

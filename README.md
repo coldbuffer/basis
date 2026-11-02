@@ -197,7 +197,7 @@ This path is **self-hosted** dev. For the **desktop app** or **managed cloud**, 
 
 Full list: [.env.example](.env.example).
 
-**PostgreSQL:** `docker compose -f compose.postgres.yml up -d`, then  
+**PostgreSQL:** `docker compose -f docker/compose.postgres.yml up -d`, then  
 `BASIS_DATABASE_URL=postgresql://basis:basis@127.0.0.1:5432/basis` (host port **5432**).
 
 **Backups:** `./scripts/ops/backup_basis_data.sh` (SQLite) or `./scripts/ops/backup_basis_postgres.sh` (Postgres).
@@ -264,7 +264,7 @@ Tune server-side limits with `BASIS_MCP_MAX_INFLIGHT` and `BASIS_MCP_TIMEOUT_SEC
 
 ```bash
 uv run pytest -q
-uv run lint-imports --config importlinter.ini
+uv run lint-imports
 cd web && npm run typecheck && npm test
 cd web && CI=1 npm run test:e2e   # optional, Playwright + API
 ```
@@ -300,7 +300,7 @@ Do not run a dev API and an installed desktop app at once. They share `~/.basis/
 **You operate** the stack on your network or cloud VM (air-gapped OK). You control platform login, org SSO, workspaces, and backups under your policies.
 
 - **Try locally:** [Quick start](#quick-start) (`uv run basis` + `npm run dev`, SQLite).
-- **Production:** PostgreSQL (`compose.postgres.yml`), set `BASIS_DATABASE_URL`, TLS in front of API/Web, and pin a release. See [Configuration (essentials)](#configuration-essentials).
+- **Production:** PostgreSQL (`docker/compose.postgres.yml`), set `BASIS_DATABASE_URL`, TLS in front of API/Web, and pin a release. See [Configuration (essentials)](#configuration-essentials).
 
 ### Managed cloud
 

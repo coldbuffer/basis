@@ -27,8 +27,8 @@ Typed per-workspace REST helpers: `basisSessionClient().workspace(workspaceId)` 
 
 | File | Role |
 | --- | --- |
-| `graphStore.ts`, `graphTheme.ts`, `edgePairKeys.js` | Sigma scene state + theme tokens |
+| `graphStore.ts`, `graphTheme.ts`, `edgePairKeys.ts` | Sigma scene state + theme tokens |
 
-Graph-only UI/helpers (`graph-surface-primitives`, `registry-store`) live under `modules/graph/lib/`.
+Graph-only UI/helpers (`components/graph-surface-primitives.tsx`, `lib/plugins/registry-store.ts`) live under `modules/graph/`.
 
 Segment-specific helpers: `modules/<segment>/lib/` — see [`lib/README.md`](../README.md).

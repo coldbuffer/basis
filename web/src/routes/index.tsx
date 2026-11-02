@@ -1,8 +1,8 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
-import { PlatformAdminLayout } from '@/components/admin/platform-admin-layout.js';
+import { PlatformAdminLayout } from '@/modules/admin/_shared/platform-admin-layout.js';
 import { BasisLayout } from '@/components/app/shared/shell/basis-layout.js';
-import { HomePage } from '@/modules/home/index.js';
-import { LoginPage } from '@/modules/login/index.js';
+import { HomePage } from '@/modules/public/home/index.js';
+import { LoginPage } from '@/modules/public/login/index.js';
 import {
   AdminConnectorsPage,
   AuditPage,

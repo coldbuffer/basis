@@ -6,7 +6,8 @@ Unit tests stay colocated in application code (`web/src/**/*.test.ts`, optional 
 
 | Path | Layer | Runner |
 |------|--------|--------|
-| `integration/` | API / service **integration** | `uv run pytest tests/integration` |
+| `unit/` | Fast in-memory **unit** tests | `uv run pytest tests/unit` |
+| `integration/<subdomain>/` | API / service **integration** (`knowledge`, `ontology`, `graph`, `connector`, `tenancy`) | `uv run pytest tests/integration` |
 | `use_cases/` | **Acceptance** / vertical-slice flows | `uv run pytest tests/use_cases` — [use_cases/README.md](./use_cases/README.md) |
 | `contract/` | **Contract** + audit wrappers | `uv run pytest tests/contract` |
 | `e2e/` | Browser **E2E** (`specs/`, Playwright package) | `cd tests/e2e && npm ci && CI=1 npm test` — [e2e/README.md](./e2e/README.md) |
@@ -76,7 +77,8 @@ CI runs `uv run python scripts/audit/audit-test-naming.py`. New files must match
 
 | Layer | Pattern | Example |
 |-------|---------|---------|
-| Integration | `test_<domain>_<behavior>.py` (≥2 segments after `test_`) | `test_workspace_token_grants.py` |
+| Unit | `tests/unit/test_<domain>_<behavior>.py` | `tests/unit/test_vocabulary_alignment_graph.py` |
+| Integration | `tests/integration/<subdomain>/test_<domain>_<behavior>.py` | `tests/integration/tenancy/test_workspace_token_grants.py` |
 | Use case | `test_uc_<slug>.py` | `test_uc_release_gate.py` |
 | Contract | `test_contract_<topic>.py` | `test_contract_openapi_v1_served.py` |
 | Unit (web) | `<kebab>.test.ts` sibling of `<kebab>.ts` or `.tsx` | `graph-url-state.test.ts` |

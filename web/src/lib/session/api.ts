@@ -1,12 +1,12 @@
 import { type ApiErrorWithMeta } from '@/lib/errors/api-error.js';
 import { basisAuthRequired } from '@/lib/runtime/basis-runtime.js';
 import { markApiDesktopProduct } from '@/lib/runtime/desktop-product-flag.js';
-import { getToken, setToken } from '@/lib/auth/auth-token.js';
+import { getToken, setToken } from '@/lib/session/auth-token.js';
 import { basisSessionClient } from '@/lib/session/basis-session-client.js';
 import { publicOpenApiPOST } from '@/lib/openapi/client.js';
 import { unwrapOpenApi } from '@/lib/openapi/response.js';
 
-export { getToken, setToken } from '@/lib/auth/auth-token.js';
+export { getToken, setToken } from '@/lib/session/auth-token.js';
 
 export type BasisUser = {
   id: string;

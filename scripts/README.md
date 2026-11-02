@@ -15,7 +15,6 @@ Python/Node/shell automation for **CI**, **OpenAPI**, **connectors**, **ops**, a
 | [`smoke/`](./smoke/) | Manual SSO / BOCP Postgres smokes | **No** — local/staging checks |
 | [`docs/`](./docs/) | Local `docs/` rename + Semantica SDK capability map | **No** — `docs/` is gitignored; map is optional local doc |
 | [`tools/`](./tools/) | Benchmarks, vector index, one-off backfills | **No** — ad hoc / migration helpers |
-| [`archive/`](./archive/) | Completed kb→workspace codemods | **No** — history only |
 
 ## Commands you use often
 
@@ -30,7 +29,7 @@ uv run python scripts/connectors/build_connector_manifests.py
 
 # CI-style audits locally (subset)
 uv run python scripts/audit/audit-test-naming.py
-uv run lint-imports --config importlinter.ini
+uv run lint-imports
 
 # Backups
 ./scripts/ops/backup_basis_data.sh
@@ -40,10 +39,9 @@ uv run lint-imports --config importlinter.ini
 ./scripts/dev/pre-push-check.sh
 ```
 
-## Archive / optional scripts
+## Optional / dev scripts
 
-- **`archive/kb-rename-migrations/`** — one-time 2024–2025 renames; do not run on current tree.
-- **`archive/dev-seeds/seed_workspace_108dd8a0.py`** — fixed workspace id demo seed for local UI.
+- **`dev/seed_workspace_108dd8a0.py`** — fixed workspace id demo seed for local UI.
 - **`tools/backfill_route_docstrings.py`** — rare OpenAPI→handler docstring backfill; run only when intentionally bulk-editing routes.
 - **`openapi/gen-client-types.mjs`** — thin wrapper around `web` `npm run gen:openapi-types` (prefer npm from `web/`).
 

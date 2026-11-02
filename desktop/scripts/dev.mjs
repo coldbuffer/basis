@@ -16,8 +16,8 @@ const desktopRoot = path.resolve(__dirname, '..');
 const webRoot = path.join(REPO_ROOT, 'web');
 
 const WEB_HOST = '127.0.0.1';
-/** Fellow desktop renderer HMR uses 3001 (not server dev 5173). */
-const WEB_PORT = process.env.BASIS_DESKTOP_WEB_PORT ?? '3001';
+/** Fellow desktop renderer HMR uses 3002 (not server dev 5173). */
+const WEB_PORT = process.env.BASIS_DESKTOP_WEB_PORT ?? '3002';
 const webUrl = `http://${WEB_HOST}:${WEB_PORT}`;
 
 const children = [];

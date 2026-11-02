@@ -13,7 +13,7 @@ from sqlalchemy import create_engine, text
 
 from basis.infra.runtime.capabilities import graph_runtime_available
 from basis.infra.runtime.config import Settings
-from basis.interface.http.app import create_app
+from basis.app import create_app
 
 
 def test_uc_connector_postgres_sqlite_inbound_sync(tmp_path: Path) -> None:

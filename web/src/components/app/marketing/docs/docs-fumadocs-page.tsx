@@ -3,10 +3,10 @@ import { Suspense, useMemo } from 'react';
 import { DocsPageFooter } from '@/components/app/marketing/docs/docs-page-footer.js';
 import { DocsPageToc } from '@/components/app/marketing/docs/docs-page-toc.js';
 import { useI18n } from '@/i18n/context.js';
-import { productDocsMdx, productDocsMdxPath } from '@/modules/docs/lib/product-docs-mdx-loader.js';
-import { productDocsNeighbours } from '@/modules/docs/lib/product-docs-neighbours.js';
-import { productDocsPageMeta } from '@/modules/docs/lib/product-docs-page-meta.js';
-import type { DocSlug } from '@/modules/docs/lib/product-docs-nav.js';
+import { productDocsMdx, productDocsMdxPath } from '@/modules/public/docs/lib/product-docs-mdx-loader.js';
+import { productDocsNeighbours } from '@/modules/public/docs/lib/product-docs-neighbours.js';
+import { productDocsPageMeta } from '@/modules/public/docs/lib/product-docs-page-meta.js';
+import type { DocSlug } from '@/modules/public/docs/lib/product-docs-nav.js';
 import { cn } from '@/lib/utils.js';
 
 type DocsFumadocsPageProps = {

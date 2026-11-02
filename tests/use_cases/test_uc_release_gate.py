@@ -13,7 +13,7 @@ pytest.importorskip("semantica")
 
 from fastapi.testclient import TestClient
 
-from basis.interface.http.app import create_app
+from basis.app import create_app
 from basis.infra.runtime.capabilities import graph_runtime_available
 from basis.infra.runtime.config import Settings
 

@@ -4,8 +4,8 @@ import { PublicIcon } from '@/components/app/shared/primitives/public-icon.js';
 import { useI18n } from '@/i18n/context.js';
 import { formatLocaleDateTime } from '@/i18n/format.js';
 import type { Locale } from '@/i18n/locale.js';
-import { hrefForDerivedFactPremise } from '@/modules/entities/lib/derived-fact-premise-link.js';
-import { graphPath } from '@/modules/graph/lib/graph-url-state.js';
+import { hrefForDerivedFactPremise } from '@/modules/workspace/entities/lib/derived-fact-premise-link.js';
+import { graphPath } from '@/modules/workspace/graph/lib/graph-url-state.js';
 
 export type DerivedFactView = {
   id: string;

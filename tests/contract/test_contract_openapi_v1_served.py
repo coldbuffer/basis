@@ -2,8 +2,8 @@
 
 from fastapi.testclient import TestClient
 
-from basis.interface.http.app import create_app
-from basis.interface.contract.openapi.v1_export import (
+from basis.app import create_app
+from basis.http.openapi.v1_export import (
     export_openapi_v1_document,
     export_openapi_v1_workspaces,
     export_openapi_v1_platform,

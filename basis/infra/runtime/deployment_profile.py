@@ -12,7 +12,7 @@ import yaml
 _ENV_VAR = re.compile(r"\$([A-Z_][A-Z0-9_]*)")
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
-_DEFAULT_DESKTOP_PROFILE = _REPO_ROOT / "profiles" / "profile.desktop.yaml"
+_DEFAULT_DESKTOP_PROFILE = _REPO_ROOT / "contracts" / "profiles" / "profile.desktop.yaml"
 
 
 def repo_root() -> Path:
@@ -119,7 +119,7 @@ def resolve_profile_path(spec: str | None) -> Path | None:
     path = Path(spec).expanduser()
     if path.is_file():
         return path
-    candidate = _REPO_ROOT / "profiles" / spec
+    candidate = _REPO_ROOT / "contracts" / "profiles" / spec
     if candidate.is_file():
         return candidate
     candidate_yaml = candidate.with_suffix(".yaml")

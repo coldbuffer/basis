@@ -11,9 +11,9 @@ from typing import Any, Iterator, Mapping, Sequence
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 
-from basis.domain.errors import AdminError
-from basis.infra.tooling.db.alembic_upgrade import upgrade_postgres_engine, upgrade_sqlite_file
-from basis.infra.tooling.db.sqlite_migrations import MigrationError, assert_desktop_sqlite_compatible
+from basis.services.errors import AdminError
+from basis.infra.db.alembic_upgrade import upgrade_postgres_engine, upgrade_sqlite_file
+from basis.infra.db.sqlite_migrations import MigrationError, assert_desktop_sqlite_compatible
 from basis.infra.runtime.sqlite_connection import connect_sqlite
 
 _pool: dict[str, Database] = {}

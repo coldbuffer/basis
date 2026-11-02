@@ -6,7 +6,7 @@ const apiStage = path.join(desktopDir, '.api-stage');
 
 const extraResources = [
   { from: '../dist/web', to: 'web', filter: ['**/*'] },
-  { from: '../profiles', to: 'profiles', filter: ['**/*'] },
+  { from: '../contracts/profiles', to: 'profiles', filter: ['**/*'] },
   { from: '.api-stage/api-manifest.json', to: 'api-manifest.json' },
 ];
 if (fs.existsSync(path.join(apiStage, 'monorepo-root.json'))) {

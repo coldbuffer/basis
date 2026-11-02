@@ -2,7 +2,7 @@
 """Write OpenAPI v1 JSON snapshots from the live FastAPI app.
 
 Runtime `/openapi/v1.json` is exported directly from `app.openapi()` (see
-`basis.interface.contract.openapi.v1_export`). This script writes the same export to
+`basis.http.openapi.v1_export`). This script writes the same export to
 `openapi/*.json` for CI drift checks and `web` `gen:openapi-types`.
 
 Operation `description` fields come from route handler docstrings only (FastAPI).
@@ -21,8 +21,8 @@ import shutil
 from copy import deepcopy
 from pathlib import Path
 
-from basis.interface.http.app import create_app
-from basis.interface.contract.openapi.v1_export import (
+from basis.app import create_app
+from basis.http.openapi.v1_export import (
     export_openapi_v1_document,
     filter_openapi_paths,
 )
@@ -53,8 +53,8 @@ def main() -> None:
     parser.add_argument(
         "--out-dir",
         type=Path,
-        default=Path("openapi"),
-        help="Directory for basis-v1*.json (default: openapi/)",
+        default=Path("contracts/openapi"),
+        help="Directory for basis-v1*.json (default: contracts/openapi/)",
     )
     args = parser.parse_args()
     default_data_dir = Path("/tmp/basis-openapi-gen")

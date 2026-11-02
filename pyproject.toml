@@ -55,9 +55,9 @@ basis = "basis.cli:main"
 include = ["basis*"]
 
 [tool.setuptools.package-data]
-"basis.infra.tooling.db" = ["migrations/*.sql", "alembic/**/*"]
-"basis.domain.connector" = ["providers/*.yaml", "providers/*.yml"]
-"basis.domain.connector.synthesis" = ["batches/*.yaml", "executors-index.json"]
+"basis.infra.db" = ["migrations/*.sql", "alembic/**/*"]
+"basis.services.connector" = ["providers/*.yaml", "providers/*.yml"]
+"basis.services.connector.synthesis" = ["batches/*.yaml", "executors-index.json"]
 
 [tool.uv]
 # Committed lockfile must use the default index so CI (GitHub-hosted) can fetch wheels.
@@ -66,10 +66,57 @@ index-url = "https://pypi.org/simple"
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = [
+  "tests/unit",
   "tests/integration",
   "tests/use_cases",
   "tests/contract",
 ]
 markers = [
   "integration: real database or external service (optional env)",
+]
+
+[tool.importlinter]
+root_package = "basis"
+
+[[tool.importlinter.contracts]]
+id = "infra-no-routes-http"
+name = "Infra must not import routes, http, mcp, or services"
+type = "forbidden"
+source_modules = ["basis.infra"]
+forbidden_modules = ["basis.routes", "basis.http", "basis.mcp"]
+
+[[tool.importlinter.contracts]]
+id = "services-no-routes"
+name = "Services must not import routes"
+type = "forbidden"
+source_modules = ["basis.services"]
+forbidden_modules = ["basis.routes"]
+
+[[tool.importlinter.contracts]]
+id = "services-no-http"
+name = "Services must not import http layer"
+type = "forbidden"
+source_modules = ["basis.services"]
+forbidden_modules = ["basis.http"]
+
+[[tool.importlinter.contracts]]
+id = "services-knowledge-no-tenancy"
+name = "Knowledge service must not import tenancy"
+type = "forbidden"
+source_modules = ["basis.services.knowledge"]
+forbidden_modules = ["basis.services.tenancy"]
+ignore_imports = [
+  "basis.services.kernel.context -> basis.services.tenancy.admin.store",
+  "basis.services.kernel.context -> basis.services.tenancy.admin.admin_types",
+]
+
+[[tool.importlinter.contracts]]
+id = "services-ontology-no-tenancy"
+name = "Ontology service must not import tenancy"
+type = "forbidden"
+source_modules = ["basis.services.ontology"]
+forbidden_modules = ["basis.services.tenancy"]
+ignore_imports = [
+  "basis.services.kernel.context -> basis.services.tenancy.admin.store",
+  "basis.services.kernel.context -> basis.services.tenancy.admin.admin_types",
 ]

@@ -8,11 +8,11 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-KNOWLEDGE = ROOT / "basis" / "domain" / "knowledge"
+KNOWLEDGE = ROOT / "basis" / "services" / "knowledge"
 ALLOWED_ROOT_SQL = frozenset({"sql.py"})
 SCAN_DIRS = (ROOT / "basis", ROOT / "tests")
 LEGACY_SQL_IMPORT_RE = re.compile(
-    r"^\s*(?:from|import)\s+(basis\.domain\.knowledge\.sql_[a-z0-9_]+)",
+    r"^\s*(?:from|import)\s+(basis\.services\.knowledge\.sql_[a-z0-9_]+)",
     re.MULTILINE,
 )
 

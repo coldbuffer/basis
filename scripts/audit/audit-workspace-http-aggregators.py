@@ -8,15 +8,17 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-HTTP = ROOT / "basis" / "interface" / "http"
+HTTP = ROOT / "basis" / "routes"
 
 AGGREGATORS = (
-    "workspace/connectors/__init__.py",
-    "workspace/documents/__init__.py",
+    "workspace/core/__init__.py",
+    "workspace/knowledge/__init__.py",
+    "workspace/knowledge/documents/__init__.py",
+    "workspace/knowledge/ledger/__init__.py",
+    "workspace/knowledge/sources/__init__.py",
+    "workspace/connector/__init__.py",
     "workspace/graph/__init__.py",
     "workspace/graph/graph_session_routes.py",
-    "workspace/ledger/__init__.py",
-    "workspace/sources/__init__.py",
     "workspace/ontology/__init__.py",
     "workspace/review/__init__.py",
     "workspace/review/resolve.py",

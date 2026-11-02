@@ -113,7 +113,7 @@ app.whenReady().then(async () => {
       createWindow();
     } else {
       apiBase = process.env.BASIS_DESKTOP_API_BASE ?? 'http://127.0.0.1:8090';
-      webUrl = process.env.BASIS_DESKTOP_WEB_URL ?? 'http://127.0.0.1:3001';
+      webUrl = process.env.BASIS_DESKTOP_WEB_URL ?? 'http://127.0.0.1:3002';
       createWindow();
     }
   } catch (err) {

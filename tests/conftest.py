@@ -5,8 +5,8 @@ import pytest
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import make_url
 
-from basis.domain.knowledge.schedulers.version_ingest_tasks import wait_for_background_ingest
-from basis.domain.tenancy.admin.store import AdminStore
+from basis.services.knowledge.schedulers.version_ingest_tasks import wait_for_background_ingest
+from basis.services.tenancy.admin.store import AdminStore
 from basis.infra.runtime.database import reset_sqlite_database_pool
 from tests.support.llm_extract_test_support import TEST_CHAT_LLM, graph_builder_stub_build
 from tests.support.test_config import apply_test_config
@@ -99,7 +99,7 @@ def postgres_admin_url() -> str:
     if not postgres_admin_reachable(admin_url):
         pytest.skip(
             "PostgreSQL is not reachable for integration tests "
-            f"({admin_url!r}); start compose.postgres.yml or adjust tests/test.yaml"
+            f"({admin_url!r}); start docker/compose.postgres.yml or adjust tests/test.yaml"
         )
     return admin_url
 
@@ -125,8 +125,8 @@ def _require_postgres_sql_connector_writable(database_url: str) -> None:
         pytest.skip(
             "PostgreSQL is not writable for BOCP SQL connector tests "
             f"({exc}). Start Basis Postgres: "
-            "docker compose -f compose.postgres.yml up -d, then "
-            f"Start Postgres (docker compose -f compose.postgres.yml up -d) or set "
+            "docker compose -f docker/compose.postgres.yml up -d, then "
+            f"Start Postgres (docker compose -f docker/compose.postgres.yml up -d) or set "
             "postgres.sql_target_url in tests/test.yaml "
             f"(host {host}, port {port})."
         )

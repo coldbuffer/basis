@@ -8,13 +8,12 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-MOUNT = ROOT / "basis" / "interface" / "http" / "platform" / "mount_platform.py"
+MOUNT = ROOT / "basis" / "routes" / "admin" / "mount_platform.py"
 
 REQUIRED_PLATFORM_MODULES = frozenset(
     {
         "audit",
         "e2e_helpers",
-        "model_providers",
         "models",
         "organizations",
         "platform_info",
@@ -25,10 +24,10 @@ REQUIRED_PLATFORM_MODULES = frozenset(
 )
 
 PLATFORM_IMPORT_RE = re.compile(
-    r"from basis\.interface\.http\.platform\.([a-z0-9_]+) import router\b",
+    r"from basis\.routes\.admin\.([a-z0-9_]+) import",
 )
 PLATFORM_AUTH_IMPORT_RE = re.compile(
-    r"from basis\.interface\.http\.platform\.auth_mount import router\b",
+    r"from basis\.routes\.admin\.auth_mount import router\b",
 )
 
 
