@@ -36,6 +36,9 @@ export function OntologyPage() {
   }, []);
 
   const rawTabParam = searchParams.get('tab');
+  const alignmentDeepLink =
+    searchParams.get('alignSuggest') === '1' ||
+    (rawTabParam === 'alignments' && Boolean(searchParams.get('alignOntology')?.trim()));
 
   const tab = useMemo(
     () =>
@@ -66,9 +69,10 @@ export function OntologyPage() {
   }, [workspaceId, caps]);
 
   const showVocabularyAlignmentTab =
-    registeredOntologyCount === null
+    alignmentDeepLink ||
+    (registeredOntologyCount === null
       ? rawTabParam === 'alignments'
-      : registeredOntologyCount >= 2;
+      : registeredOntologyCount >= 2);
 
   if (!id) {
     return null;
@@ -100,7 +104,12 @@ export function OntologyPage() {
   );
 
   useEffect(() => {
-    if (tab !== 'alignments' || showVocabularyAlignmentTab || registeredOntologyCount === null) {
+    if (
+      tab !== 'alignments' ||
+      showVocabularyAlignmentTab ||
+      registeredOntologyCount === null ||
+      searchParams.get('alignSuggest') === '1'
+    ) {
       return;
     }
     const params = new URLSearchParams(searchParams);

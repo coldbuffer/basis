@@ -9534,7 +9534,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/basis__interface__http__workspace__documents__documents_models__CreateOntologyRequest"
+                "$ref": "#/components/schemas/basis__routes__workspace__knowledge__documents__documents_models__CreateOntologyRequest"
               }
             }
           }
@@ -9905,7 +9905,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/basis__domain__ontology__hub__hub_models__CreateOntologyRequest"
+                "$ref": "#/components/schemas/basis__services__ontology__models__CreateOntologyRequest"
               }
             }
           }
@@ -19740,7 +19740,38 @@
         ],
         "title": "WorkspaceResetRequest"
       },
-      "basis__domain__ontology__hub__hub_models__CreateOntologyRequest": {
+      "basis__routes__workspace__knowledge__documents__documents_models__CreateOntologyRequest": {
+        "properties": {
+          "namespace": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Namespace"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          }
+        },
+        "type": "object",
+        "required": [
+          "namespace",
+          "name"
+        ],
+        "title": "CreateOntologyRequest"
+      },
+      "basis__services__ontology__models__CreateOntologyRequest": {
         "properties": {
           "mode": {
             "type": "string",
@@ -19821,37 +19852,6 @@
               }
             ],
             "title": "Model"
-          }
-        },
-        "type": "object",
-        "required": [
-          "namespace",
-          "name"
-        ],
-        "title": "CreateOntologyRequest"
-      },
-      "basis__interface__http__workspace__documents__documents_models__CreateOntologyRequest": {
-        "properties": {
-          "namespace": {
-            "type": "string",
-            "minLength": 1,
-            "title": "Namespace"
-          },
-          "name": {
-            "type": "string",
-            "minLength": 1,
-            "title": "Name"
-          },
-          "description": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Description"
           }
         },
         "type": "object",

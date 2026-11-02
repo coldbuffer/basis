@@ -6216,7 +6216,16 @@ export interface components {
             scopes?: string[] | null;
         };
         /** CreateOntologyRequest */
-        basis__domain__ontology__hub__hub_models__CreateOntologyRequest: {
+        basis__routes__workspace__knowledge__documents__documents_models__CreateOntologyRequest: {
+            /** Namespace */
+            namespace: string;
+            /** Name */
+            name: string;
+            /** Description */
+            description?: string | null;
+        };
+        /** CreateOntologyRequest */
+        basis__services__ontology__models__CreateOntologyRequest: {
             /**
              * Mode
              * @default scratch
@@ -6239,15 +6248,6 @@ export interface components {
             provider?: string | null;
             /** Model */
             model?: string | null;
-        };
-        /** CreateOntologyRequest */
-        basis__interface__http__workspace__documents__documents_models__CreateOntologyRequest: {
-            /** Namespace */
-            namespace: string;
-            /** Name */
-            name: string;
-            /** Description */
-            description?: string | null;
         };
     };
     responses: never;
@@ -12400,7 +12400,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["basis__interface__http__workspace__documents__documents_models__CreateOntologyRequest"];
+                "application/json": components["schemas"]["basis__routes__workspace__knowledge__documents__documents_models__CreateOntologyRequest"];
             };
         };
         responses: {
@@ -12579,7 +12579,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["basis__domain__ontology__hub__hub_models__CreateOntologyRequest"];
+                "application/json": components["schemas"]["basis__services__ontology__models__CreateOntologyRequest"];
             };
         };
         responses: {
