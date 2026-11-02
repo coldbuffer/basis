@@ -69,12 +69,12 @@ flowchart TB
     agents["智能体与自动化"]
   end
 
-  subgraph apiLayer["basis/routes · basis/http · FastAPI"]
+  subgraph apiLayer["basis/routes · basis/http · basis/mcp · FastAPI"]
     rest["OpenAPI v1 · REST"]
     mcp["MCP · JSON-RPC over HTTP"]
   end
 
-  ops["应用操作层 · 共用 catalog"]
+  ops["basis/services · 操作与工具目录"]
 
   subgraph platform["平台"]
     plat["认证 · 组织 · SSO · API 令牌 · 审计"]

@@ -69,12 +69,12 @@ flowchart TB
     agents["Agents & automation"]
   end
 
-  subgraph apiLayer["basis/routes · basis/http · FastAPI"]
+  subgraph apiLayer["basis/routes · basis/http · basis/mcp · FastAPI"]
     rest["OpenAPI v1 · REST"]
     mcp["MCP · JSON-RPC over HTTP"]
   end
 
-  ops["Application operations · shared catalog"]
+  ops["basis/services · operations & tool catalog"]
 
   subgraph platform["Platform"]
     plat["Auth · orgs · SSO · API tokens · audit"]
