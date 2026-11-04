@@ -98,6 +98,7 @@ export const WORKSPACE_NAV_BY_ZONE = {
   ],
   knowledge: [
     { segment: 'sources', labelKey: 'sources', icon: 'book-01' },
+    { segment: 'sql-catalog', labelKey: 'sqlCatalog', icon: 'server-01' },
     { segment: 'processing', labelKey: 'processing', icon: 'sync' },
   ],
   schema: [

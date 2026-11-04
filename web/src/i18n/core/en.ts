@@ -139,7 +139,9 @@ export default {
     connector_unknown_providers: "One or more connector service keys are not in the catalog.",
     connector_not_found: "Connector service was not found in the catalog.",
     sso_required: "This email domain must sign in with organization SSO.",
-    bad_auth_policy: "Invalid organization auth policy."
+    bad_auth_policy: "Invalid organization auth policy.",
+    sql_catalog_connect_failed: "Could not connect to the database.",
+    sql_catalog_driver_missing: "The database driver is not installed."
   },
   dev: {
     useSidebar: "useSidebar must be used within a SidebarProvider.",

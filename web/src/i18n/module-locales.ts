@@ -25,6 +25,7 @@ import { en as processing_en, zh as processing_zh } from '@/modules/workspace/pr
 import { en as review_en, zh as review_zh } from '@/modules/workspace/review/i18n/index.js';
 import { en as search_en, zh as search_zh } from '@/modules/workspace/search/i18n/index.js';
 import { en as settings_en, zh as settings_zh } from '@/modules/workspace/settings/i18n/index.js';
+import { en as sql_catalog_en, zh as sql_catalog_zh } from '@/modules/workspace/sql-catalog/i18n/index.js';
 import { en as swagger_en, zh as swagger_zh } from '@/modules/public/swagger/i18n/index.js';
 import { en as vocabulary_en, zh as vocabulary_zh } from '@/modules/workspace/vocabulary/i18n/index.js';
 
@@ -55,6 +56,7 @@ export const LOCALE_MODULE_SEGMENTS = [
   'review',
   'search',
   'settings',
+  'sql-catalog',
   'swagger',
   'vocabulary',
 ] as const;
@@ -85,6 +87,7 @@ export const moduleLocalesEn = {
   review: review_en,
   search: search_en,
   settings: settings_en,
+  sql_catalog: sql_catalog_en,
   swagger: swagger_en,
   vocabulary: vocabulary_en,
 } as const;
@@ -115,6 +118,7 @@ export const moduleLocalesZh = {
   review: review_zh,
   search: search_zh,
   settings: settings_zh,
+  sql_catalog: sql_catalog_zh,
   swagger: swagger_zh,
   vocabulary: vocabulary_zh,
 } as const;

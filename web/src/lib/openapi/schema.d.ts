@@ -3667,6 +3667,114 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{workspace_id}/sql-catalog/connection-test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Test Sql Catalog Connection
+         * @description Open the database and run a connectivity check. Does not store the connection or copy table rows. Requires workspace write access.
+         */
+        post: operations["test_sql_catalog_connection_api_v1_workspaces__workspace_id__sql_catalog_connection_test_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspace_id}/sql-catalog/sources": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Sql Catalog Sources
+         * @description List SQL catalog sources. Each source points at a database whose schema can be snapshotted. Connection secrets are redacted. Requires workspace read access.
+         */
+        get: operations["list_sql_catalog_sources_api_v1_workspaces__workspace_id__sql_catalog_sources_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspace_id}/sql-catalog/sources/{source_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Upsert Sql Catalog Source
+         * @description Create or replace a SQL catalog source. Opens the database and runs a connectivity check before storing the connection string. A failed check does not save the source. Does not copy table rows. Requires workspace write access.
+         */
+        put: operations["upsert_sql_catalog_source_api_v1_workspaces__workspace_id__sql_catalog_sources__source_id__put"];
+        post?: never;
+        /**
+         * Delete Sql Catalog Source
+         * @description Delete a SQL catalog source and its stored schema snapshot. Requires workspace write access.
+         */
+        delete: operations["delete_sql_catalog_source_api_v1_workspaces__workspace_id__sql_catalog_sources__source_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspace_id}/sql-catalog/sources/{source_id}/ontology": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Apply Sql Catalog Ontology
+         * @description Write the latest schema snapshot into the workspace ontology as classes, datatype properties, and foreign-key object properties. Does not copy source rows. Requires workspace write access.
+         */
+        post: operations["apply_sql_catalog_ontology_api_v1_workspaces__workspace_id__sql_catalog_sources__source_id__ontology_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspace_id}/sql-catalog/sources/{source_id}/snapshot": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Sql Catalog Snapshot
+         * @description Return the latest stored schema snapshot for a SQL catalog source. Requires workspace read access.
+         */
+        get: operations["get_sql_catalog_snapshot_api_v1_workspaces__workspace_id__sql_catalog_sources__source_id__snapshot_get"];
+        put?: never;
+        /**
+         * Snapshot Sql Catalog Source
+         * @description Read tables, columns, views, keys, and recent query text from the source database and store that schema snapshot. Does not copy source rows. Requires workspace write access.
+         */
+        post: operations["snapshot_sql_catalog_source_api_v1_workspaces__workspace_id__sql_catalog_sources__source_id__snapshot_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{workspace_id}/temporal/bounds": {
         parameters: {
             query?: never;
@@ -4987,6 +5095,11 @@ export interface components {
              */
             auto_process: boolean;
         };
+        /** TestSqlCatalogConnectionRequest */
+        TestSqlCatalogConnectionRequest: {
+            /** Connection Uri */
+            connection_uri: string;
+        };
         /** UpdateIngestSourceRequest */
         UpdateIngestSourceRequest: {
             /** Name */
@@ -5048,6 +5161,19 @@ export interface components {
              * @default
              */
             api_key: string;
+        };
+        /** UpsertSqlCatalogSourceRequest */
+        UpsertSqlCatalogSourceRequest: {
+            /** Display Name */
+            display_name: string;
+            /** Connection Uri */
+            connection_uri: string;
+            /** Table Allow Regex */
+            table_allow_regex?: string | null;
+            /** Table Deny Regex */
+            table_deny_regex?: string | null;
+            /** Schemas */
+            schemas?: string[] | null;
         };
         /** ValidationError */
         ValidationError: {
@@ -12452,6 +12578,264 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    test_sql_catalog_connection_api_v1_workspaces__workspace_id__sql_catalog_connection_test_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                workspace_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TestSqlCatalogConnectionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_sql_catalog_sources_api_v1_workspaces__workspace_id__sql_catalog_sources_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                workspace_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upsert_sql_catalog_source_api_v1_workspaces__workspace_id__sql_catalog_sources__source_id__put: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                workspace_id: string;
+                source_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpsertSqlCatalogSourceRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_sql_catalog_source_api_v1_workspaces__workspace_id__sql_catalog_sources__source_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                workspace_id: string;
+                source_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    apply_sql_catalog_ontology_api_v1_workspaces__workspace_id__sql_catalog_sources__source_id__ontology_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                workspace_id: string;
+                source_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_sql_catalog_snapshot_api_v1_workspaces__workspace_id__sql_catalog_sources__source_id__snapshot_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                workspace_id: string;
+                source_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    snapshot_sql_catalog_source_api_v1_workspaces__workspace_id__sql_catalog_sources__source_id__snapshot_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                workspace_id: string;
+                source_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Validation Error */

@@ -14383,6 +14383,508 @@
         "x-basis-auth": "session-or-workspace-api-token"
       }
     },
+    "/api/v1/workspaces/{workspace_id}/sql-catalog/connection-test": {
+      "post": {
+        "tags": [
+          "workspaces"
+        ],
+        "summary": "Test Sql Catalog Connection",
+        "description": "Open the database and run a connectivity check. Does not store the connection or copy table rows. Requires workspace write access.",
+        "operationId": "test_sql_catalog_connection_api_v1_workspaces__workspace_id__sql_catalog_connection_test_post",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Workspace Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TestSqlCatalogConnectionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Test Sql Catalog Connection Api V1 Workspaces  Workspace Id  Sql Catalog Connection Test Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-basis-surface": "workspaces",
+        "x-basis-auth": "session-or-workspace-api-token"
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/sql-catalog/sources": {
+      "get": {
+        "tags": [
+          "workspaces"
+        ],
+        "summary": "List Sql Catalog Sources",
+        "description": "List SQL catalog sources. Each source points at a database whose schema can be snapshotted. Connection secrets are redacted. Requires workspace read access.",
+        "operationId": "list_sql_catalog_sources_api_v1_workspaces__workspace_id__sql_catalog_sources_get",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Workspace Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response List Sql Catalog Sources Api V1 Workspaces  Workspace Id  Sql Catalog Sources Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-basis-surface": "workspaces",
+        "x-basis-auth": "session-or-workspace-api-token"
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/sql-catalog/sources/{source_id}": {
+      "put": {
+        "tags": [
+          "workspaces"
+        ],
+        "summary": "Upsert Sql Catalog Source",
+        "description": "Create or replace a SQL catalog source. Opens the database and runs a connectivity check before storing the connection string. A failed check does not save the source. Does not copy table rows. Requires workspace write access.",
+        "operationId": "upsert_sql_catalog_source_api_v1_workspaces__workspace_id__sql_catalog_sources__source_id__put",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Workspace Id"
+            }
+          },
+          {
+            "name": "source_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Source Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsertSqlCatalogSourceRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Upsert Sql Catalog Source Api V1 Workspaces  Workspace Id  Sql Catalog Sources  Source Id  Put"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-basis-surface": "workspaces",
+        "x-basis-auth": "session-or-workspace-api-token"
+      },
+      "delete": {
+        "tags": [
+          "workspaces"
+        ],
+        "summary": "Delete Sql Catalog Source",
+        "description": "Delete a SQL catalog source and its stored schema snapshot. Requires workspace write access.",
+        "operationId": "delete_sql_catalog_source_api_v1_workspaces__workspace_id__sql_catalog_sources__source_id__delete",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Workspace Id"
+            }
+          },
+          {
+            "name": "source_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Source Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Delete Sql Catalog Source Api V1 Workspaces  Workspace Id  Sql Catalog Sources  Source Id  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-basis-surface": "workspaces",
+        "x-basis-auth": "session-or-workspace-api-token"
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/sql-catalog/sources/{source_id}/ontology": {
+      "post": {
+        "tags": [
+          "workspaces"
+        ],
+        "summary": "Apply Sql Catalog Ontology",
+        "description": "Write the latest schema snapshot into the workspace ontology as classes, datatype properties, and foreign-key object properties. Does not copy source rows. Requires workspace write access.",
+        "operationId": "apply_sql_catalog_ontology_api_v1_workspaces__workspace_id__sql_catalog_sources__source_id__ontology_post",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Workspace Id"
+            }
+          },
+          {
+            "name": "source_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Source Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Apply Sql Catalog Ontology Api V1 Workspaces  Workspace Id  Sql Catalog Sources  Source Id  Ontology Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-basis-surface": "workspaces",
+        "x-basis-auth": "session-or-workspace-api-token"
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/sql-catalog/sources/{source_id}/snapshot": {
+      "post": {
+        "tags": [
+          "workspaces"
+        ],
+        "summary": "Snapshot Sql Catalog Source",
+        "description": "Read tables, columns, views, keys, and recent query text from the source database and store that schema snapshot. Does not copy source rows. Requires workspace write access.",
+        "operationId": "snapshot_sql_catalog_source_api_v1_workspaces__workspace_id__sql_catalog_sources__source_id__snapshot_post",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Workspace Id"
+            }
+          },
+          {
+            "name": "source_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Source Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Snapshot Sql Catalog Source Api V1 Workspaces  Workspace Id  Sql Catalog Sources  Source Id  Snapshot Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-basis-surface": "workspaces",
+        "x-basis-auth": "session-or-workspace-api-token"
+      },
+      "get": {
+        "tags": [
+          "workspaces"
+        ],
+        "summary": "Get Sql Catalog Snapshot",
+        "description": "Return the latest stored schema snapshot for a SQL catalog source. Requires workspace read access.",
+        "operationId": "get_sql_catalog_snapshot_api_v1_workspaces__workspace_id__sql_catalog_sources__source_id__snapshot_get",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Workspace Id"
+            }
+          },
+          {
+            "name": "source_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Source Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Sql Catalog Snapshot Api V1 Workspaces  Workspace Id  Sql Catalog Sources  Source Id  Snapshot Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-basis-surface": "workspaces",
+        "x-basis-auth": "session-or-workspace-api-token"
+      }
+    },
     "/api/v1/workspaces/{workspace_id}/temporal/bounds": {
       "get": {
         "tags": [
@@ -17826,6 +18328,20 @@
         "type": "object",
         "title": "SyncIngestSourceRequest"
       },
+      "TestSqlCatalogConnectionRequest": {
+        "properties": {
+          "connection_uri": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Connection Uri"
+          }
+        },
+        "type": "object",
+        "required": [
+          "connection_uri"
+        ],
+        "title": "TestSqlCatalogConnectionRequest"
+      },
       "UpdateIngestSourceRequest": {
         "properties": {
           "name": {
@@ -18011,6 +18527,62 @@
           "kind"
         ],
         "title": "UpsertModelEndpointRequest"
+      },
+      "UpsertSqlCatalogSourceRequest": {
+        "properties": {
+          "display_name": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Display Name"
+          },
+          "connection_uri": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Connection Uri"
+          },
+          "table_allow_regex": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Table Allow Regex"
+          },
+          "table_deny_regex": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Table Deny Regex"
+          },
+          "schemas": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Schemas"
+          }
+        },
+        "type": "object",
+        "required": [
+          "display_name",
+          "connection_uri"
+        ],
+        "title": "UpsertSqlCatalogSourceRequest"
       },
       "ValidationError": {
         "properties": {

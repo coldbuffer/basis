@@ -1,23 +1,18 @@
-import { createRequire } from 'node:module';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+const { contextBridge, ipcRenderer } = require('electron');
 
-import { contextBridge, ipcRenderer } from 'electron';
-
-const require = createRequire(import.meta.url);
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const { version: appVersion } = require(path.join(__dirname, '..', 'package.json'));
+function argValue(flag) {
+  const prefix = `--${flag}=`;
+  const found = process.argv.find((item) => item.startsWith(prefix));
+  return found ? found.slice(prefix.length).trim() : '';
+}
 
 function resolveApiBase() {
-  const fromArg = process.argv
-    .find((a) => a.startsWith('--basis-api-base='))
-    ?.slice('--basis-api-base='.length)
-    ?.trim();
-  const raw = fromArg || process.env.BASIS_DESKTOP_API_BASE || '';
+  const raw = argValue('basis-api-base') || process.env.BASIS_DESKTOP_API_BASE || '';
   return raw.replace(/\/$/, '');
 }
 
 const apiBase = resolveApiBase();
+const appVersion = argValue('basis-app-version');
 const hasCustomWindowControls = process.platform !== 'darwin';
 
 contextBridge.exposeInMainWorld('__BASIS_RUNTIME__', {

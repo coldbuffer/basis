@@ -106,6 +106,7 @@ export function workspaceNavSegmentEnabled(segment: string, caps: WorkspaceCapab
   if (!caps) return true;
   if (segment === 'graph-diff') return caps.graph;
   if (segment === 'quality') return caps.review;
+  if (segment === 'sql-catalog') return true;
   if (segment === 'analyze') {
     return caps.sparql || caps.reasoning;
   }

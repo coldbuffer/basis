@@ -67,6 +67,11 @@ export const ProcessingPage = lazy(() =>
     default: m.ProcessingPage,
   })),
 );
+export const SqlCatalogPage = lazy(() =>
+  import('@/modules/workspace/sql-catalog/index.js').then((m) => ({
+    default: m.SqlCatalogPage,
+  })),
+);
 export const ReviewPage = lazy(() =>
   import('@/modules/workspace/review/index.js').then((m) => ({ default: m.ReviewPage })),
 );

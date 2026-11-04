@@ -5997,6 +5997,20 @@
         "type": "object",
         "title": "SyncIngestSourceRequest"
       },
+      "TestSqlCatalogConnectionRequest": {
+        "properties": {
+          "connection_uri": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Connection Uri"
+          }
+        },
+        "type": "object",
+        "required": [
+          "connection_uri"
+        ],
+        "title": "TestSqlCatalogConnectionRequest"
+      },
       "UpdateIngestSourceRequest": {
         "properties": {
           "name": {
@@ -6182,6 +6196,62 @@
           "kind"
         ],
         "title": "UpsertModelEndpointRequest"
+      },
+      "UpsertSqlCatalogSourceRequest": {
+        "properties": {
+          "display_name": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Display Name"
+          },
+          "connection_uri": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Connection Uri"
+          },
+          "table_allow_regex": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Table Allow Regex"
+          },
+          "table_deny_regex": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Table Deny Regex"
+          },
+          "schemas": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Schemas"
+          }
+        },
+        "type": "object",
+        "required": [
+          "display_name",
+          "connection_uri"
+        ],
+        "title": "UpsertSqlCatalogSourceRequest"
       },
       "ValidationError": {
         "properties": {

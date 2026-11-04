@@ -96,6 +96,8 @@ def purge_workspace_reset_data(
             "connector_policies",
             "connector_oauth_configs",
             "connector_connections",
+            "sql_catalog_snapshots",
+            "sql_catalog_sources",
         ):
             _delete_workspace_rows(conn, table, workspace_id)
 

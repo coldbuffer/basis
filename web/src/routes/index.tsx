@@ -19,6 +19,7 @@ import {
   MappingsPage,
   OntologyPage,
   ProcessingPage,
+  SqlCatalogPage,
   ReviewPage,
   DataQualityPage,
   SearchPage,
@@ -132,6 +133,7 @@ export function AppRoutes() {
         <Route path="/workspaces/:id/graph" element={<WorkspaceLazy><GraphPage /></WorkspaceLazy>} />
         <Route path="/workspaces/:id/search" element={<WorkspaceLazy><SearchPage /></WorkspaceLazy>} />
         <Route path="/workspaces/:id/sources" element={<Lazy><LibraryPage /></Lazy>} />
+        <Route path="/workspaces/:id/sql-catalog" element={<WorkspaceLazy><SqlCatalogPage /></WorkspaceLazy>} />
         <Route path="/workspaces/:id/processing" element={<Lazy><ProcessingPage /></Lazy>} />
         <Route path="/workspaces/:id/entities" element={<WorkspaceLazy><EntitiesPage /></WorkspaceLazy>} />
         <Route path="/workspaces/:id/log" element={<WorkspaceLazy><ActivityLogPage /></WorkspaceLazy>} />

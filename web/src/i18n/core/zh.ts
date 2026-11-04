@@ -139,7 +139,9 @@ export default {
     connector_unknown_providers: "存在不在目录中的 connector service 键。",
     connector_not_found: "未找到该连接器服务。",
     sso_required: "该邮箱域名须使用企业 SSO 登录。",
-    bad_auth_policy: "组织登录策略无效。"
+    bad_auth_policy: "组织登录策略无效。",
+    sql_catalog_connect_failed: "无法连接数据库。",
+    sql_catalog_driver_missing: "数据库驱动未安装。"
   },
   dev: {
     useSidebar: "useSidebar 须在 SidebarProvider 内使用。",

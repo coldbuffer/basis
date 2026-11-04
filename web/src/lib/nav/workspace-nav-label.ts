@@ -10,6 +10,8 @@ export function workspaceNavMenuLabel(t: LocaleMessages, labelKey: SidebarMenuKe
       return t.search.menu.search;
     case 'sources':
       return t.library.menu.sources;
+    case 'sqlCatalog':
+      return t.sql_catalog.menu.sql_catalog;
     case 'processing':
       return t.processing.menu.processing;
     case 'entities':

@@ -78,8 +78,11 @@ function createWindow() {
     titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'hidden',
     autoHideMenuBar: true,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.mjs'),
-      additionalArguments: [`--basis-api-base=${apiBase}`],
+      preload: path.join(__dirname, 'preload.cjs'),
+      additionalArguments: [
+        `--basis-api-base=${apiBase}`,
+        `--basis-app-version=${app.getVersion()}`,
+      ],
       contextIsolation: true,
       nodeIntegration: false,
     },
