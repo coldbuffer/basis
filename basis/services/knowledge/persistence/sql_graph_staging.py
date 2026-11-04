@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 import json
 from typing import Any
 
-from basis.services.knowledge.ports.connector import LockedCanonicalConn
+from basis.services.knowledge.persistence.locked_conn import LockedCanonicalConn
 
 
 def _staging_now_iso() -> str:

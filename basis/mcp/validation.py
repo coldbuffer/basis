@@ -6,8 +6,6 @@ from typing import Any
 
 from pydantic import BaseModel, ValidationError
 
-from basis.services.connector.schemas import TOOL_INPUT_MODELS as CONNECTOR_INPUT
-from basis.services.connector.schemas import TOOL_RESPONSE_MODELS as CONNECTOR_RESPONSE
 from basis.services.graph.schemas import TOOL_INPUT_MODELS as GRAPH_INPUT
 from basis.services.graph.schemas import TOOL_RESPONSE_MODELS as GRAPH_RESPONSE
 from basis.services.knowledge.schemas import TOOL_INPUT_MODELS as KNOWLEDGE_INPUT
@@ -24,7 +22,6 @@ OPERATION_INPUT_MODELS: dict[str, type[BaseModel]] = {
     **ONTOLOGY_INPUT,
     **GRAPH_INPUT,
     **REVIEW_INPUT,
-    **CONNECTOR_INPUT,
 }
 
 OPERATION_RESPONSE_MODELS: dict[str, type[BaseModel]] = {
@@ -32,7 +29,6 @@ OPERATION_RESPONSE_MODELS: dict[str, type[BaseModel]] = {
     **KNOWLEDGE_RESPONSE,
     **GRAPH_RESPONSE,
     **REVIEW_RESPONSE,
-    **CONNECTOR_RESPONSE,
 }
 
 

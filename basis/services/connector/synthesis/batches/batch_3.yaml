@@ -1,5 +1,0 @@
-id: 3
-name: crm
-ship_tier_default: beta
-services:
-  - hubspot

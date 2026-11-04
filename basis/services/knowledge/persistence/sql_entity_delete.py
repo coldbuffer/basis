@@ -5,7 +5,36 @@ from __future__ import annotations
 from typing import Any
 
 from basis.services.errors import AdminError
-from basis.services.knowledge.persistence.sql_connector_sync import purge_entity_connector_sync_data
+
+
+def _purge_entity_connector_rows(conn: Any, workspace_id: str, entity_id: str) -> None:
+    """Drop leftover connector outbox rows so entity delete still commits."""
+    outbox_ids = [
+        row[0]
+        for row in conn.execute(
+            "SELECT id FROM entity_sync_outbox WHERE workspace_id = ? AND entity_id = ?",
+            (workspace_id, entity_id),
+        ).fetchall()
+    ]
+    if outbox_ids:
+        placeholders = ",".join("?" * len(outbox_ids))
+        conn.execute(
+            f"""
+            DELETE FROM review_items
+            WHERE workspace_id = ? AND subject_type = 'entity_sync_outbox'
+              AND subject_id IN ({placeholders})
+            """,
+            (workspace_id, *outbox_ids),
+        )
+    conn.execute(
+        "DELETE FROM entity_sync_outbox WHERE workspace_id = ? AND entity_id = ?",
+        (workspace_id, entity_id),
+    )
+    conn.execute(
+        "DELETE FROM entity_external_refs WHERE workspace_id = ? AND entity_id = ?",
+        (workspace_id, entity_id),
+    )
+
 
 _STATEMENT_REVIEW_SUBJECT_TYPES = ("statement", "statement_remember")
 _PREVIEW_LIMIT = 500
@@ -230,7 +259,7 @@ def execute_delete_entity(conn: Any, workspace_id: str, entity_id: str) -> dict[
         "DELETE FROM statement_qualifiers WHERE workspace_id = ? AND entity_id = ?",
         (workspace_id, entity_id),
     )
-    purge_entity_connector_sync_data(conn, workspace_id, entity_id)
+    _purge_entity_connector_rows(conn, workspace_id, entity_id)
     conn.execute(
         "DELETE FROM entity_names WHERE workspace_id = ? AND entity_id = ?",
         (workspace_id, entity_id),

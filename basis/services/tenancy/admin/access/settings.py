@@ -1,4 +1,4 @@
-"""Platform settings and connector policy."""
+"""Platform settings."""
 
 from __future__ import annotations
 
@@ -14,23 +14,6 @@ if TYPE_CHECKING:
 class SettingsAccess:
     def __init__(self, store: AdminStore) -> None:
         self._store = store
-
-    def get_platform_allowed_providers(self) -> list[str] | str:
-        from basis.services.connector.vault.platform_policy import PlatformConnectorPolicy
-
-        with self._store._lock:
-            return PlatformConnectorPolicy(self._store._conn).get_allowed_providers()
-
-    def upsert_platform_allowed_providers(
-        self,
-        allowed_providers: list[str] | str,
-    ) -> tuple[list[str] | str, str]:
-        from basis.services.connector.vault.platform_policy import PlatformConnectorPolicy
-
-        with self._store._lock:
-            return PlatformConnectorPolicy(self._store._conn).upsert_allowed_providers(
-                allowed_providers
-            )
 
     def get_settings(self) -> dict[str, Any]:
         with self._store._lock:

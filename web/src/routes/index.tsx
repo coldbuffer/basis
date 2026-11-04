@@ -4,15 +4,10 @@ import { BasisLayout } from '@/components/app/shared/shell/basis-layout.js';
 import { HomePage } from '@/modules/public/home/index.js';
 import { LoginPage } from '@/modules/public/login/index.js';
 import {
-  AdminConnectorsPage,
   AuditPage,
   DocsPage,
   AlertsPage,
   AnalyzePage,
-  ConnectorMappingEditPage,
-  ConnectorMappingNewPage,
-  ConnectorOAuthCallbackPage,
-  ConnectorsPage,
   ActivityLogPage,
   EntitiesPage,
   GraphDiffPage,
@@ -122,14 +117,6 @@ export function AppRoutes() {
             }
           />
           <Route
-            path="connectors"
-            element={
-              <AdminOnly>
-                <Lazy><AdminConnectorsPage /></Lazy>
-              </AdminOnly>
-            }
-          />
-          <Route
             path="settings"
             element={
               <SettingsAccess>
@@ -145,20 +132,6 @@ export function AppRoutes() {
         <Route path="/workspaces/:id/graph" element={<WorkspaceLazy><GraphPage /></WorkspaceLazy>} />
         <Route path="/workspaces/:id/search" element={<WorkspaceLazy><SearchPage /></WorkspaceLazy>} />
         <Route path="/workspaces/:id/sources" element={<Lazy><LibraryPage /></Lazy>} />
-        <Route
-          path="/workspaces/:id/connectors/mappings/new"
-          element={<Lazy><ConnectorMappingNewPage /></Lazy>}
-        />
-        <Route
-          path="/workspaces/:id/connectors/mappings/:mappingId/edit"
-          element={<Lazy><ConnectorMappingEditPage /></Lazy>}
-        />
-        <Route
-          path="/workspaces/:id/connectors/oauth/callback"
-          element={<Lazy><ConnectorOAuthCallbackPage /></Lazy>}
-        />
-        <Route path="/workspaces/:id/connectors/:panel" element={<Lazy><ConnectorsPage /></Lazy>} />
-        <Route path="/workspaces/:id/connectors" element={<Lazy><ConnectorsPage /></Lazy>} />
         <Route path="/workspaces/:id/processing" element={<Lazy><ProcessingPage /></Lazy>} />
         <Route path="/workspaces/:id/entities" element={<WorkspaceLazy><EntitiesPage /></WorkspaceLazy>} />
         <Route path="/workspaces/:id/log" element={<WorkspaceLazy><ActivityLogPage /></WorkspaceLazy>} />

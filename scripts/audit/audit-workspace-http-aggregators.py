@@ -16,7 +16,6 @@ AGGREGATORS = (
     "workspace/knowledge/documents/__init__.py",
     "workspace/knowledge/ledger/__init__.py",
     "workspace/knowledge/sources/__init__.py",
-    "workspace/connector/__init__.py",
     "workspace/graph/__init__.py",
     "workspace/graph/graph_session_routes.py",
     "workspace/ontology/__init__.py",

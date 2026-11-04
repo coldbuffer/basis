@@ -14,7 +14,6 @@ import { EntityRefLine } from '@/components/app/shared/workspace/entity-ref-line
 import { DerivedFactCard } from '@/components/app/shared/workspace/derived-fact-card.js';
 import { Badge } from '@/components/ui/badge.js';
 import { Button } from '@/components/ui/button.js';
-import { Input } from '@/components/ui/input.js';
 import {
   Dialog,
   DialogContent,
@@ -23,6 +22,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog.js';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet.js';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,7 +44,6 @@ import type { Locale } from '@/i18n/locale.js';
 import { ledgerStatementStatusLabel } from '@/modules/workspace/library/lib/ledger-labels.js';
 import { useWorkspaceNodeLabels } from '@/lib/workspace/node-labels.js';
 import { workspacePath } from '@/lib/nav/nav-config.js';
-import { reviewItemPath } from '@/modules/workspace/review/lib/review-url-state.js';
 import { useWorkspaceCapabilities } from '@/lib/workspace/capabilities.js';
 import { workspaceOpenApiDELETE, workspaceOpenApiGET, workspaceOpenApiPOST } from '@/lib/openapi/client.js';
 import { useApiErrorMessage } from '@/lib/errors/use-api-error-message.js';
@@ -105,22 +110,6 @@ type DerivedFactHit = {
   derivations: Array<{ premise_kind: string; premise_id: string }>;
 };
 
-type EntityExternalSyncDto = {
-  ref_id: string;
-  mapping_id: string;
-  provider: string;
-  stream_name: string;
-  external_table: string;
-  external_pk: string;
-  sync_direction: string;
-  writeback_mode: string;
-  writable_columns: Array<{
-    column: string;
-    surface_phrase: string;
-    predicate_uri: string;
-    current_value: string | null;
-  }>;
-};
 
 export function ledgerEntityId(hit: LedgerEntityHit): string {
   return hit.id ?? hit.entity_id;
@@ -137,13 +126,8 @@ function EntityFactsPanel({
 }) {
   const { t, locale } = useI18n();
   const l = t.entities.ledger;
-  const apiError = useApiErrorMessage();
   const [entityFacts, setEntityFacts] = useState<EntityFactHit[]>([]);
   const [entityDerivedFacts, setEntityDerivedFacts] = useState<DerivedFactHit[]>([]);
-  const [externalSync, setExternalSync] = useState<EntityExternalSyncDto | null>(null);
-  const [writebackValues, setWritebackValues] = useState<Record<string, string>>({});
-  const [proposingWriteback, setProposingWriteback] = useState(false);
-  const [queuedReviewItemId, setQueuedReviewItemId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const factLabelIds = entityFacts.flatMap((fact) =>
@@ -157,23 +141,12 @@ function EntityFactsPanel({
       const data = await workspaceOpenApiGET<{
         facts: EntityFactHit[];
         derived_facts?: DerivedFactHit[];
-        external_sync?: EntityExternalSyncDto | null;
       }>(workspaceId, `ledger/entities/${encodeURIComponent(entityId)}/facts`);
       setEntityFacts(data.facts ?? []);
       setEntityDerivedFacts(data.derived_facts ?? []);
-      const ext = data.external_sync ?? null;
-      setExternalSync(ext);
-      if (ext?.writable_columns) {
-        const initial: Record<string, string> = {};
-        for (const col of ext.writable_columns) {
-          initial[col.column] = col.current_value ?? '';
-        }
-        setWritebackValues(initial);
-      }
     } catch {
       setEntityFacts([]);
       setEntityDerivedFacts([]);
-      setExternalSync(null);
     } finally {
       setLoading(false);
     }
@@ -182,34 +155,6 @@ function EntityFactsPanel({
   useEffect(() => {
     void loadEntityFacts();
   }, [loadEntityFacts]);
-
-  async function handleProposeWriteback() {
-    if (!externalSync) return;
-    setProposingWriteback(true);
-    setQueuedReviewItemId(null);
-    try {
-      const res = await workspaceOpenApiPOST<{
-        outbox_id: string;
-        status: string;
-        review_item_id?: string | null;
-      }>(workspaceId, 'connectors/outbox/propose', {
-        body: {
-          entity_id: entityId,
-          field_updates: writebackValues,
-        },
-      });
-      if (res.review_item_id) {
-        setQueuedReviewItemId(res.review_item_id);
-      } else {
-        toast.success(l.writeback_applied_toast);
-        await loadEntityFacts();
-      }
-    } catch (err) {
-      toast.error(apiError(err));
-    } finally {
-      setProposingWriteback(false);
-    }
-  }
 
   useEffect(() => {
     if (!highlightStatementId || loading) return;
@@ -225,7 +170,7 @@ function EntityFactsPanel({
     );
   }
 
-  if (entityFacts.length === 0 && entityDerivedFacts.length === 0 && !externalSync) {
+  if (entityFacts.length === 0 && entityDerivedFacts.length === 0) {
     return (
       <p className="text-sm text-muted-foreground">
         {l.no_statements_or_derived}
@@ -234,72 +179,7 @@ function EntityFactsPanel({
   }
 
   return (
-    <div className="max-h-[min(60vh,28rem)] space-y-5 overflow-y-auto pr-1">
-      {externalSync ? (
-        <section
-          className="rounded-lg border border-border/80 bg-muted/30 p-3"
-          data-testid="entity-external-sync-section"
-        >
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h4 className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
-              {l.external_sync_section}
-            </h4>
-            <Badge variant="outline" className="font-mono text-[11px]">
-              {externalSync.provider} · {externalSync.external_table} ({externalSync.external_pk})
-            </Badge>
-          </div>
-          {externalSync.sync_direction === 'bidirectional' &&
-          externalSync.writeback_mode !== 'disabled' &&
-          externalSync.writable_columns.length > 0 ? (
-            <div className="mt-3 space-y-2.5">
-              {externalSync.writable_columns.map((col) => (
-                <div key={col.column} className="flex items-center gap-2 text-xs">
-                  <span className="w-28 shrink-0 font-mono font-medium text-foreground">
-                    {col.column}
-                  </span>
-                  <Input
-                    value={writebackValues[col.column] ?? ''}
-                    onChange={(e) =>
-                      setWritebackValues((prev) => ({
-                        ...prev,
-                        [col.column]: e.target.value,
-                      }))
-                    }
-                    className="h-7 font-mono text-xs"
-                    data-testid={`writeback-input-${col.column}`}
-                  />
-                </div>
-              ))}
-              <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-                {queuedReviewItemId ? (
-                  <div className="flex items-center gap-2 text-xs">
-                    <span className="text-muted-foreground">{l.writeback_review_queued}</span>
-                    <Button variant="link" size="sm" className="h-auto p-0 text-xs" asChild>
-                      <Link
-                        to={reviewItemPath(workspaceId, queuedReviewItemId)}
-                        data-testid="open-writeback-review-link"
-                      >
-                        {l.open_review_queue}
-                      </Link>
-                    </Button>
-                  </div>
-                ) : (
-                  <span />
-                )}
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={proposingWriteback}
-                  onClick={() => void handleProposeWriteback()}
-                  data-testid="propose-entity-writeback-btn"
-                >
-                  {proposingWriteback ? l.proposing_writeback : l.propose_writeback_button}
-                </Button>
-              </div>
-            </div>
-          ) : null}
-        </section>
-      ) : null}
+    <div className="space-y-5">
       {entityFacts.length > 0 ? (
         <section>
           <div className="mb-2 flex items-center justify-between">
@@ -456,11 +336,13 @@ export function LedgerEntityBrowser({
   workspaceId,
   loadRecentOnMount = true,
   focusStatementId,
+  toolbarPrefix,
 }: {
   workspaceId: string;
   limit?: number;
   loadRecentOnMount?: boolean;
   focusStatementId?: string;
+  toolbarPrefix?: React.ReactNode;
 }) {
   const { t, locale } = useI18n();
   const l = t.entities.ledger;
@@ -661,11 +543,11 @@ export function LedgerEntityBrowser({
       {
         key: 'kind',
         header: l.col_kind,
-        width: '6rem',
+        width: '8rem',
         hideBelow: 'sm',
         render: (hit) =>
           hit.entity_kind ? (
-            <Badge variant="secondary" className="max-w-full truncate">
+            <Badge variant="outline" className="max-w-full truncate text-[11px] font-normal">
               {hit.entity_kind}
             </Badge>
           ) : (
@@ -675,16 +557,19 @@ export function LedgerEntityBrowser({
       {
         key: 'description',
         header: l.col_description,
+        width: '40%',
         hideBelow: 'md',
         render: (hit) => (
-          <span className="line-clamp-2 text-muted-foreground">{hit.description || emptyCell}</span>
+          <span className="line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+            {hit.description || emptyCell}
+          </span>
         ),
       },
       {
         key: 'actions',
         header: l.col_actions,
         align: 'right',
-        width: '5rem',
+        width: '4rem',
         render: (hit) => {
           const entityId = ledgerEntityId(hit);
           return (
@@ -746,19 +631,36 @@ export function LedgerEntityBrowser({
     <DataPanel>
       <form onSubmit={(e) => void onSubmit(e)}>
         <DataPanelToolbar
-          search={
-            <ToolbarSearch
-              className="w-full min-w-[12rem] max-w-md sm:w-72"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder={l.entity_placeholder}
-            />
-          }
+          className="flex-wrap gap-y-2"
+          search={toolbarPrefix}
           actions={
-            <Button type="submit" size="sm" disabled={loading}>
-              {loading ? <Spinner className="size-4" /> : null}
-              {loading ? l.searching : l.search}
-            </Button>
+            <div className="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-2 sm:flex-initial">
+              <ToolbarSearch
+                className="min-w-[14rem] flex-1 sm:w-72 sm:flex-none"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={l.entity_placeholder}
+              />
+              {appliedQuery ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 px-2 text-xs text-muted-foreground"
+                  onClick={() => {
+                    setQuery('');
+                    setAppliedQuery('');
+                    setPage(1);
+                  }}
+                >
+                  {l.clear_search}
+                </Button>
+              ) : null}
+              <Button type="submit" size="sm" className="min-w-[5rem]" disabled={loading}>
+                {loading ? <Spinner className="size-4" /> : null}
+                {loading ? l.searching : l.search}
+              </Button>
+            </div>
           }
         />
       </form>
@@ -792,30 +694,71 @@ export function LedgerEntityBrowser({
         )}
       </DataPanelBody>
 
-      <Dialog
+      <Sheet
         open={factsTarget !== null}
         onOpenChange={(open) => {
           if (!open) setFactsTarget(null);
         }}
       >
-        <DialogContent className="sm:max-w-xl">
-          <DialogHeader>
-            <DialogTitle>{l.entity_facts_title}</DialogTitle>
-            <DialogDescription>
+        <SheetContent side="right" className="flex w-full flex-col gap-0 p-0 sm:max-w-lg">
+          <SheetHeader className="border-b border-border/60 px-5 py-4 pr-12">
+            <div className="flex flex-wrap items-center gap-2">
+              <SheetTitle className="text-base">{l.entity_facts_title}</SheetTitle>
+              {factsTarget?.entity_kind ? (
+                <Badge variant="outline" className="text-[11px] font-normal">
+                  {factsTarget.entity_kind}
+                </Badge>
+              ) : null}
+            </div>
+            <SheetDescription className="text-sm text-foreground/90">
               {factsTarget
                 ? factsTarget.canonical_label || ledgerEntityId(factsTarget)
                 : ''}
-            </DialogDescription>
-          </DialogHeader>
-          {factsTarget ? (
-            <EntityFactsPanel
-              workspaceId={workspaceId}
-              entityId={ledgerEntityId(factsTarget)}
-              highlightStatementId={highlightStatementId}
-            />
-          ) : null}
-        </DialogContent>
-      </Dialog>
+            </SheetDescription>
+            {factsTarget?.description ? (
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                {factsTarget.description}
+              </p>
+            ) : null}
+            {factsTarget ? (
+              <div className="flex flex-wrap items-center gap-2 pt-1.5">
+                <Button variant="outline" size="sm" className="h-7 text-xs" asChild>
+                  <Link
+                    to={`${workspacePath(workspaceId, 'graph')}?focus=${encodeURIComponent(ledgerEntityId(factsTarget))}`}
+                  >
+                    {l.open_in_graph}
+                  </Link>
+                </Button>
+                {showLineage ? (
+                  <Button variant="outline" size="sm" className="h-7 text-xs" asChild>
+                    <Link
+                      to={`${workspacePath(workspaceId, 'lineage')}?node=${encodeURIComponent(ledgerEntityId(factsTarget))}`}
+                    >
+                      {l.open_lineage}
+                    </Link>
+                  </Button>
+                ) : null}
+                <Button variant="ghost" size="sm" className="h-7 text-xs" asChild>
+                  <Link
+                    to={`${workspacePath(workspaceId, 'search')}?entity=${encodeURIComponent(ledgerEntityId(factsTarget))}`}
+                  >
+                    {l.search_chunks}
+                  </Link>
+                </Button>
+              </div>
+            ) : null}
+          </SheetHeader>
+          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
+            {factsTarget ? (
+              <EntityFactsPanel
+                workspaceId={workspaceId}
+                entityId={ledgerEntityId(factsTarget)}
+                highlightStatementId={highlightStatementId}
+              />
+            ) : null}
+          </div>
+        </SheetContent>
+      </Sheet>
 
       <Dialog
         open={invalidateTarget !== null}

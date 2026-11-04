@@ -1,7 +1,0 @@
-{
-  "slack": {
-    "slack.add_reaction": { "method": "POST", "path": "/reactions.add" },
-    "slack.post_message": { "method": "POST", "path": "/chat.postMessage" },
-    "slack.conversations_list": { "method": "GET", "path": "/conversations.list" }
-  }
-}

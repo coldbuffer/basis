@@ -14,8 +14,6 @@ export function workspaceNavMenuLabel(t: LocaleMessages, labelKey: SidebarMenuKe
       return t.processing.menu.processing;
     case 'entities':
       return t.entities.menu.entities;
-    case 'connectionsSync':
-      return t.connectors.menu.connections_sync;
     case 'ontology':
       return t.ontology.menu.ontology;
     case 'analyze':

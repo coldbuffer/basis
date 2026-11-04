@@ -56,8 +56,6 @@ include = ["basis*"]
 
 [tool.setuptools.package-data]
 "basis.infra.db" = ["migrations/*.sql", "alembic/**/*"]
-"basis.services.connector" = ["providers/*.yaml", "providers/*.yml"]
-"basis.services.connector.synthesis" = ["batches/*.yaml", "executors-index.json"]
 
 [tool.uv]
 # Committed lockfile must use the default index so CI (GitHub-hosted) can fetch wheels.

@@ -69,14 +69,3 @@ def http_response_from_payload(payload: dict[str, Any]) -> dict[str, Any]:
 def http_exception_from_core(exc: CoreError) -> HTTPException:
     detail = exc.detail if isinstance(exc.detail, dict) else {"message": str(exc.detail)}
     return HTTPException(status_code=exc.status_code, detail=detail)
-
-
-def http_response_from_connector_payload(
-    payload: dict[str, Any],
-    *,
-    kind: str = "primitive",
-) -> dict[str, Any]:
-    """Connector BC ``{error}`` payloads → ``AdminError`` (global HTTP handler)."""
-    from basis.services.connector.errors import payload_for_http
-
-    return payload_for_http(payload, kind=kind)  # type: ignore[arg-type]

@@ -243,8 +243,6 @@ for _name in (
     setattr(AdminStore, _name, _admin_access_delegate("_models", _name))
 
 for _name in (
-    "get_platform_allowed_providers",
-    "upsert_platform_allowed_providers",
     "get_settings",
     "update_settings",
 ):

@@ -1,4 +1,4 @@
-export type PlatformNavKey = 'workspaces' | 'users' | 'models' | 'connectors' | 'audit' | 'system';
+export type PlatformNavKey = 'workspaces' | 'users' | 'models' | 'audit' | 'system';
 
 export type NavItem = {
   to: string;
@@ -15,7 +15,6 @@ export const PLATFORM_NAV: NavItem[] = [
   { to: '/admin/workspaces', labelKey: 'workspaces', icon: 'folder-down-01', exact: true },
   { to: '/admin/users', labelKey: 'users', icon: 'users-profiles-01', adminOnly: true },
   { to: '/admin/models', labelKey: 'models', icon: 'atom', adminOnly: true },
-  { to: '/admin/connectors', labelKey: 'connectors', icon: 'plug-01', adminOnly: true },
   { to: '/admin/audit', labelKey: 'audit', icon: 'list-dashes-01', adminOnly: true },
   { to: '/admin/settings', labelKey: 'system', icon: 'settings' },
 ];
@@ -64,7 +63,7 @@ export function platformAdminEntryPath(
 /**
  * Workspace sidebar zones:
  * 1. explore — graph, graph diff, search, entity ledger
- * 2. knowledge — sources, BOCP connections (stream sync lives under connectors routes)
+ * 2. knowledge — sources and processing
  * 3. schema — ontology (incl. semantic alignment tab), vocabulary, analysis
  * 4. govern — data quality, smart review, change log, lineage
  * 5. system — integration, settings; alerts via account menu only
@@ -100,7 +99,6 @@ export const WORKSPACE_NAV_BY_ZONE = {
   knowledge: [
     { segment: 'sources', labelKey: 'sources', icon: 'book-01' },
     { segment: 'processing', labelKey: 'processing', icon: 'sync' },
-    { segment: 'connectors', labelKey: 'connectionsSync', icon: 'database' },
   ],
   schema: [
     { segment: 'ontology', labelKey: 'ontology', icon: 'shapes-01' },
@@ -198,17 +196,6 @@ export function workspaceQualityPath(
   return q ? `${base}?${q}` : base;
 }
 
-/** BOCP workspace sub-panels (sidebar routes under `/connectors/…`). Home is `/connectors`. */
-export type ConnectorPanel = 'mappings' | 'policy' | 'runs';
-
-export function workspaceConnectorHomePath(workspaceId: string): string {
-  return workspacePath(workspaceId, 'connectors');
-}
-
-export function workspaceConnectorPanelPath(workspaceId: string, panel: ConnectorPanel): string {
-  return workspacePath(workspaceId, `connectors/${panel}`);
-}
-
 /** Deep-link to OWL versions workspace + proposal review modal (F-ONT-05). */
 export function workspaceOntologyProposalPath(workspaceId: string, proposalId: string): string {
   const params = new URLSearchParams({
@@ -246,9 +233,6 @@ export function parseWorkspaceIdFromPath(pathname: string): string | null {
 export function menuIconForPath(pathname: string): string | undefined {
   const segment = /^\/workspaces\/[^/]+\/([^/]+)/.exec(pathname)?.[1];
   if (segment) {
-    if (segment === 'connectors') {
-      return WORKSPACE_NAV.find((item) => item.segment === 'connectors')?.icon;
-    }
     if (segment === 'mappings') {
       return WORKSPACE_NAV.find((item) => item.segment === 'ontology')?.icon;
     }
@@ -265,9 +249,6 @@ export function isWorkspaceScopedPath(pathname: string): boolean {
   const rest = pathname.slice(`/workspaces/${id}`.length);
   if (!rest || rest === '/') return false;
   const segment = rest.replace(/^\//, '').split('/')[0];
-  if (segment === 'connectors') {
-    return true;
-  }
   if (segment === 'mappings') {
     return true;
   }

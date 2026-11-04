@@ -1,7 +1,0 @@
-id: 5
-name: qq_mail
-ship_tier_default: beta
-services:
-  - qq_mail
-# Auth from OpenConnector catalog; IMAP/SMTP procedures require OpenConnector Node runtime (not yet wired in Basis REST invoke maps).
-prefer_anyconnect_procedures: true

@@ -212,7 +212,6 @@ async def list_entity_facts_route(
     limit: int = Query(50, ge=1, le=100),
     user: User = Depends(get_current_user),
     store: AdminStore = Depends(get_store),
-    knowledge: KnowledgeStore = Depends(get_knowledge_store),
 ) -> dict[str, Any]:
     """
 List Entity Facts Route. Evidence ledger: documents, chunks, statements, entities. Requires workspace membership (session) or workspace API token with read/write scope. All paths are scoped to `{workspace_id}`.
@@ -223,10 +222,7 @@ List Entity Facts Route. Evidence ledger: documents, chunks, statements, entitie
         ctx,
         {"entity_id": entity_id, "limit": limit},
     )
-    data = http_response_from_payload(payload)
-    sync_svc = knowledge.connector_sync_service()
-    external_sync = sync_svc.get_entity_external_sync_context(workspace_id, entity_id)
-    return {**data, "external_sync": external_sync}
+    return http_response_from_payload(payload)
 
 
 @router.get("/{workspace_id}/ledger/entities/{entity_id}/delete-preview")

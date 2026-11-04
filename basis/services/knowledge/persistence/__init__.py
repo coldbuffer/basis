@@ -2,5 +2,5 @@
 
 Inside knowledge: ``from basis.services.knowledge.persistence import sql_<topic>`` or
 ``from basis.services.knowledge.persistence.sql_<topic> import …``.
-Other domains: ``basis.services.knowledge.sql`` (connector vault/sync) or documented allowlist.
+Other domains use the documented allowlist in ``scripts/audit/audit-knowledge-persistence-imports.py``.
 """

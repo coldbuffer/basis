@@ -17,7 +17,6 @@ REQUIRED_WORKSPACE_PACKAGES = frozenset(
         "graph",
         "ontology",
         "review",
-        "connector",
     }
 )
 

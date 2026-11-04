@@ -5,9 +5,8 @@ from basis.mcp.dispatch import execute
 
 
 def test_tool_names_match_registry() -> None:
-    assert len(TOOL_NAMES) == 75
+    assert len(TOOL_NAMES) == 63
     assert "search_chunks" in TOOL_NAMES
-    assert "list_connector_catalog" in TOOL_NAMES
     assert "list_typed_facts" in TOOL_NAMES
     assert "run_reasoning" in TOOL_NAMES
     assert "get_graph_summary" in TOOL_NAMES

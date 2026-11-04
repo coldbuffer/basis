@@ -124,16 +124,6 @@ def test_tool_definitions_match_registry() -> None:
         assert by_name[name]["inputSchema"]["type"] == "object"
 
 
-def test_invoke_connector_primitive_schema() -> None:
-    schema = input_schema_for_tool("invoke_connector_primitive")
-    assert schema is not None
-    props = schema.get("properties") or {}
-    assert "service" in props
-    assert "connection_scope" in props
-    assert "action_id" in props
-    assert "primitive" in props
-
-
 def test_mcp_descriptions_from_catalog() -> None:
     for name in ("search_chunks", "get_graph_summary"):
         desc = description_for_tool(name)

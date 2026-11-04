@@ -13,7 +13,6 @@ describe('visiblePlatformNavItems', () => {
     expect(keys).not.toContain('audit');
     expect(keys).not.toContain('system');
     expect(keys).toContain('models');
-    expect(keys).toContain('connectors');
   });
 
   it('desktop admin entry skips hidden system settings', () => {

@@ -45,7 +45,6 @@ jobs:
         run: >-
           uv run pytest tests/integration/tenancy/test_postgres_integration.py
           tests/integration/tenancy/test_postgres_backup_restore.py
-          tests/integration/connector/test_sql_connector_integration.py::test_sql_connector_postgres_check_discover_read_mutate
           -q
 
   openapi:

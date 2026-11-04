@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from typing import Any, Callable, NotRequired, TypedDict
 
-from basis.services.connector import operations as connector_ops
 from basis.services.graph import operations as graph_ops
 from basis.services.knowledge import operations as knowledge_ops
 from basis.services.ontology import operations as ontology_ops
@@ -88,18 +87,6 @@ OPERATIONS: dict[str, OperationSpec] = {
     "get_review_item": {"handler": review_ops.op_get_review_item},
     "approve_review_item": {"handler": review_ops.op_approve_review_item},
     "reject_review_item": {"handler": review_ops.op_reject_review_item},
-    "list_connector_catalog": {"handler": connector_ops.op_list_connector_catalog},
-    "describe_connector_service": {"handler": connector_ops.op_describe_connector_service},
-    "list_connector_connections": {"handler": connector_ops.op_list_connector_connections},
-    "upsert_connector_connection": {"handler": connector_ops.op_upsert_connector_connection},
-    "delete_connector_connection": {"handler": connector_ops.op_delete_connector_connection},
-    "check_connector_connection": {"handler": connector_ops.op_check_connector_connection},
-    "discover_connector_schema": {"handler": connector_ops.op_discover_connector_schema},
-    "list_connector_table_mappings": {"handler": connector_ops.op_list_connector_table_mappings},
-    "sync_connector_table_mapping": {"handler": connector_ops.op_sync_connector_table_mapping},
-    "invoke_connector_primitive": {"handler": connector_ops.op_invoke_connector_primitive},
-    "execute_connector_tool": {"handler": connector_ops.op_execute_connector_tool},
-    "propose_entity_writeback": {"handler": connector_ops.op_propose_entity_writeback},
 }
 
 

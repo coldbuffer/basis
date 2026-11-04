@@ -3,7 +3,6 @@ import { useLocation, useNavigate, useParams, useSearchParams } from 'react-rout
 import { ApiTokensPanel } from './components/api-tokens-panel.js';
 import { McpIntegrationPanel } from './components/mcp-integration-panel.js';
 import { OpenApiIntegrationPanel } from './components/openapi-integration-panel.js';
-import { workspaceConnectorsAuthorizationHref } from '@/modules/workspace/connectors/lib/playground-deep-link.js';
 import { ConsolePageLayout } from '@/components/app/shared/console/index.js';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs.js';
 import { useI18n } from '@/i18n/context.js';
@@ -54,18 +53,6 @@ export function IntegrationPage() {
     integration.revealCreatedSecret(secret);
     navigate({ pathname: location.pathname, search: location.search }, { replace: true, state: null });
   }, [integration.revealCreatedSecret, location.pathname, location.search, location.state, navigate]);
-
-  useEffect(() => {
-    if (!id) return;
-    if (searchParams.get('tab') !== 'connectors') return;
-    navigate(
-      workspaceConnectorsAuthorizationHref(id, {
-        subjectId: searchParams.get('subject_id') ?? undefined,
-        service: searchParams.get('service') ?? undefined,
-      }),
-      { replace: true },
-    );
-  }, [id, navigate, searchParams]);
 
   if (!id) return null;
 

@@ -77,4 +77,3 @@ def test_v1_integration_endpoints_respond(tmp_path) -> None:
     assert set(TOOL_NAMES).issubset(set(tools))
     assert "query_graph" in tools
     assert "search_chunks" in tools
-    assert "connector_postgres__table_records__list" in tools

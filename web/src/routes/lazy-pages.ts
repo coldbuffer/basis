@@ -1,10 +1,5 @@
 import { lazy } from 'react';
 
-export const AdminConnectorsPage = lazy(() =>
-  import('@/modules/admin/connectors/index.js').then((m) => ({
-    default: m.AdminConnectorsPage,
-  })),
-);
 export const AuditPage = lazy(() =>
   import('@/modules/admin/audit/index.js').then((m) => ({ default: m.AuditPage })),
 );
@@ -25,26 +20,6 @@ export const AlertsPage = lazy(() =>
 );
 export const AnalyzePage = lazy(() =>
   import('@/modules/workspace/analyze/index.js').then((m) => ({ default: m.AnalyzePage })),
-);
-export const ConnectorsPage = lazy(() =>
-  import('@/modules/workspace/connectors/index.js').then((m) => ({
-    default: m.ConnectorsPage,
-  })),
-);
-export const ConnectorOAuthCallbackPage = lazy(() =>
-  import('@/modules/workspace/connectors/pages/oauth-callback.js').then((m) => ({
-    default: m.ConnectorOAuthCallbackPage,
-  })),
-);
-export const ConnectorMappingNewPage = lazy(() =>
-  import('@/modules/workspace/connectors/pages/mapping-new.js').then((m) => ({
-    default: m.ConnectorMappingNewPage,
-  })),
-);
-export const ConnectorMappingEditPage = lazy(() =>
-  import('@/modules/workspace/connectors/pages/mapping-edit.js').then((m) => ({
-    default: m.ConnectorMappingEditPage,
-  })),
 );
 export const ActivityLogPage = lazy(() =>
   import('@/modules/workspace/activity-log/index.js').then((m) => ({

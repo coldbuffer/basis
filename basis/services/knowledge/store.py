@@ -7,7 +7,6 @@ from typing import Any
 
 from basis.infra.runtime.database import Database, get_sqlite_database
 from basis.services.knowledge.blob_store import BlobStore
-from basis.services.knowledge.access.connector import ConnectorAccess
 from basis.services.knowledge.access.governance import GovernanceAccess
 from basis.services.knowledge.access.document_delete import DocumentDeleteAccess
 from basis.services.knowledge.access.entity_delete import EntityDeleteAccess
@@ -43,7 +42,6 @@ class KnowledgeStore:
             self._owns_db_ref = True
         self._lock = self._db.lock
         self._conn = self._db.conn
-        self._connector = ConnectorAccess(self)
         self._graph_staging = GraphStagingAccess(self)
         self._entity_delete = EntityDeleteAccess(self)
         self._entity_invalidate = EntityInvalidateAccess(self)
@@ -97,20 +95,6 @@ def _workspace_access_delegate(access_attr: str, method_name: str):
     _wrapped.__qualname__ = f"KnowledgeStore.{method_name}"
     return _wrapped
 
-
-for _name in (
-    "connector_vault_persistence",
-    "connector_sync_persistence",
-    "get_platform_allowed_providers",
-    "connector_runtime",
-    "connector_sync_service",
-    "list_source_table_mapping_ids",
-    "list_entity_sync_outbox_ids",
-    "reject_entity_sync_outbox",
-    "list_connector_runs",
-    "list_active_connector_table_mappings_global",
-):
-    setattr(KnowledgeStore, _name, _workspace_access_delegate("_connector", _name))
 
 for _name in ("graph_staging_at", "upsert_graph_staging_session"):
     setattr(KnowledgeStore, _name, _workspace_access_delegate("_graph_staging", _name))

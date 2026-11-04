@@ -314,39 +314,6 @@ async def approve_review_item(
 
         merge_result = deps.ontology_hub(_publish)
         approve_action = "workspace.ontology.vocabulary_alignment_publish"
-    elif item["kind"] == "connector_writeback":
-        approve_action = "workspace.connector.writeback_approved"
-        outbox_id = str((item.get("payload") or {}).get("outbox_id") or item["subject_id"])
-        sync_svc = knowledge.connector_sync_service()
-        executed_outbox = sync_svc.approve_and_execute_outbox(
-            workspace_id,
-            outbox_id,
-            actor_id=user.id,
-            rationale=rationale or "Approved connector writeback",
-        )
-        deps.rebuild_projection()
-        decision_id = executed_outbox.get("decision_id")
-        resolved_item = knowledge.get_review_item(workspace_id, item_id)
-        audit_graph(
-            store,
-            user,
-            workspace_id,
-            approve_action,
-            review_item_id=item_id,
-            extra={
-                "outbox_id": outbox_id,
-                "decision_id": decision_id,
-                "rationale": rationale,
-            },
-        )
-        return {
-            "item": resolved_item,
-            "merge": None,
-            "import": None,
-            "mapping": None,
-            "outbox": executed_outbox,
-            "decision_id": decision_id,
-        }
     elif item["kind"] == "graph_import":
         approve_action = "workspace.graph.import"
         runtime = deps.runtime_loader()

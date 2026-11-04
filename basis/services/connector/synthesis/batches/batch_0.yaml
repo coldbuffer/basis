@@ -1,7 +1,0 @@
-id: 0
-name: shipped_core
-ship_tier_default: ga
-services:
-  - postgres
-  - mysql
-  - github

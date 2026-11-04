@@ -47,7 +47,9 @@ def test_openapi_slices_reflect_platform_and_workspace_mounts(tmp_path) -> None:
     assert "/api/v1/settings" in platform
     assert "/api/v1/reason" in platform
     assert any(k.startswith("/api/v1/workspaces/{workspace_id}/ledger/") for k in workspaces)
-    assert "/api/v1/workspaces/{workspace_id}/connectors/catalog" in workspaces
+    assert "/api/v1/workspaces/{workspace_id}/ontology" in workspaces or any(
+        k.startswith("/api/v1/workspaces/{workspace_id}/ontology") for k in workspaces
+    )
 
 
 def test_api_v1_mcp_info_and_legacy_path_gone(tmp_path) -> None:

@@ -1,6 +1,0 @@
-id: 2
-name: dev_pm
-ship_tier_default: beta
-services:
-  - gitlab
-  - jira

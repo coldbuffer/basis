@@ -104,7 +104,6 @@ export function useWorkspaceCapabilities(): WorkspaceCapabilitiesContextValue {
 /** Whether a workspace sidebar segment should be navigable for the current capability set. */
 export function workspaceNavSegmentEnabled(segment: string, caps: WorkspaceCapabilities | null): boolean {
   if (!caps) return true;
-  if (segment === 'connectors' || segment.startsWith('connectors/')) return true;
   if (segment === 'graph-diff') return caps.graph;
   if (segment === 'quality') return caps.review;
   if (segment === 'analyze') {

@@ -31,11 +31,6 @@ MCP_ONLY_OK = frozenset(
         "query_graph",
         "record_decision",
         "update_node",
-        # application/connectors — HTTP uses richer catalog/connection helpers
-        "describe_connector_service",
-        "list_connector_catalog",
-        "list_connector_connections",
-        "list_connector_table_mappings",
     }
 )
 

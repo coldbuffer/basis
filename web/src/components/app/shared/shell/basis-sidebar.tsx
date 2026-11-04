@@ -78,10 +78,6 @@ export function BasisSidebar({ onLogout }: { onLogout: () => void }) {
 
   function isKbActive(segment: string) {
     const prefix = `/workspaces/${navWorkspaceId}/${segment}`;
-    if (segment === 'connectors') {
-      const path = location.pathname;
-      return path === prefix || path.startsWith(`${prefix}/`);
-    }
     return location.pathname === prefix || location.pathname.startsWith(`${prefix}/`);
   }
 

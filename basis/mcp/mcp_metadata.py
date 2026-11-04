@@ -201,58 +201,6 @@ MCP_TOOL_METADATA: dict[str, dict[str, Any]] = {
     "get_review_item": {"description": "Fetch one review queue item by id."},
     "approve_review_item": {"description": "Approve any open review queue item (merges, imports, remember, conflicts, writeback, …). Same semantics as HTTP POST .../review/items/{item_id}/approve."},
     "reject_review_item": {"description": "Reject any open review queue item. Same semantics as HTTP POST .../review/items/{item_id}/reject."},
-    "list_connector_catalog": {
-        "description": (
-            "List BOCP connector services allowed for this workspace (summary rows; same filters as "
-            "HTTP GET …/connectors/catalog for query/limit/has_streams_only — HTTP may return full manifests)."
-        )
-    },
-    "describe_connector_service": {
-        "description": (
-            "Describe one connector service (catalog summary plus stream/tool slices; HTTP GET "
-            "…/connectors/catalog/{service} returns the full manifest document)."
-        )
-    },
-    "list_connector_connections": {
-        "description": (
-            "List saved BOCP connections (compact rows; HTTP GET …/connectors/connections returns "
-            "the same vault rows with extra console fields such as connection_config and has_credentials)."
-        )
-    },
-    "upsert_connector_connection": {
-        "description": (
-            "Create or update a saved BOCP connection (encrypted vault). Same semantics as HTTP PUT "
-            "…/connectors/connections/{service}."
-        )
-    },
-    "delete_connector_connection": {
-        "description": (
-            "Delete a saved BOCP connection. Same semantics as HTTP DELETE "
-            "…/connectors/connections/{service}."
-        )
-    },
-    "check_connector_connection": {
-        "description": (
-            "Validate credentials and return connector profile metadata. Same semantics as HTTP POST "
-            "…/connectors/connections/{service}/check."
-        )
-    },
-    "discover_connector_schema": {
-        "description": (
-            "Discover stream or SQL table schema for a saved connection. Same semantics as HTTP GET "
-            "…/connectors/connections/{service}/discover."
-        )
-    },
-    "list_connector_table_mappings": {
-        "description": (
-            "List stream-to-ontology table mappings (paginated summary; HTTP GET …/table-mappings "
-            "returns full mapping records for the workspace console)."
-        )
-    },
-    "sync_connector_table_mapping": {"description": "Run inbound BOCP sync for one table mapping (pull external rows into the Evidence Ledger)."},
-    "invoke_connector_primitive": {"description": "Invoke a BOCP Section 10 primitive for an entity or procedure action (discover, list, mutate, invoke) using manifest operations — no table mapping required."},
-    "execute_connector_tool": {"description": "Execute a standalone BOCP ToolSpec RPC for an allowed provider (subject to workspace action_policy_json)."},
-    "propose_entity_writeback": {"description": "Propose an outbound writeback of ledger entity attributes to its external BOCP connector stream (creates an entity_sync_outbox record and a human review gate when writeback_mode is 'review')."},
     "extract_entities": {
         "description": (
             "Extract named entities (people, places, organisations, concepts) from text using Semantica NER. "

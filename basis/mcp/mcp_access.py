@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-from basis.mcp.connector_mcp_tool_name import parse_connector_mcp_tool_name
-
-# Write = requires workspace editor (mutations, approvals, connector vault writes, sync).
+# Write = requires workspace editor (mutations and approvals).
 MCP_TOOL_ACCESS: dict[str, str] = {
     "list_processing_jobs": "read",
     "reset_workspace": "write",
@@ -65,22 +63,10 @@ MCP_TOOL_ACCESS: dict[str, str] = {
     "get_rule": "read",
     "list_review_items": "read",
     "get_review_item": "read",
-    "list_connector_catalog": "read",
-    "describe_connector_service": "read",
-    "list_connector_connections": "read",
-    "check_connector_connection": "read",
-    "discover_connector_schema": "read",
-    "list_connector_table_mappings": "read",
     "propose_remember": "write",
     "run_reasoning": "write",
     "approve_review_item": "write",
     "reject_review_item": "write",
-    "upsert_connector_connection": "write",
-    "delete_connector_connection": "write",
-    "sync_connector_table_mapping": "write",
-    "invoke_connector_primitive": "write",
-    "execute_connector_tool": "write",
-    "propose_entity_writeback": "write",
 }
 
 
@@ -88,10 +74,4 @@ def mcp_tool_access(tool_name: str) -> str:
     """Return ``read`` or ``write`` for MCP / HTTP grant classification."""
     if tool_name in MCP_TOOL_ACCESS:
         return MCP_TOOL_ACCESS[tool_name]
-    binding = parse_connector_mcp_tool_name(tool_name)
-    if binding is not None:
-        primitive = binding.get("primitive", "")
-        if primitive in {"discover", "list"}:
-            return "read"
-        return "write"
     return "write"

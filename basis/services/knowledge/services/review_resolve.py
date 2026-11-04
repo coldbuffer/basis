@@ -152,9 +152,6 @@ def reject_review_item(
             item_id=item_id,
             rationale=rationale,
         )
-    elif kind == "connector_writeback":
-        outbox_id = str((item.get("payload") or {}).get("outbox_id") or item["subject_id"])
-        knowledge.reject_entity_sync_outbox(workspace_id, outbox_id)
     resolved = knowledge.resolve_review_item(
         workspace_id,
         item_id,

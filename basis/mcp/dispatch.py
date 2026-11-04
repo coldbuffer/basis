@@ -5,24 +5,14 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Any
 
-from pydantic import ValidationError
-
 from basis.services.kernel import CoreError, WorkspaceCoreContext
-from basis.services.connector import primitives as connector_primitives
 from basis.mcp import (
     OPERATIONS,
     TOOL_NAMES,
-    coerce_operation_args,
-    validation_error_payload,
-    validate_operation_response,
 )
 from basis.mcp.catalog import mcp_exposed
 from basis.mcp import run as run_static_operation
 from basis.services.errors import AdminError
-from basis.mcp.connector_tools import (
-    connector_tool_definitions_for_workspace,
-    parse_connector_mcp_tool_name,
-)
 from basis.mcp.format import mcp_text_result
 from basis.mcp.run import description_for_tool, input_schema_for_tool
 from basis.services.tenancy.admin.api_token_grants import token_allows_mcp_operation
@@ -51,10 +41,8 @@ def get_static_tool_definitions() -> list[dict[str, Any]]:
 
 
 def get_tool_definitions(ctx: WorkspaceCoreContext | None = None) -> list[dict[str, Any]]:
-    """MCP tools/list payload; includes manifest-derived connector tools when ``ctx`` is set."""
+    """MCP tools/list payload."""
     tools = list(get_static_tool_definitions())
-    if ctx is not None:
-        tools.extend(connector_tool_definitions_for_workspace(ctx))
     record = ctx.api_token if ctx is not None else None
     if record is not None and record.mcp_allowed_operations is not None:
         tools = [t for t in tools if token_allows_mcp_operation(record, str(t.get("name", "")))]
@@ -68,30 +56,17 @@ def __getattr__(name: str) -> Any:
 
 
 def _is_known_mcp_tool(name: str) -> bool:
-    if name in OPERATIONS:
-        return True
-    return parse_connector_mcp_tool_name(name) is not None
+    return name in OPERATIONS
 
 
 def run(ctx: WorkspaceCoreContext, name: str, arguments: dict[str, Any] | None) -> dict[str, Any]:
-    """Run a static or manifest-derived connector MCP tool; plain JSON dict."""
+    """Run a static MCP tool; plain JSON dict."""
     if ctx.api_token is not None and not token_allows_mcp_operation(ctx.api_token, name):
         return {
             "error": "forbidden",
             "code": "forbidden",
             "message": f"令牌未授权操作：{name}",
         }
-    binding = parse_connector_mcp_tool_name(name)
-    if binding is not None:
-        try:
-            args = coerce_operation_args(name, arguments)
-        except ValidationError as exc:
-            return validation_error_payload(exc)
-        args = {**binding, **args}
-        result = connector_primitives.invoke(ctx, args)
-        if isinstance(result, dict) and "error" not in result:
-            return validate_operation_response(name, result)
-        return result
     return run_static_operation(ctx, name, arguments)
 
 

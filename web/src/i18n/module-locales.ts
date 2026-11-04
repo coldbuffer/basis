@@ -8,7 +8,6 @@ import { en as admin_users_en, zh as admin_users_zh } from '@/modules/admin/user
 import { en as admin_workspaces_en, zh as admin_workspaces_zh } from '@/modules/admin/workspaces/i18n/index.js';
 import { en as alerts_en, zh as alerts_zh } from '@/modules/workspace/alerts/i18n/index.js';
 import { en as analyze_en, zh as analyze_zh } from '@/modules/workspace/analyze/i18n/index.js';
-import { en as connectors_en, zh as connectors_zh } from '@/modules/workspace/connectors/i18n/index.js';
 import { en as data_quality_en, zh as data_quality_zh } from '@/modules/workspace/data-quality/i18n/index.js';
 import { en as decisions_en, zh as decisions_zh } from '@/modules/workspace/decisions/i18n/index.js';
 import { en as docs_en, zh as docs_zh } from '@/modules/public/docs/i18n/index.js';
@@ -39,7 +38,6 @@ export const LOCALE_MODULE_SEGMENTS = [
   'admin-workspaces',
   'alerts',
   'analyze',
-  'connectors',
   'data-quality',
   'decisions',
   'docs',
@@ -70,7 +68,6 @@ export const moduleLocalesEn = {
   admin_workspaces: admin_workspaces_en,
   alerts: alerts_en,
   analyze: analyze_en,
-  connectors: connectors_en,
   data_quality: data_quality_en,
   decisions: decisions_en,
   docs: docs_en,
@@ -101,7 +98,6 @@ export const moduleLocalesZh = {
   admin_workspaces: admin_workspaces_zh,
   alerts: alerts_zh,
   analyze: analyze_zh,
-  connectors: connectors_zh,
   data_quality: data_quality_zh,
   decisions: decisions_zh,
   docs: docs_zh,

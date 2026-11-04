@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from fastapi import APIRouter, FastAPI
 
-from basis.routes.workspace.connector import router as connector_router
 from basis.routes.workspace.core import router as core_router
 from basis.routes.workspace.core.resources import router as resources_router
 from basis.routes.workspace.e2e_helpers import router as e2e_helpers_router
@@ -30,7 +29,6 @@ _WORKSPACE_ROUTERS: tuple[APIRouter, ...] = (
     graph_session_query_router,
     ontology_router,
     review_router,
-    connector_router,
 )
 
 

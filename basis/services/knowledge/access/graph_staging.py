@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, TYPE_CHECKING
 
-from basis.services.knowledge.ports.connector import LockedCanonicalConn
+from basis.services.knowledge.persistence.locked_conn import LockedCanonicalConn
 from basis.services.graph.reads.diff import diff_session_at
 from basis.services.graph.reads.staging import (
     build_graph_staging_payload,
