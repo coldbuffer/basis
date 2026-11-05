@@ -1,7 +1,7 @@
 ---
 title: "指南：企业 SSO"
 sidebarTitle: "企业 SSO"
-description: "为组织配置 OIDC 或 SAML 控制台登录。"
+description: "为组织配置 OIDC、SAML 或 CAS 控制台登录。"
 ---
 
 **目标：** 组织用户通过 IdP 登录；API 令牌与 MCP 不变。
@@ -15,8 +15,8 @@ description: "为组织配置 OIDC 或 SAML 控制台登录。"
 
 1. **管理 → 设置 → 组织 SSO**。
 2. 选择组织。
-3. 添加 **OIDC** 或 **SAML**（客户端 ID/密钥、issuer，或 SAML 元数据）。
-4. 保存并将回调 URL 填入 IdP 白名单。
+3. 添加 **OIDC**、**SAML** 或 **CAS**。CAS 填服务器根地址和邮箱属性名。登录路径、校验路径默认是 `/login` 和 `/serviceValidate`，可以改成 IdP 实际路径。
+4. 保存。OIDC/SAML 把回调 URL 填入 IdP；CAS 把页面上的 service 地址原样登记为允许的 service。
 
 ## 登录行为
 
@@ -24,8 +24,9 @@ description: "为组织配置 OIDC 或 SAML 控制台登录。"
 - `GET /api/v1/auth/org-sso-hint?email=…`
 - OIDC：`/api/v1/auth/oidc/{slug}/start`
 - SAML：`/api/v1/auth/saml/*`
+- CAS：`/api/v1/auth/cas/{slug}/start`，回调 `/api/v1/auth/cas/callback` 按配置的校验路径核验票据（默认 `/serviceValidate`）
 
-域策略要求 SSO 时，可能对相应用户隐藏密码登录。
+每种登录方式各自有开关：密码和邮箱链接在访问设置里，OIDC、SAML、CAS 在组织卡片上。打开一种不会关掉另一种。
 
 ## 运维检查
 

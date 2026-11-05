@@ -75,7 +75,8 @@ test('settings shows SAML panel after API configure', async ({ page }) => {
 
   await applyWorkspaceSessionLogin(page, { email, password });
   await page.goto('/admin/settings', { waitUntil: 'domcontentloaded' });
-  await expect(page.getByTestId('org-oidc-panel')).toBeVisible({ timeout: 120_000 });
+  await expect(page.getByRole('tab', { name: /^SAML$/ })).toBeVisible({ timeout: 120_000 });
+  await page.getByRole('tab', { name: /^SAML$/ }).click();
   await expect(page.getByTestId('org-saml-panel')).toBeVisible();
   await expect(page.getByTestId('org-saml-panel')).toContainText(/SAML|saml/i);
   await expect(page.getByTestId('org-saml-panel')).toContainText(/saml\/slo/i);

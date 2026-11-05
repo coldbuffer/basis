@@ -83,7 +83,7 @@ export function DataPanelBody({
   padded?: boolean;
 }) {
   return (
-    <Card padding="none">
+    <Card padding="none" className="overflow-hidden">
       <div className={cn(padded && 'p-4', className)}>{children}</div>
     </Card>
   );

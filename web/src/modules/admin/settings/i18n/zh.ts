@@ -5,6 +5,9 @@ export default {
     tab_connectors: "连接器",
     tab_general: "常规",
     tab_org_sso: "组织 SSO",
+    tab_oidc: "OIDC",
+    tab_saml: "SAML",
+    tab_cas: "CAS",
     desktop_settings_lead: "本机运行，无需登录。在「管理」→「模型」配置 LLM 与嵌入；Desktop 模式不提供组织 SSO 与用户管理。",
     connectors: {
       section_lead: "治理全实例可用的 BOCP 服务商。各工作区只能在此上限内再收紧，不能超出平台允许范围。",
@@ -69,7 +72,7 @@ export default {
       detail_streams_title: "数据流（预览）",
       detail_tools_title: "工具（预览）"
     },
-    org_sso_section_lead: "按组织配置企业 IdP。下方登录链接与 IdP 回调地址随上方「对外站点 URL」变化（保存登录配置后生效）。",
+    org_sso_section_lead: "按组织配置 OIDC、SAML 或 CAS。回调地址使用本实例的对外站点 URL。",
     access: {
       page_lead: "管理本实例的登录方式、注册策略与对外 URL。",
       form_title: "站点与注册",
@@ -135,7 +138,7 @@ export default {
     org_sso_single_org: "组织",
     org_sso_empty: "没有可配置 SSO 的组织。系统管理员刷新后仍为空时，请用数据库 owner 执行：ALTER TABLE workspaces ADD COLUMN IF NOT EXISTS organization_id TEXT;",
     org_sso_empty_admin: "尚未创建组织。请刷新页面；若仍为空，请确认 API 已重启，或联系 DBA 为 workspaces 添加 organization_id 列。",
-    nav_title: "系统",
-    nav_subtitle: "平台注册策略与组织企业 SSO（OIDC）。"
+    nav_title: "设置",
+    nav_subtitle: "登录方式、注册策略，以及组织的 OIDC、SAML 与 CAS。"
   }
 } as const;

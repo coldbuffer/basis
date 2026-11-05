@@ -24,7 +24,6 @@ export default {
     continue_github: "GitHub 登录",
     continue_google: "Google 登录",
     continue_org_sso: "使用 {org} 企业 SSO 登录",
-    sso_required_hint: "该组织已强制企业 SSO，请使用下方按钮登录。",
     or: "或",
     magic_link_title: "邮箱登录",
     magic_link_subtitle: "我们会向你的邮箱发送一次性登录链接。",

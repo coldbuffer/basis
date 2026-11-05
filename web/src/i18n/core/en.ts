@@ -186,7 +186,7 @@ export default {
       models: "Models",
       connectors: "Connectors",
       audit: "Audit",
-      system: "System"
+      system: "Settings"
     },
     workspace_zones: {
       explore: "Explore",

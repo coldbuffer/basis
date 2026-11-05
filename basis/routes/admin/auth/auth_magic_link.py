@@ -12,7 +12,6 @@ from basis.services.errors import AdminError
 from basis.services.tenancy.admin.store import AdminStore
 from basis.http.deps import get_store
 from basis.services.tenancy.identity.magic_link import deliver_magic_link
-from basis.services.tenancy.identity.org_login_policy import assert_local_login_allowed
 from basis.services.tenancy.identity.http_paths import auth_v1_path
 
 from basis.routes.admin.auth.auth_support import auth_settings, redirect_with_token
@@ -38,13 +37,6 @@ Magic Link Request. Authentication and session bootstrap. Public bootstrap; opti
         raise HTTPException(status_code=404, detail={"code": "not_configured", "message": "邮箱登录未启用"})
     if not settings.magic_link_available:
         raise HTTPException(status_code=503, detail={"code": "not_configured", "message": "Magic Link 邮件未配置"})
-    try:
-        assert_local_login_allowed(store, body.email)
-    except AdminError as exc:
-        raise HTTPException(
-            status_code=exc.status,
-            detail={"code": exc.code, "message": exc.message},
-        ) from exc
     org = store.resolve_org_by_email_domain(body.email)
     org_id = org.id if org else None
     token = store.create_magic_link(body.email, organization_id=org_id)

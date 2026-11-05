@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { OrgCasPanel } from './org-cas-panel.js';
 import { OrgSamlPanel } from './org-saml-panel.js';
 import { OrgSsoPanel } from './org-sso-panel.js';
 import { Label } from '@/components/ui/label.js';
@@ -23,7 +24,15 @@ type OrgRow = {
 
 const ORG_ADMIN_ROLES = new Set(['owner', 'admin']);
 
-export function PlatformOrgSsoSection({ siteBaseUrl }: { siteBaseUrl?: string }) {
+type SsoProtocol = 'oidc' | 'saml' | 'cas';
+
+export function PlatformOrgSsoSection({
+  siteBaseUrl,
+  protocol,
+}: {
+  siteBaseUrl?: string;
+  protocol: SsoProtocol;
+}) {
   const { t } = useI18n();
   const ps = t.admin_settings.page;
   const { isAdmin } = useBasisSession();
@@ -98,8 +107,15 @@ export function PlatformOrgSsoSection({ siteBaseUrl }: { siteBaseUrl?: string })
           {ps.org_sso_single_org}: <span className="font-medium text-foreground">{selectedOrg.name}</span>
         </p>
       ) : null}
-      <OrgSsoPanel organizationId={selectedOrgId || null} siteBaseUrl={siteBaseUrl} />
-      <OrgSamlPanel organizationId={selectedOrgId || null} />
+      <div className={protocol === 'oidc' ? undefined : 'hidden'}>
+        <OrgSsoPanel organizationId={selectedOrgId || null} siteBaseUrl={siteBaseUrl} />
+      </div>
+      <div className={protocol === 'saml' ? undefined : 'hidden'}>
+        <OrgSamlPanel organizationId={selectedOrgId || null} />
+      </div>
+      <div className={protocol === 'cas' ? undefined : 'hidden'}>
+        <OrgCasPanel organizationId={selectedOrgId || null} />
+      </div>
     </div>
   );
 }

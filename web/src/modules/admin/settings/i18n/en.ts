@@ -5,6 +5,9 @@ export default {
     tab_connectors: "Connectors",
     tab_general: "General",
     tab_org_sso: "Organization SSO",
+    tab_oidc: "OIDC",
+    tab_saml: "SAML",
+    tab_cas: "CAS",
     desktop_settings_lead: "This copy runs on your machine without sign-in. Use Models in Administration for LLM and embedding keys; organization SSO and user management are not available in Desktop mode.",
     connectors: {
       section_lead: "Govern which BOCP providers are available instance-wide. Workspaces can only tighten within this ceiling.",
@@ -71,7 +74,7 @@ export default {
       detail_streams_title: "Streams (preview)",
       detail_tools_title: "Tools (preview)"
     },
-    org_sso_section_lead: "Enterprise IdP per organization. Login and callback URLs follow the public site URL above (after you save login settings).",
+    org_sso_section_lead: "Configure OIDC, SAML, or CAS per organization. Callback URLs use this instance's public site URL.",
     edit_registration: "Edit registration policy",
     registration_policy: "Registration policy",
     open_registration: "Open registration",
@@ -137,7 +140,7 @@ export default {
     org_sso_single_org: "Organization",
     org_sso_empty: "No organization available for SSO. Organization owners/admins configure enterprise login here.",
     org_sso_empty_admin: "No organizations yet. Refresh the page after restarting the API. If still empty, ensure workspaces.organization_id exists (DB owner may need to run ALTER TABLE).",
-    nav_title: "System",
-    nav_subtitle: "Platform registration policy and organization SSO (OIDC)."
+    nav_title: "Settings",
+    nav_subtitle: "Sign-in methods, registration, and organization OIDC, SAML, and CAS."
   }
 } as const;

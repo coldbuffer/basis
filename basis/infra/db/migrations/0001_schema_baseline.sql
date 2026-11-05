@@ -770,3 +770,19 @@ ALTER TABLE org_saml_configs ADD COLUMN sp_private_key TEXT;
 
 ALTER TABLE org_saml_configs ADD COLUMN idp_slo_url TEXT;
 ALTER TABLE org_saml_configs ADD COLUMN slo_enabled INTEGER NOT NULL DEFAULT 0;
+
+-- >>> 0014_org_cas_config.sql
+
+-- Organization CAS 2.0 server (ticket validation).
+
+CREATE TABLE IF NOT EXISTS org_cas_configs (
+    organization_id TEXT PRIMARY KEY REFERENCES organizations(id) ON DELETE CASCADE,
+    server_url TEXT NOT NULL,
+    login_path TEXT NOT NULL DEFAULT '/login',
+    validate_path TEXT NOT NULL DEFAULT '/serviceValidate',
+    email_attribute TEXT NOT NULL DEFAULT 'email',
+    email_domains_json TEXT NOT NULL DEFAULT '[]',
+    enabled INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);

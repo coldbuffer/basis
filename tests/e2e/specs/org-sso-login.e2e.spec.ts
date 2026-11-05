@@ -70,16 +70,14 @@ test('org SSO hint and login UI follow auth_policy', async ({ page }) => {
     `${api}/api/v1/auth/org-sso-hint?email=${encodeURIComponent(email)}`,
   );
   const requiredBody = (await hintRequired.json()) as { password_login_allowed?: boolean };
-  expect(requiredBody.password_login_allowed).toBe(false);
+  expect(requiredBody.password_login_allowed).toBe(true);
 
   await page.goto('/?mode=login');
   await expect(
     page.locator(`[data-testid="login-org-sso"][href*="/oidc/${orgSlug}/"]`),
   ).toBeVisible({ timeout: 30_000 });
   await page.getByLabel(/Email|邮箱/i).fill(email);
-  await expect
-    .poll(async () => page.locator('form button[type="submit"]').count(), { timeout: 15_000 })
-    .toBe(0);
+  await expect(page.locator('form button[type="submit"]')).toBeVisible();
 
   await upsertOidc('password_allowed');
 });

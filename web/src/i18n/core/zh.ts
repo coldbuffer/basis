@@ -186,7 +186,7 @@ export default {
       models: "模型",
       connectors: "连接器",
       audit: "审计",
-      system: "系统"
+      system: "设置"
     },
     workspace_zones: {
       explore: "探索",

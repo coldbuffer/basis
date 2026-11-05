@@ -24,7 +24,6 @@ export default {
     continue_github: "GitHub",
     continue_google: "Google",
     continue_org_sso: "Sign in with {org} SSO",
-    sso_required_hint: "This organization requires SSO. Use the button below.",
     or: "or",
     magic_link_title: "Sign in with email",
     magic_link_subtitle: "We will email you a one-time sign-in link.",

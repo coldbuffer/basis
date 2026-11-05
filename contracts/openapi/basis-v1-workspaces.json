@@ -6,6 +6,101 @@
     "description": "Normative HTTP contract for Basis. Paths use /api/v1 prefix.\n\n**Two surfaces** (see x-basis-surface on each operation):\n- `platform` — console & system/org admin; **session JWT** (`sessionAuth`).\n- `workspaces` — workspace data & integration (MCP parity); **session or workspace API token** (`workspaceApiTokenAuth`, scoped by `workspace_id`).\n\nSplit specs: `/openapi/v1/platform.json`, `/openapi/v1/workspaces.json` (workspace **integration** contract). Console-only routes may appear here but are omitted from the workspace integration slice (see x-basis-audience: console). MCP: POST /api/v1/workspaces/{workspace_id}/mcp. Docs: docs/architecture/openapi-v1.md."
   },
   "paths": {
+    "/api/v1/auth/cas/callback": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Org Cas Callback",
+        "description": "Org Cas Callback. Validate the CAS service ticket and open a Basis session.",
+        "operationId": "org_cas_callback_api_v1_auth_cas_callback_get",
+        "parameters": [
+          {
+            "name": "org",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Org"
+            }
+          },
+          {
+            "name": "ticket",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ticket"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-basis-surface": "public",
+        "x-basis-auth": "public-or-session"
+      }
+    },
+    "/api/v1/auth/cas/{org_slug}/start": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Org Cas Start",
+        "description": "Org Cas Start. Redirect the browser to the organization's CAS login.",
+        "operationId": "org_cas_start_api_v1_auth_cas__org_slug__start_get",
+        "parameters": [
+          {
+            "name": "org_slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Org Slug"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-basis-surface": "public",
+        "x-basis-auth": "public-or-session"
+      }
+    },
     "/api/v1/auth/desktop-session": {
       "post": {
         "tags": [
@@ -14886,6 +14981,46 @@
         ],
         "title": "OntologyEdgeChange"
       },
+      "OrgCasUpsert": {
+        "properties": {
+          "server_url": {
+            "type": "string",
+            "title": "Server Url"
+          },
+          "login_path": {
+            "type": "string",
+            "title": "Login Path",
+            "default": "/login"
+          },
+          "validate_path": {
+            "type": "string",
+            "title": "Validate Path",
+            "default": "/serviceValidate"
+          },
+          "email_attribute": {
+            "type": "string",
+            "title": "Email Attribute",
+            "default": "email"
+          },
+          "email_domains": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Email Domains"
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "server_url"
+        ],
+        "title": "OrgCasUpsert"
+      },
       "OrgOidcUpsert": {
         "properties": {
           "issuer": {
@@ -14917,11 +15052,6 @@
             "type": "boolean",
             "title": "Enabled",
             "default": true
-          },
-          "auth_policy": {
-            "type": "string",
-            "title": "Auth Policy",
-            "default": "password_allowed"
           }
         },
         "type": "object",
@@ -14962,11 +15092,6 @@
             "type": "boolean",
             "title": "Enabled",
             "default": true
-          },
-          "auth_policy": {
-            "type": "string",
-            "title": "Auth Policy",
-            "default": "password_allowed"
           },
           "authn_requests_signed": {
             "type": "boolean",

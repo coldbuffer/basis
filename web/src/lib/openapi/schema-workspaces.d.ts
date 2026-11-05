@@ -4,6 +4,46 @@
  */
 
 export interface paths {
+    "/api/v1/auth/cas/callback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Org Cas Callback
+         * @description Org Cas Callback. Validate the CAS service ticket and open a Basis session.
+         */
+        get: operations["org_cas_callback_api_v1_auth_cas_callback_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/cas/{org_slug}/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Org Cas Start
+         * @description Org Cas Start. Redirect the browser to the organization's CAS login.
+         */
+        get: operations["org_cas_start_api_v1_auth_cas__org_slug__start_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/desktop-session": {
         parameters: {
             query?: never;
@@ -4015,6 +4055,33 @@ export interface components {
             /** Id */
             id?: string | null;
         };
+        /** OrgCasUpsert */
+        OrgCasUpsert: {
+            /** Server Url */
+            server_url: string;
+            /**
+             * Login Path
+             * @default /login
+             */
+            login_path: string;
+            /**
+             * Validate Path
+             * @default /serviceValidate
+             */
+            validate_path: string;
+            /**
+             * Email Attribute
+             * @default email
+             */
+            email_attribute: string;
+            /** Email Domains */
+            email_domains?: string[];
+            /**
+             * Enabled
+             * @default true
+             */
+            enabled: boolean;
+        };
         /** OrgOidcUpsert */
         OrgOidcUpsert: {
             /** Issuer */
@@ -4038,11 +4105,6 @@ export interface components {
              * @default true
              */
             enabled: boolean;
-            /**
-             * Auth Policy
-             * @default password_allowed
-             */
-            auth_policy: string;
         };
         /** OrgSamlUpsert */
         OrgSamlUpsert: {
@@ -4067,11 +4129,6 @@ export interface components {
              * @default true
              */
             enabled: boolean;
-            /**
-             * Auth Policy
-             * @default password_allowed
-             */
-            auth_policy: string;
             /**
              * Authn Requests Signed
              * @default false
@@ -4658,6 +4715,69 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    org_cas_callback_api_v1_auth_cas_callback_get: {
+        parameters: {
+            query: {
+                org: string;
+                ticket: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    org_cas_start_api_v1_auth_cas__org_slug__start_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     desktop_session_api_v1_auth_desktop_session_post: {
         parameters: {
             query?: never;

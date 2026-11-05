@@ -46,12 +46,13 @@ test('platform settings page shows access and org SSO sections', async ({ page }
 
   await ensurePlatformAdminSession(page);
   await gotoPlatformAdminPath(page, '/admin/settings');
-  await expect(page.getByRole('heading', { name: /^Login$|^登录$/ })).toBeVisible({
+  await expect(page.getByRole('tab', { name: /^Login$|^登录$/ })).toBeVisible({
     timeout: 30_000,
   });
-  await expect(
-    page.getByRole('heading', { name: /Organization SSO|组织 SSO/i }),
-  ).toBeVisible();
+  await expect(page.getByRole('tab', { name: /^OIDC$/ })).toBeVisible();
+  await expect(page.getByRole('tab', { name: /^SAML$/ })).toBeVisible();
+  await expect(page.getByRole('tab', { name: /^CAS$/ })).toBeVisible();
+  await expect(page.getByLabel(/Public site URL|对外站点 URL/)).toBeVisible();
 });
 
 test('platform audit page shows filters and refresh', async ({ page }) => {

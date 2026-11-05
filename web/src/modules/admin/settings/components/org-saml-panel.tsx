@@ -41,7 +41,6 @@ type OrgSamlResponse = {
   sp_entity_id?: string | null;
   email_domains?: string[];
   enabled?: boolean;
-  auth_policy?: string;
   authn_requests_signed?: boolean;
   sp_signing_configured?: boolean;
 };
@@ -53,7 +52,6 @@ const samlFormSchema = z.object({
   spEntityId: z.string(),
   emailDomains: z.string(),
   enabled: z.boolean(),
-  authPolicy: z.enum(['password_allowed', 'sso_preferred', 'sso_required']),
   authnRequestsSigned: z.boolean(),
   spCert: z.string(),
   spPrivateKey: z.string(),
@@ -91,7 +89,6 @@ const emptyValues: SamlFormValues = {
   spEntityId: '',
   emailDomains: '',
   enabled: true,
-  authPolicy: 'password_allowed',
   authnRequestsSigned: false,
   spCert: '',
   spPrivateKey: '',
@@ -139,8 +136,6 @@ export function OrgSamlPanel({ organizationId }: { organizationId: string | null
           spEntityId: body.sp_entity_id ?? '',
           emailDomains: (body.email_domains ?? []).join(', '),
           enabled: body.enabled ?? true,
-          authPolicy:
-            (body.auth_policy as SamlFormValues['authPolicy']) ?? 'password_allowed',
           authnRequestsSigned: body.authn_requests_signed ?? false,
           spCert: '',
           spPrivateKey: '',
@@ -180,7 +175,6 @@ export function OrgSamlPanel({ organizationId }: { organizationId: string | null
           sp_entity_id: values.spEntityId,
           email_domains: domains,
           enabled: values.enabled,
-          auth_policy: values.authPolicy,
           authn_requests_signed: values.authnRequestsSigned,
           sp_x509_cert: values.spCert,
           sp_private_key: values.spPrivateKey,
@@ -365,27 +359,6 @@ export function OrgSamlPanel({ organizationId }: { organizationId: string | null
                       <Input placeholder="acme.com" {...field} />
                     </FormControl>
                     <FormDescription>{oidcCopy.email_domains_hint}</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="authPolicy"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{copy.fields.auth_policy}</FormLabel>
-                    <FormControl>
-                      <select
-                        className="native-select native-select--full"
-                        value={field.value}
-                        onChange={field.onChange}
-                      >
-                        <option value="password_allowed">{oidcCopy.auth_policy_password_allowed}</option>
-                        <option value="sso_preferred">{oidcCopy.auth_policy_sso_preferred}</option>
-                        <option value="sso_required">{oidcCopy.auth_policy_sso_required}</option>
-                      </select>
-                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}

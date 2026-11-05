@@ -54,6 +54,19 @@ Org Sso Options. List organizations with enabled OIDC for login-page SSO buttons
                     "login_url": f"{public}{login_path}",
                 }
             )
+        if store.get_org_cas_config(org.id) is not None:
+            login_path = auth_v1_path(f"cas/{org.slug}/start")
+            options.append(
+                {
+                    "organization_id": org.id,
+                    "org_slug": org.slug,
+                    "org_name": org.name,
+                    "auth_policy": org.auth_policy,
+                    "protocol": "cas",
+                    "login_path": login_path,
+                    "login_url": f"{public}{login_path}",
+                }
+            )
     return {"options": options}
 
 
@@ -73,15 +86,14 @@ Org Sso Hint. Resolve enabled org OIDC login by email domain (F-ACC-07).
     settings = auth_settings(request)
     login_path = auth_v1_path(f"{protocol}/{org.slug}/start")
     public = settings.public_url.rstrip("/")
-    policy = org.auth_policy
     return {
         "available": True,
         "organization_id": org.id,
         "org_slug": org.slug,
         "org_name": org.name,
-        "auth_policy": policy,
+        "auth_policy": org.auth_policy,
         "protocol": protocol,
-        "password_login_allowed": policy != "sso_required",
+        "password_login_allowed": True,
         "login_path": login_path,
         "login_url": f"{public}{login_path}",
     }
@@ -100,4 +112,5 @@ Auth Providers. Authentication and session bootstrap. Public bootstrap; optional
         "magic_link": settings.magic_link_available,
         "org_oidc": True,
         "org_saml": saml_sp_available(),
+        "org_cas": True,
     }

@@ -155,9 +155,9 @@ def test_org_sso_hint_by_email_domain(tmp_path: Path) -> None:
     assert "/api/v1/auth/oidc/" in body["login_path"]
 
 
-def test_sso_required_blocks_password_login(tmp_path: Path) -> None:
+def test_enabled_oidc_does_not_block_password_login(tmp_path: Path) -> None:
     admin = _store(tmp_path)
-    user, _ = admin.register("owner@example.com", "password1", "Owner")
+    user, _ = admin.register("owner@strictco.com", "password1", "Owner")
     workspace = admin.create_workspace(user, "Strict Co", None, "restricted")
     org_id = workspace.organization_id
     assert org_id
@@ -168,25 +168,16 @@ def test_sso_required_blocks_password_login(tmp_path: Path) -> None:
         client_id="cid",
         client_secret="secret",
         email_domains=["strictco.com"],
-        auth_policy="sso_required",
     )
     admin.close()
 
     client = TestClient(create_app(Settings(data_dir=tmp_path)))
     res = client.post(
         "/api/v1/auth/login",
-        json={"email": "emp@strictco.com", "password": "password1"},
+        json={"email": "owner@strictco.com", "password": "password1"},
     )
-    assert res.status_code == 403
-    assert res.json()["detail"]["code"] == "sso_required"
-
-    magic = client.post(
-        "/api/v1/auth/magic-link/request",
-        json={"email": "emp@strictco.com"},
-    )
-    assert magic.status_code in (403, 404, 503)
-    if magic.status_code == 403:
-        assert magic.json()["detail"]["code"] == "sso_required"
+    assert res.status_code == 200
+    assert res.json()["token"]
 
 
 def test_magic_link_login(tmp_path: Path) -> None:

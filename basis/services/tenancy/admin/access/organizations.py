@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any, TYPE_CHECKING
@@ -19,6 +20,10 @@ from basis.services.tenancy.admin.admin_types import (
     utc_now_iso,
 )
 from basis.services.errors import AdminError
+from basis.services.tenancy.identity.cas_client import (
+    DEFAULT_CAS_LOGIN_PATH,
+    DEFAULT_CAS_VALIDATE_PATH,
+)
 from basis.services.tenancy.identity.org_login_policy import ORG_AUTH_POLICIES
 from basis.infra.db.org_backfill import _slug_for_workspace, parse_email_domains
 from basis.services.tenancy.admin.passwords import hash_password, hash_token, new_token
@@ -27,6 +32,16 @@ from basis.services.tenancy.admin.persistence import users as users_persist
 
 if TYPE_CHECKING:
     from basis.services.tenancy.admin.store import AdminStore
+
+
+_CAS_PATH = re.compile(r"^/(?:[A-Za-z0-9._~-]+/)*[A-Za-z0-9._~-]+/?$")
+
+
+def _normalize_cas_path(path: str | None, *, default: str) -> str:
+    raw = (path or "").strip() or default
+    if not _CAS_PATH.fullmatch(raw):
+        raise AdminError(422, "bad_cas_path", "路径必须以 / 开头，且不能带域名或查询参数")
+    return raw
 
 
 class OrganizationsAccess:
@@ -370,6 +385,13 @@ class OrganizationsAccess:
                 break
         if saml_match is not None and self.get_org_saml_config(saml_match.id):
             return saml_match, "saml"
+        cas_match: Organization | None = None
+        for row in self._sso_domain_rows("org_cas_configs"):
+            if domain in parse_email_domains(row["email_domains_json"]):
+                cas_match = org_from_row(row)
+                break
+        if cas_match is not None and self.get_org_cas_config(cas_match.id):
+            return cas_match, "cas"
         if oidc_match is not None:
             return oidc_match, "oidc"
         return None
@@ -394,6 +416,13 @@ class OrganizationsAccess:
                 """
                 SELECT o.*
                 FROM org_saml_configs c
+                JOIN organizations o ON o.id = c.organization_id
+                WHERE c.enabled = 1
+                ORDER BY o.name ASC
+                """,
+                """
+                SELECT o.*
+                FROM org_cas_configs c
                 JOIN organizations o ON o.id = c.organization_id
                 WHERE c.enabled = 1
                 ORDER BY o.name ASC
@@ -696,6 +725,113 @@ class OrganizationsAccess:
         cfg = self.get_org_saml_settings(org_id)
         assert cfg is not None
         return {k: v for k, v in cfg.items() if k not in ("sp_private_key",)}
+
+    def _org_cas_row_to_dict(self, row: Any) -> dict[str, Any]:
+        return {
+            "organization_id": row["organization_id"],
+            "server_url": row["server_url"].rstrip("/"),
+            "login_path": row["login_path"] or DEFAULT_CAS_LOGIN_PATH,
+            "validate_path": row["validate_path"] or DEFAULT_CAS_VALIDATE_PATH,
+            "email_attribute": row["email_attribute"] or "email",
+            "email_domains": parse_email_domains(row["email_domains_json"]),
+            "enabled": bool(row["enabled"]),
+        }
+
+    def get_org_cas_settings(self, org_id: str) -> dict[str, Any] | None:
+        with self._store._lock:
+            try:
+                row = self._store._conn.execute(
+                    "SELECT * FROM org_cas_configs WHERE organization_id = ?",
+                    (org_id,),
+                ).fetchone()
+            except Exception as exc:
+                msg = str(exc).lower()
+                if "org_cas_configs" in msg and ("does not exist" in msg or "no such table" in msg):
+                    return None
+                raise
+        if row is None:
+            return None
+        return self._org_cas_row_to_dict(row)
+
+    def get_org_cas_config(self, org_id: str) -> dict[str, Any] | None:
+        cfg = self.get_org_cas_settings(org_id)
+        if cfg is None or not cfg["enabled"]:
+            return None
+        return cfg
+
+    def upsert_org_cas_config(
+        self,
+        actor: "User",
+        org_id: str,
+        *,
+        server_url: str,
+        login_path: str = DEFAULT_CAS_LOGIN_PATH,
+        validate_path: str = DEFAULT_CAS_VALIDATE_PATH,
+        email_attribute: str = "email",
+        email_domains: list[str] | None = None,
+        enabled: bool = True,
+        auth_policy: str | None = None,
+    ) -> dict[str, Any]:
+        self.require_org_admin(actor, org_id)
+        if auth_policy is not None and auth_policy not in ORG_AUTH_POLICIES:
+            raise AdminError(422, "bad_auth_policy", "auth_policy 无效")
+        base = server_url.strip().rstrip("/")
+        if not base.startswith("http"):
+            raise AdminError(422, "bad_server_url", "CAS 服务器地址必须是 URL")
+        login = _normalize_cas_path(login_path, default=DEFAULT_CAS_LOGIN_PATH)
+        validate = _normalize_cas_path(validate_path, default=DEFAULT_CAS_VALIDATE_PATH)
+        attribute = (email_attribute or "email").strip() or "email"
+        if not attribute.replace("_", "").replace("-", "").isalnum():
+            raise AdminError(422, "bad_email_attribute", "邮箱属性名无效")
+        domains = [d.strip().lower() for d in (email_domains or []) if d.strip()]
+        now = utc_now_iso()
+        with self._store._lock:
+            if self.get_org_by_id(org_id) is None:
+                raise AdminError(404, "not_found", "组织不存在")
+            self._store._conn.execute(
+                """
+                INSERT INTO org_cas_configs(
+                    organization_id, server_url, login_path, validate_path,
+                    email_attribute, email_domains_json,
+                    enabled, created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(organization_id) DO UPDATE SET
+                    server_url = excluded.server_url,
+                    login_path = excluded.login_path,
+                    validate_path = excluded.validate_path,
+                    email_attribute = excluded.email_attribute,
+                    email_domains_json = excluded.email_domains_json,
+                    enabled = excluded.enabled,
+                    updated_at = excluded.updated_at
+                """,
+                (
+                    org_id,
+                    base,
+                    login,
+                    validate,
+                    attribute,
+                    json.dumps(domains, ensure_ascii=False),
+                    int(enabled),
+                    now,
+                    now,
+                ),
+            )
+            if auth_policy is not None:
+                self._store._conn.execute(
+                    "UPDATE organizations SET auth_policy = ? WHERE id = ?",
+                    (auth_policy, org_id),
+                )
+            self._store._audit(
+                actor.id,
+                "org.cas_updated",
+                "organization",
+                org_id,
+                {"server_url": base, "enabled": enabled, "auth_policy": auth_policy},
+            )
+            self._store._conn.commit()
+        cfg = self.get_org_cas_settings(org_id)
+        assert cfg is not None
+        return cfg
 
     def login_or_register_federated(
         self,

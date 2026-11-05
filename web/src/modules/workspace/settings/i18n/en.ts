@@ -105,12 +105,8 @@ export default {
       client_secret: "Client secret",
       scopes: "Scopes",
       email_domains: "Email domains",
-      enabled: "Enable SSO",
-      auth_policy: "Sign-in policy"
+      enabled: "Enable SSO"
     },
-    auth_policy_password_allowed: "Password and SSO allowed",
-    auth_policy_sso_preferred: "Prefer SSO (password still allowed)",
-    auth_policy_sso_required: "Require SSO (block password and email link)",
     email_domains_hint: "Comma-separated domains (e.g. acme.com). Used to suggest org SSO on sign-in.",
     issuer_placeholder: "https://idp.example.com/application/o/my-app/",
     client_id_placeholder: "OAuth client ID",
@@ -138,7 +134,6 @@ export default {
       sp_entity_id: "SP Entity ID (optional)",
       email_domains: "Email domains",
       enabled: "Enable SAML",
-      auth_policy: "Sign-in policy",
       idp_slo_url: "IdP SLO URL",
       slo_enabled: "Enable single logout (SLO)"
     },
@@ -164,6 +159,32 @@ export default {
     save: "Save SAML settings",
     saving: "Saving…",
     saved: "SAML settings saved"
+  },
+  org_cas: {
+    title: "Organization CAS",
+    description: "Configure a CAS 2.0 server for this organization. Basis validates the service ticket and opens a session.",
+    not_configured: "CAS is not configured yet.",
+    configured: "CAS server is configured.",
+    fields: {
+      server_url: "CAS server URL",
+      login_path: "Login path",
+      validate_path: "Validate path",
+      email_attribute: "Email attribute",
+      email_domains: "Email domains",
+      enabled: "Enable CAS"
+    },
+    server_url_placeholder: "https://cas.example.edu/cas",
+    server_url_hint: "Base URL only. Set the login and validate paths separately below.",
+    login_path_placeholder: "/login",
+    validate_path_placeholder: "/serviceValidate",
+    path_hint: "Appended to the server URL. Keep the defaults for standard CAS, or set the paths your ticket login actually uses.",
+    email_attribute_hint: "Attribute released by CAS that contains the email. If the CAS username is already an email address, that is used instead.",
+    service_url_label: "CAS service URL",
+    service_url_hint: "Register this exact URL as an allowed service on the CAS server.",
+    login_url_label: "SSO start URL",
+    save: "Save CAS settings",
+    saving: "Saving…",
+    saved: "CAS settings saved"
   },
   page: {
     subtitle: "Members, search backends, graph projection, and workspace metadata — changes here apply only to this workspace."

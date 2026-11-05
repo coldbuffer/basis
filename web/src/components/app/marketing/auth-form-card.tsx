@@ -33,6 +33,7 @@ export type AuthProviders = {
   magic_link: boolean;
   org_oidc?: boolean;
   org_saml?: boolean;
+  org_cas?: boolean;
 };
 
 type OrgSsoHint = {
@@ -43,6 +44,7 @@ type OrgSsoHint = {
   login_path?: string;
   auth_policy?: string;
   password_login_allowed?: boolean;
+  protocol?: string;
 };
 
 type OrgSsoOption = {
@@ -52,13 +54,14 @@ type OrgSsoOption = {
   login_url: string;
   login_path: string;
   auth_policy?: string;
+  protocol?: string;
 };
 
 export async function loadAuthProviders(): Promise<AuthProviders> {
   try {
     return await publicOpenApiGET<AuthProviders>('/api/v1/auth/providers');
   } catch {
-    return { github: false, google: false, magic_link: false, org_oidc: true, org_saml: false };
+    return { github: false, google: false, magic_link: false, org_oidc: true, org_saml: false, org_cas: true };
   }
 }
 
@@ -99,7 +102,7 @@ export function AuthFormCard({ providers }: AuthFormCardProps) {
   const [magicNotice, setMagicNotice] = useState<string | null>(null);
   const [orgSsoHint, setOrgSsoHint] = useState<OrgSsoHint | null>(null);
   const [orgSsoOptions, setOrgSsoOptions] = useState<OrgSsoOption[]>([]);
-  const orgSsoEnabled = Boolean(providers?.org_oidc || providers?.org_saml);
+  const orgSsoEnabled = Boolean(providers?.org_oidc || providers?.org_saml || providers?.org_cas);
   const resolver = useMemo(() => zodResolver(authSchemaForMode(mode)), [mode]);
   const isRegister = mode === 'register';
 
@@ -196,15 +199,11 @@ export function AuthFormCard({ providers }: AuthFormCardProps) {
   const showMagicLink = !isRegister && !isMagicPanel && providers?.magic_link === true;
   const showGithub = !isRegister && providers?.github === true;
   const showGoogle = !isRegister && providers?.google === true;
-  const ssoRequired =
-    !isRegister &&
-    orgSsoHint?.available === true &&
-    orgSsoHint.password_login_allowed === false;
   const showOrgSso =
     !isMagicPanel && !isRegister && (orgSsoOptions.length > 0 || orgSsoHint?.available === true);
   const showOAuth = !isMagicPanel && (showGithub || showGoogle || showOrgSso);
-  const showPasswordLogin = !isMagicPanel && !ssoRequired;
-  const showMagicEntry = showMagicLink && !ssoRequired;
+  const showPasswordLogin = !isMagicPanel && providers?.password !== false;
+  const showMagicEntry = showMagicLink;
 
   function openMagicPanel() {
     setError(null);
@@ -302,11 +301,6 @@ export function AuthFormCard({ providers }: AuthFormCardProps) {
                 </FormItem>
               )}
             />
-            {ssoRequired ? (
-              <p className="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">
-                {t.login.page.sso_required_hint}
-              </p>
-            ) : null}
             <div
               className={cn(
                 'grid transition-[grid-template-rows] duration-200 ease-out',
@@ -421,15 +415,18 @@ export function AuthFormCard({ providers }: AuthFormCardProps) {
                         {
                           org_slug: orgSsoHint.org_slug ?? '',
                           org_name: orgSsoHint.org_name ?? orgSsoHint.org_slug ?? 'Organization',
+                          protocol: orgSsoHint.protocol,
                           login_url:
                             orgSsoHint.login_url ??
-                            authV1Path(`oidc/${orgSsoHint.org_slug ?? ''}/start`),
+                            authV1Path(
+                              `${orgSsoHint.protocol ?? 'oidc'}/${orgSsoHint.org_slug ?? ''}/start`,
+                            ),
                         },
                       ]
                     : []
                 ).map((opt) => (
                   <Button
-                    key={opt.org_slug}
+                    key={`${opt.protocol ?? 'sso'}-${opt.org_slug}`}
                     type="button"
                     variant="outline"
                     size="sm"

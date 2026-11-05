@@ -63,6 +63,18 @@
     {
       "file": "web/src/lib/openapi/schema-workspaces.d.ts",
       "kind": "literal",
+      "path": "/api/v1/auth/cas/callback",
+      "operationId": "org_cas_callback_api_v1_auth_cas_callback_get"
+    },
+    {
+      "file": "web/src/lib/openapi/schema-workspaces.d.ts",
+      "kind": "literal",
+      "path": "/api/v1/auth/cas/{org_slug}/start",
+      "operationId": "org_cas_start_api_v1_auth_cas__org_slug__start_get"
+    },
+    {
+      "file": "web/src/lib/openapi/schema-workspaces.d.ts",
+      "kind": "literal",
       "path": "/api/v1/auth/desktop-session",
       "operationId": "desktop_session_api_v1_auth_desktop_session_post"
     },
@@ -1071,6 +1083,18 @@
     {
       "file": "web/src/lib/openapi/schema.d.ts",
       "kind": "literal",
+      "path": "/api/v1/auth/cas/callback",
+      "operationId": "org_cas_callback_api_v1_auth_cas_callback_get"
+    },
+    {
+      "file": "web/src/lib/openapi/schema.d.ts",
+      "kind": "literal",
+      "path": "/api/v1/auth/cas/{org_slug}/start",
+      "operationId": "org_cas_start_api_v1_auth_cas__org_slug__start_get"
+    },
+    {
+      "file": "web/src/lib/openapi/schema.d.ts",
+      "kind": "literal",
       "path": "/api/v1/auth/desktop-session",
       "operationId": "desktop_session_api_v1_auth_desktop_session_post"
     },
@@ -1259,6 +1283,12 @@
       "kind": "literal",
       "path": "/api/v1/orgs/{org_id}",
       "operationId": "get_org_api_v1_orgs__org_id__get"
+    },
+    {
+      "file": "web/src/lib/openapi/schema.d.ts",
+      "kind": "literal",
+      "path": "/api/v1/orgs/{org_id}/cas",
+      "operationId": "get_org_cas_api_v1_orgs__org_id__cas_get"
     },
     {
       "file": "web/src/lib/openapi/schema.d.ts",
@@ -2393,6 +2423,18 @@
       "kind": "literal",
       "path": "/api/v1/models/batch",
       "operationId": "create_models_batch_api_v1_models_batch_post"
+    },
+    {
+      "file": "web/src/modules/admin/settings/components/org-cas-panel.tsx",
+      "kind": "literal",
+      "path": "/api/v1/orgs/{org_id}/cas",
+      "operationId": "get_org_cas_api_v1_orgs__org_id__cas_get"
+    },
+    {
+      "file": "web/src/modules/admin/settings/components/org-cas-panel.tsx",
+      "kind": "literal",
+      "path": "/api/v1/orgs/{org_id}/cas",
+      "operationId": "get_org_cas_api_v1_orgs__org_id__cas_get"
     },
     {
       "file": "web/src/modules/admin/settings/components/org-saml-panel.tsx",

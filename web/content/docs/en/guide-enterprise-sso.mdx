@@ -1,7 +1,7 @@
 ---
 title: "Guide: enterprise SSO"
 sidebarTitle: "Enterprise SSO"
-description: "Configure organization OIDC or SAML for console login."
+description: "Configure organization OIDC, SAML, or CAS for console login."
 ---
 
 **Goal:** Users in an organization sign in through your IdP; API tokens and MCP stay unchanged.
@@ -15,10 +15,11 @@ description: "Configure organization OIDC or SAML for console login."
 
 1. Open **Admin → Settings → Organization SSO**.
 2. Select the organization (owners/admins of that org may also manage depending on deployment).
-3. Add **OIDC** or **SAML** configuration:
+3. Add **OIDC**, **SAML**, or **CAS**.
    - OIDC: client id/secret, issuer, scopes as required by your IdP
    - SAML: metadata URL or XML, ACS URL shown in the UI
-4. Save and note the callback URLs displayed (must match IdP allowlists).
+   - CAS: server base URL (without `/login`) and the email attribute name
+4. Save. For OIDC/SAML, register the callback URLs with the IdP. For CAS, register the service URL shown in the panel exactly.
 
 ## Sign-in behavior
 
@@ -31,8 +32,9 @@ Browser redirects:
 
 - OIDC: `GET /api/v1/auth/oidc/{slug}/start`
 - SAML: routes under `/api/v1/auth/saml/*` (metadata, start, ACS, logout)
+- CAS: `GET /api/v1/auth/cas/{slug}/start`; the callback validates the ticket at the configured path (default `/serviceValidate`)
 
-When SSO is required for an email domain, password login may be hidden for those users.
+Each method has its own switch: password and email link on the access settings card, OIDC, SAML, and CAS on the organization card. Turning one on does not turn the others off.
 
 ## Operations checklist
 

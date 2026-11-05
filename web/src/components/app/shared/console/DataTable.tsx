@@ -65,7 +65,7 @@ export function DataTable<T>({
 
   return (
     <div className={cn('overflow-x-auto border border-line bg-bg-2', className)}>
-      <Table className="min-w-[640px] border-collapse">
+      <Table className="min-w-[640px] border-separate border-spacing-0">
         <TableHeader>
           <TableRow className="border-b border-border hover:bg-transparent">
             {columns.map((col) => (

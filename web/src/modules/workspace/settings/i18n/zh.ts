@@ -103,12 +103,8 @@ export default {
       client_secret: "Client secret",
       scopes: "Scopes",
       email_domains: "邮箱域名",
-      enabled: "启用 SSO",
-      auth_policy: "登录策略"
+      enabled: "启用 SSO"
     },
-    auth_policy_password_allowed: "允许密码与 SSO",
-    auth_policy_sso_preferred: "优先 SSO（仍可用密码）",
-    auth_policy_sso_required: "强制 SSO（禁止密码与邮箱链接）",
     email_domains_hint: "逗号分隔（如 acme.com），用于登录页匹配组织 SSO。",
     issuer_placeholder: "https://idp.example.com/application/o/my-app/",
     client_id_placeholder: "OAuth Client ID",
@@ -136,7 +132,6 @@ export default {
       sp_entity_id: "SP Entity ID（可选）",
       email_domains: "邮箱域名",
       enabled: "启用 SAML",
-      auth_policy: "登录策略",
       idp_slo_url: "IdP SLO URL",
       slo_enabled: "启用单点登出（SLO）"
     },
@@ -162,6 +157,32 @@ export default {
     save: "保存 SAML 设置",
     saving: "保存中…",
     saved: "SAML 设置已保存"
+  },
+  org_cas: {
+    title: "组织 CAS",
+    description: "为本组织配置 CAS 2.0 服务器。Basis 校验服务票据后建立会话。",
+    not_configured: "尚未配置 CAS。",
+    configured: "CAS 服务器已配置。",
+    fields: {
+      server_url: "CAS 服务器地址",
+      login_path: "登录路径",
+      validate_path: "校验路径",
+      email_attribute: "邮箱属性",
+      email_domains: "邮箱域名",
+      enabled: "启用 CAS"
+    },
+    server_url_placeholder: "https://cas.example.edu/cas",
+    server_url_hint: "只填根地址。登录和校验路径在下面单独填。",
+    login_path_placeholder: "/login",
+    validate_path_placeholder: "/serviceValidate",
+    path_hint: "拼在服务器地址后面。标准 CAS 保持默认；其他票据登录可改成实际路径。",
+    email_attribute_hint: "CAS 返回的用户属性里，哪个字段是邮箱。如果用户名本身就是邮箱，则直接使用用户名。",
+    service_url_label: "CAS service 地址",
+    service_url_hint: "把这个地址原样登记为 CAS 允许的 service。",
+    login_url_label: "SSO 起始 URL",
+    save: "保存 CAS 设置",
+    saving: "保存中…",
+    saved: "CAS 设置已保存"
   },
   page: {
     subtitle: "成员、检索后端、图谱投影与工作区元数据；仅作用于当前工作区。"
