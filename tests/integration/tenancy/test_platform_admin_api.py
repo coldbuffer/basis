@@ -27,16 +27,25 @@ def test_health(tmp_path) -> None:
     assert response.json()["status"] == "ok"
 
 
-def test_first_user_is_admin_and_owns_the_public_workspace(tmp_path) -> None:
+def test_each_registration_gets_a_private_default_workspace(tmp_path) -> None:
     client = _client(tmp_path)
     admin = _register(client, "admin@example.com", "管理员")
     assert admin["user"]["is_admin"] is True
 
-    workspaces = client.get("/api/v1/workspaces", headers=_auth(admin["token"])).json()["workspaces"]
-    assert len(workspaces) == 1
-    assert workspaces[0]["name"] == "公共工作区"
-    assert workspaces[0]["visibility"] == "open"
-    assert workspaces[0]["my_role"] == "owner"
+    admin_headers = _auth(admin["token"])
+    admin_workspaces = client.get("/api/v1/workspaces", headers=admin_headers).json()["workspaces"]
+    assert len(admin_workspaces) == 1
+    assert admin_workspaces[0]["name"] == "默认工作区"
+    assert admin_workspaces[0]["visibility"] == "restricted"
+    assert admin_workspaces[0]["my_role"] == "owner"
+
+    member = _register(client, "member@example.com", "成员")
+    member_workspaces = client.get("/api/v1/workspaces", headers=_auth(member["token"])).json()["workspaces"]
+    assert len(member_workspaces) == 1
+    assert member_workspaces[0]["name"] == "默认工作区"
+    assert member_workspaces[0]["visibility"] == "restricted"
+    assert member_workspaces[0]["my_role"] == "owner"
+    assert member_workspaces[0]["id"] != admin_workspaces[0]["id"]
 
 
 def test_registration_switch_and_admin_provisioning(tmp_path) -> None:

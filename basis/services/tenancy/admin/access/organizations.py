@@ -1053,4 +1053,6 @@ class OrganizationsAccess:
             """,
             (user_id, email, display_name, hash_password(random_pw), created_at),
         )
-        return User(user_id, email, display_name, False, None, created_at)
+        user = User(user_id, email, display_name, False, None, created_at)
+        self._store._workspaces.provision_default_workspace_locked(user)
+        return user

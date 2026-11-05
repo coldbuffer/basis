@@ -40,12 +40,7 @@ class AuthAccess:
                 raise AdminError(409, "email_taken", "这个邮箱已经注册")
             user = self._store._insert_user(email, password, display_name, is_admin=first)
             token = self._store._issue_token(user.id)
-            if first:
-                org = self._store._organizations.create_organization_locked(
-                    "公共工作区", owner_user_id=user.id
-                )
-                workspace_id = self._store._insert_workspace("公共工作区", "", "open", user.id, org.id)
-                self._store._set_member(workspace_id, user.id, "owner", user.id)
+            self._store._workspaces.provision_default_workspace_locked(user)
             audit_persist.insert_audit(
                 conn,
                 actor_id=user.id,

@@ -23,6 +23,9 @@ if TYPE_CHECKING:
     from basis.services.tenancy.admin.store import AdminStore
 
 
+DEFAULT_WORKSPACE_NAME = "默认工作区"
+
+
 class WorkspacesAccess:
     def __init__(self, store: AdminStore) -> None:
         self._store = store
@@ -39,6 +42,17 @@ class WorkspacesAccess:
     def list_workspace_ids(self) -> list[str]:
         with self._store._lock:
             return workspace_persist.list_workspace_ids(self._store._conn)
+
+    def provision_default_workspace_locked(self, user: User) -> str:
+        """Create a private workspace for a newly registered user. Caller holds the lock and commits."""
+        org = self._store._organizations.create_organization_locked(
+            DEFAULT_WORKSPACE_NAME, owner_user_id=user.id
+        )
+        workspace_id = self._store._insert_workspace(
+            DEFAULT_WORKSPACE_NAME, "", "restricted", user.id, org.id
+        )
+        self._store._set_member(workspace_id, user.id, "owner", user.id)
+        return workspace_id
 
     def create_workspace(
         self, actor: User, name: str, description: str | None, visibility: str
