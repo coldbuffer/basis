@@ -294,10 +294,10 @@ def test_viewer_cannot_confirm_mapping_directly(tmp_path) -> None:
     ).json()
     viewer_user = client.get("/api/v1/users", headers=owner_headers).json()["users"]
     viewer_id = next(u for u in viewer_user if u["email"] == "view2@example.com")["id"]
-    client.post(
-        f"/api/v1/workspaces/{workspace_id}/members",
+    client.put(
+        f"/api/v1/workspaces/{workspace_id}/members/{viewer_id}",
         headers=owner_headers,
-        json={"user_id": viewer_id, "role": "viewer"},
+        json={"role": "viewer"},
     )
     viewer_headers = {"Authorization": f"Bearer {viewer['token']}"}
 

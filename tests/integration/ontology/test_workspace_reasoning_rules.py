@@ -74,10 +74,10 @@ def test_viewer_cannot_mutate_rules(tmp_path) -> None:
         "/api/v1/auth/register",
         json={"email": "view@example.com", "password": "password1", "display_name": "View"},
     ).json()
-    client.post(
-        f"/api/v1/workspaces/{workspace_id}/members",
+    client.put(
+        f"/api/v1/workspaces/{workspace_id}/members/{viewer['user']['id']}",
         headers=owner_headers,
-        json={"user_id": viewer["user"]["id"], "role": "viewer"},
+        json={"role": "viewer"},
     )
     viewer_headers = {"Authorization": f"Bearer {viewer['token']}"}
 

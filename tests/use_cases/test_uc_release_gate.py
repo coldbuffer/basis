@@ -56,10 +56,10 @@ def _viewer_headers(
     ).json()
     users = client.get("/api/v1/users", headers=owner_headers).json()["users"]
     viewer_user = next(u for u in users if u["email"] == email)
-    client.post(
-        f"/api/v1/workspaces/{workspace_id}/members",
+    client.put(
+        f"/api/v1/workspaces/{workspace_id}/members/{viewer_user['id']}",
         headers=owner_headers,
-        json={"user_id": viewer_user["id"], "role": "viewer"},
+        json={"role": "viewer"},
     )
     return _auth(viewer["token"])
 
@@ -274,7 +274,11 @@ def test_ledger_and_projection_survive_app_restart(tmp_path) -> None:
 
     client.close()
     client2 = TestClient(create_app(settings))
-    headers2 = _register(client2, "restart2@example.com")
+    logged_in = client2.post(
+        "/api/v1/auth/login",
+        json={"email": "restart@example.com", "password": "password1"},
+    ).json()
+    headers2 = _auth(logged_in["token"])
     workspace_id2 = client2.get("/api/v1/workspaces", headers=headers2).json()["workspaces"][0]["id"]
     assert workspace_id2 == workspace_id
 

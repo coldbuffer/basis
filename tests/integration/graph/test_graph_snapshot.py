@@ -90,10 +90,10 @@ def test_workspace_graph_audit_visible_to_viewer_not_platform_audit(tmp_path) ->
     ).json()
     viewer_id = client.get("/api/v1/users", headers=owner_headers).json()["users"]
     viewer_user = next(u for u in viewer_id if u["email"] == "view@example.com")
-    client.post(
-        f"/api/v1/workspaces/{workspace_id}/members",
+    client.put(
+        f"/api/v1/workspaces/{workspace_id}/members/{viewer_user['id']}",
         headers=owner_headers,
-        json={"user_id": viewer_user["id"], "role": "viewer"},
+        json={"role": "viewer"},
     )
     viewer_headers = _auth(viewer["token"])
 
