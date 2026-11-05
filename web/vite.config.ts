@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { fumadocsMdx } from 'fumadocs-mdx/vite';
-import { defineConfig } from 'vite';
+import { defineConfig, type PluginOption } from 'vite';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 
@@ -52,7 +52,8 @@ export default defineConfig(({ mode }) => ({
       : hmrFromEnv()
         ? { hmr: hmrFromEnv() }
         : undefined,
-  plugins: [fumadocsMdx(), react(), tailwindcss()],
+  // plugin-react 4.0.0's default export types collapse under NodeNext, so the call is cast.
+  plugins: [fumadocsMdx(), (react as unknown as () => PluginOption[])(), tailwindcss()],
   resolve: {
     dedupe: ['react', 'react-dom'],
     alias: [
