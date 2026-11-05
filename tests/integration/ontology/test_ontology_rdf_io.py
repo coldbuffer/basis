@@ -1,15 +1,58 @@
 import pytest
 
 from basis.services.ontology.io.rdf_io import (
-    content_likely_owl_schema,
     convert_ontology_to_graph,
     parse_rdf_sync_for_basis,
 )
 
 
-def test_content_likely_owl_schema_detects_owl() -> None:
-    assert content_likely_owl_schema("@prefix owl: <http://www.w3.org/2002/07/owl#> .\n:a a owl:Class .")
-    assert not content_likely_owl_schema("@prefix skos: <http://www.w3.org/2004/02/skos/core#> .\n:a a skos:Concept .")
+def test_parse_rdf_xml_expands_internal_literal_entities() -> None:
+    pytest.importorskip("rdflib")
+    pytest.importorskip("defusedxml")
+    xml = """<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE rdf:RDF [
+  <!ENTITY cmns-av "https://www.omg.org/spec/Commons/AnnotationVocabulary/">
+  <!ENTITY xsd "http://www.w3.org/2001/XMLSchema#">
+]>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+  xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+  xmlns:owl="http://www.w3.org/2002/07/owl#"
+  xmlns:cmns-av="https://www.omg.org/spec/Commons/AnnotationVocabulary/">
+  <owl:Ontology rdf:about="https://example.org/loan/">
+    <rdfs:label>Loans</rdfs:label>
+    <cmns-av:copyright>Copyright</cmns-av:copyright>
+    <owl:versionInfo rdf:datatype="&xsd;string">1</owl:versionInfo>
+  </owl:Ontology>
+</rdf:RDF>
+"""
+    _nodes, _edges, metadata = parse_rdf_sync_for_basis(xml.encode(), "xml")
+    assert metadata["uri"] == "https://example.org/loan/"
+    assert metadata["name"] == "Loans"
+
+
+def test_external_xml_entities_are_not_expanded() -> None:
+    from basis.services.ontology.io.rdf_parse import expand_literal_internal_entities
+
+    xml = b"""<?xml version="1.0"?>
+<!DOCTYPE rdf:RDF [
+  <!ENTITY xxe SYSTEM "http://127.0.0.1:9/secret">
+]>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"/>
+"""
+    assert expand_literal_internal_entities(xml) == xml
+
+
+def test_nested_xml_entities_are_not_expanded() -> None:
+    from basis.services.ontology.io.rdf_parse import expand_literal_internal_entities
+
+    xml = b"""<?xml version="1.0"?>
+<!DOCTYPE rdf:RDF [
+  <!ENTITY lol "lol">
+  <!ENTITY lol2 "&lol;&lol;&lol;&lol;">
+]>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">&lol2;</rdf:RDF>
+"""
+    assert expand_literal_internal_entities(xml) == xml
 
 
 def test_parse_rdf_sync_builds_nodes_and_metadata() -> None:

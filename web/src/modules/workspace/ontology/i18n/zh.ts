@@ -102,7 +102,6 @@ export default {
       drop_file_prefix: "拖放文件到此处或",
       browse: "浏览",
       drop_extensions: ".ttl · .rdf · .owl · .xml · .nt · .jsonld · .json · .n3",
-      format: "格式",
       format_select_extended: {
         turtle: "Turtle（.ttl）",
         xml: "RDF/XML（.rdf、.owl）",

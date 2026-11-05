@@ -314,21 +314,6 @@ def _fetch_url_sync(url: str) -> bytes:
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"Could not fetch {url}: {exc}") from exc
 
-def _content_likely_owl_schema_impl(content_str: str) -> bool:
-    """Heuristic: OntologyIngestor only extracts OWL classes/properties, not SKOS vocabularies."""
-    probe = content_str.lower()
-    owl_markers = (
-        "owl:class",
-        "owl#class",
-        "owl:objectproperty",
-        "owl#objectproperty",
-        "owl:datatypeproperty",
-        "owl#datatypeproperty",
-        "owl:annotationproperty",
-        "owl#annotationproperty",
-    )
-    return any(marker in probe for marker in owl_markers)
-
 def _parse_rdf_sync_impl(content: bytes, fmt: str) -> tuple:
     """Return (nodes, edges, metadata). Raises HTTPException on failure."""
     try:
@@ -448,10 +433,6 @@ def _parse_rdf_sync_impl(content: bytes, fmt: str) -> tuple:
         })
 
     return nodes, edges, metadata
-
-
-def content_likely_owl_schema(content: str) -> bool:
-    return _content_likely_owl_schema_impl(content)
 
 
 def convert_ontology_to_graph(ontology_data: dict[str, Any]) -> tuple[list[Any], list[Any]]:

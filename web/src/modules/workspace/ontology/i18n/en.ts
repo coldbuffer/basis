@@ -102,7 +102,6 @@ export default {
       drop_file_prefix: "Drop a file here or ",
       browse: "browse",
       drop_extensions: ".ttl · .rdf · .owl · .xml · .nt · .jsonld · .json · .n3",
-      format: "Format",
       format_select_extended: {
         turtle: "Turtle (.ttl)",
         xml: "RDF/XML (.rdf, .owl)",

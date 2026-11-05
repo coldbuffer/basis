@@ -307,6 +307,48 @@ def _load_response(
     }
 
 
+def _prepare_ingestor_text(content_str: str, fmt: str) -> str:
+    if fmt != "xml":
+        return content_str
+    from basis.services.ontology.io.rdf_parse import expand_literal_internal_entities
+
+    return expand_literal_internal_entities(content_str.encode("utf-8")).decode("utf-8")
+
+
+def _graph_from_ontology_ingestor(
+    content_str: str,
+    fmt: str,
+    convert_ontology_to_graph: Callable[[dict[str, Any]], tuple[list[Any], list[Any]]],
+) -> tuple[list[Any], list[Any], dict[str, Any]]:
+    """Parse ontology content with Semantica OntologyIngestor and map it to graph nodes."""
+    from semantica.ingest.ontology_ingestor import OntologyIngestor
+
+    suffix = _INGEST_FORMAT_SUFFIXES.get(fmt)
+    if suffix is None:
+        raise AdminError(422, "validation_error", f"Unsupported ontology format: {fmt}")
+
+    payload = _prepare_ingestor_text(content_str, fmt)
+    ingestor = OntologyIngestor()
+    with NamedTemporaryFile(mode="w", suffix=suffix, delete=False, encoding="utf-8") as temp_file:
+        temp_file.write(payload)
+        temp_path = temp_file.name
+    try:
+        ontology_data = ingestor.ingest_ontology(temp_path, format=fmt)
+    except AdminError:
+        raise
+    except Exception as exc:
+        raise AdminError(422, "validation_error", f"Could not parse ontology: {exc}") from exc
+    finally:
+        try:
+            os.unlink(temp_path)
+        except OSError as cleanup_exc:
+            logger.debug("Failed to remove temporary ontology file: %s", cleanup_exc)
+
+    data = ontology_data.data
+    nodes, edges = convert_ontology_to_graph(data)
+    return nodes, edges, data
+
+
 def load_ontology(
     session: Any,
     registry: dict[str, Any],
@@ -318,8 +360,6 @@ def load_ontology(
     description: str | None = None,
     tags: list[str] | None = None,
     fetch_url_bytes: Callable[[str], bytes],
-    parse_rdf_sync: Callable[[bytes, str], tuple[Any, Any, dict[str, Any]]],
-    content_likely_owl: Callable[[str], bool],
     convert_ontology_to_graph: Callable[[dict[str, Any]], tuple[list[Any], list[Any]]],
 ) -> dict[str, Any]:
     if not url and not content:
@@ -332,95 +372,23 @@ def load_ontology(
         content_str = content or ""
 
     fmt = normalize_format(format) if format else detect_format(content_str)
-    suffix = _INGEST_FORMAT_SUFFIXES.get(fmt)
-    if suffix is None:
-        raise AdminError(422, "validation_error", f"Unsupported ontology format: {fmt}")
-
-    nodes: list[dict[str, Any]]
-    edges: list[dict[str, Any]]
-    metadata: dict[str, Any]
-
-    if not content_likely_owl(content_str):
-        try:
-            nodes, edges, metadata = parse_rdf_sync(content_str.encode("utf-8"), fmt)
-        except AdminError:
-            raise
-        except Exception as exc:
-            raise AdminError(422, "validation_error", f"Could not parse ontology: {exc}") from exc
-    else:
-        try:
-            from semantica.ingest.ontology_ingestor import OntologyIngestor
-
-            ingestor = OntologyIngestor()
-            with NamedTemporaryFile(mode="w", suffix=suffix, delete=False, encoding="utf-8") as temp_file:
-                temp_file.write(content_str)
-                temp_path = temp_file.name
-            try:
-                ontology_data = ingestor.ingest_ontology(temp_path, format=fmt)
-                data = ontology_data.data
-                if not data.get("classes") and not data.get("properties"):
-                    raise ValueError("No OWL classes or properties found by OntologyIngestor")
-
-                nodes, edges = convert_ontology_to_graph(data)
-                try:
-                    nodes_added, edges_added = session.add_nodes_and_edges(nodes, edges)
-                except ValueError as exc:
-                    raise AdminError(422, "validation_error", str(exc)) from exc
-
-                ontology_uri = data.get("uri", f"temp:{uuid.uuid4().hex[:12]}")
-                display_name = name or data.get("name", "Imported Ontology")
-                cc, cn, cp = _count_entity_types(nodes)
-                _register_ontology(
-                    registry,
-                    ontology_uri=ontology_uri,
-                    name=display_name,
-                    description=description or data.get("description"),
-                    fmt=fmt,
-                    version=data.get("version", "1.0"),
-                    class_count=cc,
-                    concept_count=cn,
-                    property_count=cp,
-                    tags=tags,
-                    source_url=url,
-                )
-                return _load_response(
-                    ontology_uri=ontology_uri,
-                    name=display_name,
-                    nodes_added=nodes_added,
-                    edges_added=edges_added,
-                    fmt=fmt,
-                )
-            finally:
-                try:
-                    os.unlink(temp_path)
-                except OSError as cleanup_exc:
-                    logger.debug("Failed to remove temporary ontology file: %s", cleanup_exc)
-        except AdminError:
-            raise
-        except Exception as ingest_exc:
-            logger.warning("OntologyIngestor failed, falling back to basic parsing: %s", ingest_exc)
-            try:
-                nodes, edges, metadata = parse_rdf_sync(content_str.encode("utf-8"), fmt)
-            except AdminError:
-                raise
-            except Exception as exc:
-                raise AdminError(422, "validation_error", f"Could not parse ontology: {exc}") from exc
+    nodes, edges, data = _graph_from_ontology_ingestor(content_str, fmt, convert_ontology_to_graph)
 
     try:
         nodes_added, edges_added = session.add_nodes_and_edges(nodes, edges)
     except ValueError as exc:
         raise AdminError(422, "validation_error", str(exc)) from exc
 
-    ontology_uri = metadata.get("uri", f"temp:{uuid.uuid4().hex[:12]}")
-    display_name = name or metadata.get("name", "Imported Ontology")
+    ontology_uri = data.get("uri") or f"temp:{uuid.uuid4().hex[:12]}"
+    display_name = name or data.get("name") or "Imported Ontology"
     cc, cn, cp = _count_entity_types(nodes)
     _register_ontology(
         registry,
         ontology_uri=ontology_uri,
         name=display_name,
-        description=description or metadata.get("description"),
+        description=description or data.get("description"),
         fmt=fmt,
-        version=metadata.get("version", "1.0"),
+        version=data.get("version", "1.0"),
         class_count=cc,
         concept_count=cn,
         property_count=cp,
@@ -465,7 +433,7 @@ def refresh_ontology(
     ontology_uri: str,
     *,
     fetch_url_bytes: Callable[[str], bytes],
-    parse_rdf_sync: Callable[[bytes, str], tuple[Any, Any, dict[str, Any]]],
+    convert_ontology_to_graph: Callable[[dict[str, Any]], tuple[list[Any], list[Any]]],
 ) -> dict[str, Any]:
     entry = registry.get(ontology_uri)
     if entry is None:
@@ -475,16 +443,10 @@ def refresh_ontology(
     if not source_url:
         raise AdminError(422, "validation_error", "No source URL to refresh from.")
 
-    fmt = _entry_field(entry, "format", "turtle")
+    fmt = normalize_format(str(_entry_field(entry, "format", "turtle")))
     raw = fetch_url_bytes(str(source_url))
     content_str = raw.decode("utf-8", errors="replace")
-
-    try:
-        nodes, edges, _metadata = parse_rdf_sync(content_str.encode("utf-8"), fmt)
-    except AdminError:
-        raise
-    except Exception as exc:
-        raise AdminError(422, "validation_error", f"Refresh parse error: {exc}") from exc
+    nodes, edges, _data = _graph_from_ontology_ingestor(content_str, fmt, convert_ontology_to_graph)
 
     try:
         nodes_added, edges_added = session.add_nodes_and_edges(nodes, edges)

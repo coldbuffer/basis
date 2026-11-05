@@ -357,10 +357,26 @@ function URLImportPanel({ onLoaded }: { onLoaded: () => void }) {
 // File Upload panel
 // ---------------------------------------------------------------------------
 
+const FILE_EXTENSION_FORMAT: Record<string, string> = {
+  ttl: "turtle",
+  rdf: "xml",
+  owl: "xml",
+  xml: "xml",
+  nt: "nt",
+  n3: "n3",
+  jsonld: "json-ld",
+  json: "json-ld",
+};
+
+function formatFromFileName(fileName: string): string {
+  const ext = fileName.split(".").pop()?.toLowerCase() || "";
+  // Unknown extensions stay empty so the backend sniffs the content.
+  return FILE_EXTENSION_FORMAT[ext] ?? "";
+}
+
 function FileUploadPanel({ onLoaded }: { onLoaded: () => void }) {
   const { t, locale } = useI18n();
   const l = t.ontology.hub.loader;
-  const mgr = t.ontology.hub.manager;
   const workspaceId = useOntologyWorkspaceId();
   const fileRef = useRef<HTMLInputElement>(null);
   const [fileName, setFileName] = useState("");
@@ -372,13 +388,7 @@ function FileUploadPanel({ onLoaded }: { onLoaded: () => void }) {
 
   const handleFile = (file: File) => {
     setFileName(file.name);
-    const ext = file.name.split(".").pop()?.toLowerCase() || "";
-    const fmtMap: Record<string, string> = {
-      ttl: "turtle", rdf: "xml", owl: "xml", xml: "xml",
-      nt: "nt", jsonld: "json-ld", json: "json-ld",
-    };
-    // Leave format empty for unknown extensions so the backend auto-detects
-    setFormat(fmtMap[ext] ?? "");
+    setFormat(formatFromFileName(file.name));
     const reader = new FileReader();
     reader.onload = (e) => setContent(e.target?.result as string || "");
     reader.readAsText(file);
@@ -438,23 +448,6 @@ function FileUploadPanel({ onLoaded }: { onLoaded: () => void }) {
           onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
         />
       </div>
-
-      {content && (
-        <FieldGroup label={l.format}>
-          <div className="native-select--full">
-            <NativeSelect
-              value={format}
-              onChange={(e) => setFormat(e.target.value)}
-              className={ontLoaderSelect}
-            >
-              <NativeSelectOption value="turtle">{mgr.format_labels.turtle}</NativeSelectOption>
-              <NativeSelectOption value="xml">{mgr.format_labels.xml}</NativeSelectOption>
-              <NativeSelectOption value="nt">{mgr.format_labels.nt}</NativeSelectOption>
-              <NativeSelectOption value="json-ld">{mgr.format_labels.json_ld}</NativeSelectOption>
-            </NativeSelect>
-          </div>
-        </FieldGroup>
-      )}
 
       {loadState === "success" && (
         <div className={ontLoaderSuccessBox}>

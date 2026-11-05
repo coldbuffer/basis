@@ -46,7 +46,6 @@ from basis.services.ontology.models import (
     SKOSConceptSearchRequest,
 )
 from basis.services.ontology.io.rdf_io import (
-    content_likely_owl_schema,
     convert_ontology_to_graph,
     fetch_ontology_url_bytes,
     parse_rdf_sync_for_basis,
@@ -108,8 +107,6 @@ Load Ontology. Ontology hub (SKOS, alignments) via workspace graph session. Requ
                 description=body.description,
                 tags=list(body.tags) if body.tags else None,
                 fetch_url_bytes=fetch_ontology_url_bytes,
-                parse_rdf_sync=parse_rdf_sync_for_basis,
-                content_likely_owl=content_likely_owl_schema,
                 convert_ontology_to_graph=convert_ontology_to_graph,
             )
             save_graph(request, workspace_id, sync_ledger=False)
@@ -444,7 +441,7 @@ Refresh Ontology. Ontology hub (SKOS, alignments) via workspace graph session. R
                 registry,
                 ontology_uri,
                 fetch_url_bytes=fetch_ontology_url_bytes,
-                parse_rdf_sync=parse_rdf_sync_for_basis,
+                convert_ontology_to_graph=convert_ontology_to_graph,
             )
             save_graph(request, workspace_id, sync_ledger=False)
             return result
