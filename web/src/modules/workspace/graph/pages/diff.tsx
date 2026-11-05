@@ -20,12 +20,11 @@ export function GraphDiffPage() {
         { label: getWorkspace(id)?.name ?? id, to: workspacePath(id, 'graph') },
         { label: t.graph.menu.graph_diff },
       ]}
-      subtitle={t.graph.page.subtitle}
-      className="min-h-0 overflow-hidden"
+      subtitle={t.graph.diff.compare_hint}
+      className="gap-6 [&>:last-child]:min-h-0 [&>:last-child]:flex-none"
     >
       <GraphDiff
         workspaceId={id}
-        className="min-h-0 flex-1 overflow-y-auto"
         initialFrom={searchParams.get('from') ?? undefined}
         initialTo={searchParams.get('to') ?? undefined}
       />

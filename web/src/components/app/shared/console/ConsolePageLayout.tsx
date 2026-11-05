@@ -1,13 +1,10 @@
 import type { ReactNode } from 'react';
-import { useLocation } from 'react-router-dom';
 import { PageHeader, type Crumb } from '@/components/app/shared/console/PageHeader.js';
-import { SidebarIcon } from '@/components/app/shared/shell/sidebar-icon.js';
-import { menuIconForPath } from '@/lib/nav/nav-config.js';
 import { cn } from '@/lib/utils.js';
 
 export type ConsolePageLayoutProps = {
   crumbs: Crumb[];
-  /** Short description under the breadcrumb (e.g. KbPageSubtitle text). */
+  /** Short description under the breadcrumb. */
   subtitle?: ReactNode;
   /** Secondary line: role, hint, etc. */
   meta?: ReactNode;
@@ -28,26 +25,20 @@ export function ConsolePageLayout({
   children,
   className,
 }: ConsolePageLayoutProps) {
-  const { pathname } = useLocation();
-  const menuIcon = menuIconForPath(pathname);
-
   return (
-    <div className={cn('flex min-h-0 flex-1 flex-col gap-6', className)}>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+    <div className={cn('flex min-h-0 flex-1 flex-col gap-4', className)}>
+      <header className="flex flex-col gap-2 border-b border-border/60 pb-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0 space-y-1">
           <PageHeader crumbs={crumbs} />
           {subtitle ? (
-            <div className="flex items-start gap-1.5 text-sm text-muted-foreground">
-              {menuIcon ? <SidebarIcon name={menuIcon} className="mt-0.5" /> : null}
-              <div className="min-w-0">{subtitle}</div>
-            </div>
+            <div className="min-w-0 text-xs leading-relaxed text-muted-foreground">{subtitle}</div>
           ) : null}
-          {meta ? <div className="text-sm text-muted-foreground">{meta}</div> : null}
+          {meta ? <div className="text-xs text-muted-foreground">{meta}</div> : null}
         </div>
         {actions ? (
           <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>
         ) : null}
-      </div>
+      </header>
       <div className="flex min-h-0 flex-1 flex-col">{children}</div>
     </div>
   );

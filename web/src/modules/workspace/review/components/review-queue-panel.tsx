@@ -488,11 +488,11 @@ export function ReviewQueuePanel({
     }
     const label = labels[trimmed]?.trim();
     if (label) {
-      return <span className="font-medium text-foreground">{label}</span>;
+      return <span className="text-foreground">{label}</span>;
     }
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(trimmed);
     if (!isUuid) {
-      return <span className="font-medium text-foreground">{trimmed}</span>;
+      return <span className="text-foreground">{trimmed}</span>;
     }
     return <span className="text-muted-foreground">{r.unresolved_entity}</span>;
   }

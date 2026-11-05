@@ -52,12 +52,27 @@ export function parseSearchUrlState(search: string): SearchUrlParams & {
 } {
   const params = new URLSearchParams(search);
   const scope = resolveSearchScope(params.get(SCOPE_PARAM));
+  const asOf = params.get('as_of') ?? undefined;
+  const createdAfter = params.get('created_after') ?? undefined;
+  const createdBefore = params.get('created_before') ?? undefined;
   return {
     scope,
     q: params.get('q') ?? undefined,
-    asOf: params.get('as_of') ?? undefined,
-    createdAfter: params.get('created_after') ?? undefined,
-    createdBefore: params.get('created_before') ?? undefined,
+    asOf,
+    createdAfter,
+    /** Legacy `as_of` maps to ingest upper bound when `created_before` is absent. */
+    createdBefore: createdBefore ?? asOf,
     at: params.get('at') ?? undefined,
+  };
+}
+
+/** Resolved chunk ingest bounds for API calls (legacy `as_of` → `createdBefore` only). */
+export function chunkTemporalFromUrlState(params: SearchUrlParams): {
+  createdAfter: string;
+  createdBefore: string;
+} {
+  return {
+    createdAfter: params.createdAfter?.trim() ?? '',
+    createdBefore: (params.createdBefore ?? params.asOf)?.trim() ?? '',
   };
 }

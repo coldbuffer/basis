@@ -26,12 +26,13 @@ test('reasoning apply_to_graph shows derived facts on entities page', async ({ p
     throw err;
   }
 
-  await page.goto(`/workspaces/${workspaceId}/entities`);
+  await page.goto(`/workspaces/${workspaceId}/entities?tab=derived`);
   await expect(
     page.getByRole('heading', { name: /Recent reasoning|最近推理/i }),
   ).toBeVisible({ timeout: 30_000 });
   await expect(page.getByText(/urn:basis:pred:ancestor|ancestor/).first()).toBeVisible();
 
+  await page.getByRole('tab', { name: /^Entities$|^实体名录$/ }).click();
   await page.getByPlaceholder(/Entity label|实体名称/i).fill(entityA);
   await page.getByRole('button', { name: /^Search$|^搜索$/ }).click();
   await expect(page.getByText(entityA).first()).toBeVisible({ timeout: 60_000 });

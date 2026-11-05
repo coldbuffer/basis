@@ -1,0 +1,9 @@
+# pnpm 10+ supply-chain: allow postinstall/native scripts required by Vite and tooling.
+# Do not leave "pnpm approve-builds" placeholder strings here.
+allowBuilds:
+  '@scarf/scarf': false
+  '@tree-sitter-grammars/tree-sitter-yaml': true
+  core-js-pure: true
+  esbuild: true
+  tree-sitter: true
+  tree-sitter-json: true

@@ -1,6 +1,8 @@
 export default {
   page: {
-    subtitle: "搜索账本实体，点开一行查看陈述与派生事实。右侧是推理最近写回的结果。"
+    subtitle: "浏览账本实体并在右侧抽屉查看陈述与证据，或切换查看推理写回的派生事实。",
+    tab_entities: "实体名录",
+    tab_derived: "最近推理",
   },
   menu: {
     entities: "实体"
@@ -15,6 +17,7 @@ export default {
     open_lineage: "溯源血缘",
     entity_placeholder: "实体名称或描述（留空浏览最近）",
     search: "搜索",
+    clear_search: "清除",
     searching: "加载中…",
     no_entities: "无实体",
     empty_browse_hint: "输入关键词搜索，或留空浏览最近创建的账本实体。",
@@ -47,7 +50,6 @@ export default {
     open_review_queue: "前往智能审查审批",
     writeback_applied_toast: "已直接写回外部数据源",
     recent_derived_facts: "最近推理",
-    recent_derived_facts_hint: "推理写回账本的结果，按时间从新到旧。",
     open_reasoning: "打开推理工作台",
     loading_derived_facts: "加载派生事实…",
     no_derived_facts: "暂无推理派生事实",

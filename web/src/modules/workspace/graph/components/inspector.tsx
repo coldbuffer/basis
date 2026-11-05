@@ -679,7 +679,7 @@ export function GraphInspectorPanel({
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <div className="truncate font-medium text-foreground">{prediction.label || prediction.target}</div>
+                      <div className="truncate text-foreground">{prediction.label || prediction.target}</div>
                       <div className="text-xs text-muted-foreground">
                         {graphNodeTypeLabel(loc, prediction.type)}
                       </div>

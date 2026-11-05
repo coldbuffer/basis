@@ -1,6 +1,8 @@
 export default {
   page: {
-    subtitle: "Search ledger entities and open a row for statements and derived facts. The rail lists what reasoning wrote back."
+    subtitle: "Browse canonical ledger entities, inspect their statements in the side drawer, or review recent facts inferred by reasoning.",
+    tab_entities: "Entities",
+    tab_derived: "Recent reasoning",
   },
   menu: {
     entities: "Ledger"
@@ -15,6 +17,7 @@ export default {
     open_lineage: "Lineage",
     entity_placeholder: "Entity label or description (empty = recent)",
     search: "Search",
+    clear_search: "Clear",
     searching: "Loading…",
     no_entities: "No entities",
     empty_browse_hint: "Search by keyword, or leave empty to browse recent ledger entities.",
@@ -47,7 +50,6 @@ export default {
     open_review_queue: "Open in Smart review",
     writeback_applied_toast: "Write-back applied to external source",
     recent_derived_facts: "Recent reasoning",
-    recent_derived_facts_hint: "Facts written back by inference, newest first.",
     open_reasoning: "Open reasoning",
     loading_derived_facts: "Loading derived facts…",
     no_derived_facts: "No recent derived facts",

@@ -27,19 +27,21 @@ export function PageHeader({ crumbs, className }: PageHeaderProps) {
   return (
     <Breadcrumb
       aria-label={t.core.common.breadcrumbNavAria}
-      className={cn('box-border flex h-(--console-chrome-row) shrink-0 items-center', className)}
+      className={cn('flex shrink-0 items-center', className)}
     >
-      <BreadcrumbList className="text-[12.5px]">
+      <BreadcrumbList className="text-xs sm:gap-2">
         {crumbs.map((item, i) => (
           <Fragment key={`${item.label}-${i}`}>
-            {i > 0 ? <BreadcrumbSeparator /> : null}
+            {i > 0 ? <BreadcrumbSeparator className="[&>svg]:size-3" /> : null}
             <BreadcrumbItem>
               {item.to ? (
-                <BreadcrumbLink asChild>
+                <BreadcrumbLink asChild className="text-muted-foreground hover:text-foreground">
                   <Link to={item.to}>{item.label}</Link>
                 </BreadcrumbLink>
               ) : (
-                <BreadcrumbPage>{item.label}</BreadcrumbPage>
+                <BreadcrumbPage className="font-semibold text-foreground">
+                  {item.label}
+                </BreadcrumbPage>
               )}
             </BreadcrumbItem>
           </Fragment>

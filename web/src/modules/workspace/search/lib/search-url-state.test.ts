@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { searchPath, parseSearchUrlState, resolveSearchScope } from '@/modules/workspace/search/lib/search-url-state.js';
+import {
+  searchPath,
+  parseSearchUrlState,
+  resolveSearchScope,
+  chunkTemporalFromUrlState,
+} from '@/modules/workspace/search/lib/search-url-state.js';
 
 describe('searchUrlState', () => {
   it('parses scope param', () => {
@@ -20,11 +25,19 @@ describe('searchUrlState', () => {
     const href = searchPath('kb-1', {
       scope: 'chunks',
       q: 'x',
-      asOf: '2030-01-01T00:00:00Z',
+      createdAfter: '2030-01-01T00:00:00.000Z',
+      createdBefore: '2030-01-31T23:59:59.999Z',
       at: '2030-06-01T00:00:00Z',
     });
     const parsed = parseSearchUrlState(href.split('?')[1] ?? '');
-    expect(parsed.asOf).toBe('2030-01-01T00:00:00Z');
+    expect(parsed.createdAfter).toBe('2030-01-01T00:00:00.000Z');
+    expect(parsed.createdBefore).toBe('2030-01-31T23:59:59.999Z');
     expect(parsed.at).toBe('2030-06-01T00:00:00Z');
+  });
+
+  it('maps legacy as_of to createdBefore', () => {
+    const parsed = parseSearchUrlState('?as_of=2030-01-01T00:00:00Z');
+    expect(parsed.createdBefore).toBe('2030-01-01T00:00:00Z');
+    expect(chunkTemporalFromUrlState(parsed).createdBefore).toBe('2030-01-01T00:00:00Z');
   });
 });

@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { EmptyState } from '@/components/app/shared/console/index.js';
+import { Badge } from '@/components/ui/badge.js';
 import {
   ledgerEntityId,
   type LedgerEntityHit,
@@ -29,21 +30,30 @@ export type ChunkHit = {
 type SearchPageCopy = LocaleMessages['search']['page'];
 
 const titleLinkClass =
-  'text-[15px] leading-snug text-primary underline-offset-2 hover:underline';
+  'text-sm leading-snug text-foreground underline-offset-2 hover:text-primary hover:underline';
 
-const metaLineClass = 'mt-0.5 text-xs leading-snug text-muted-foreground';
-
-const snippetClass = 'mt-1 text-sm leading-relaxed text-foreground/85 line-clamp-3';
-
-const secondaryLinkClass =
-  'mt-1.5 inline-block text-xs text-muted-foreground underline-offset-2 hover:text-primary hover:underline';
+const actionLinkClass =
+  'shrink-0 text-xs text-muted-foreground underline-offset-2 hover:text-primary hover:underline';
 
 function SearchResultList({ children }: { children: ReactNode }) {
   return <ul className="divide-y divide-border/60">{children}</ul>;
 }
 
-function SearchResultItem({ children }: { children: ReactNode }) {
-  return <li className="px-4 py-3.5 first:pt-4 last:pb-4">{children}</li>;
+function SearchResultItem({
+  category,
+  children,
+}: {
+  category: 'chunk' | 'graph' | 'entity';
+  children: ReactNode;
+}) {
+  return (
+    <li
+      data-result-category={category}
+      className="px-4 py-3.5 transition-colors hover:bg-muted/20"
+    >
+      {children}
+    </li>
+  );
 }
 
 export function SearchChunkList({
@@ -66,21 +76,30 @@ export function SearchChunkList({
   return (
     <SearchResultList>
       {hits.map((hit) => (
-        <SearchResultItem key={hit.chunk_id}>
-          <Link to={evidenceHref(hit.chunk_id)} className={titleLinkClass}>
-            {hit.document_title || hit.document_id}
-          </Link>
-          <p className={metaLineClass}>
-            {fmt(copy.chunk_meta, { ordinal: hit.ordinal, chunkId: hit.chunk_id })}
-          </p>
+        <SearchResultItem key={hit.chunk_id} category="chunk">
+          <div className="flex items-baseline justify-between gap-3">
+            <div className="flex min-w-0 flex-wrap items-baseline gap-2">
+              <Link to={evidenceHref(hit.chunk_id)} className={titleLinkClass}>
+                {hit.document_title || hit.document_id}
+              </Link>
+              <span
+                className="font-mono text-xs tabular-nums text-muted-foreground"
+                title={fmt(copy.chunk_meta, { ordinal: hit.ordinal, chunkId: hit.chunk_id })}
+              >
+                {fmt(copy.chunk_ordinal_badge, { ordinal: hit.ordinal })}
+              </span>
+            </div>
+            <Link to={evidenceHref(hit.chunk_id)} className={actionLinkClass}>
+              {copy.evidence}
+            </Link>
+          </div>
           {hit.snippet ? (
-            <p className={snippetClass}>{hit.snippet}</p>
+            <blockquote className="mt-2 border-l-2 border-border pl-3 text-sm leading-relaxed text-muted-foreground line-clamp-3">
+              {hit.snippet}
+            </blockquote>
           ) : (
-            <p className={`${snippetClass} text-muted-foreground`}>{emptyCell}</p>
+            <p className="mt-1.5 text-sm text-muted-foreground">{emptyCell}</p>
           )}
-          <Link to={evidenceHref(hit.chunk_id)} className={secondaryLinkClass}>
-            {copy.evidence}
-          </Link>
         </SearchResultItem>
       ))}
     </SearchResultList>
@@ -119,18 +138,41 @@ export function SearchGraphList({
         const showContent =
           hit.node.content && hit.node.content !== labels[hit.node.id];
         return (
-          <SearchResultItem key={hit.node.id}>
-            <Link to={graphHref} className={titleLinkClass}>
-              {title}
-            </Link>
-            <p className={metaLineClass}>
-              {subtitle ? `${subtitle} · ` : null}
-              {fmt(copy.graph_score_line, { type: typeLabel, score: scoreLabel })}
-            </p>
-            {showContent ? <p className={snippetClass}>{hit.node.content}</p> : null}
-            <Link to={graphHref} className={secondaryLinkClass}>
-              {copy.open_in_graph}
-            </Link>
+          <SearchResultItem key={hit.node.id} category="graph">
+            <div className="flex items-baseline justify-between gap-3">
+              <div className="flex min-w-0 flex-wrap items-center gap-2">
+                <Badge variant="outline" className="text-[11px] font-normal">
+                  {typeLabel}
+                </Badge>
+                <Link to={graphHref} className={titleLinkClass}>
+                  {title}
+                </Link>
+                {subtitle ? (
+                  <span
+                    className="max-w-[14rem] truncate font-mono text-xs text-muted-foreground"
+                    title={subtitle}
+                  >
+                    {subtitle}
+                  </span>
+                ) : null}
+              </div>
+              <div className="flex shrink-0 items-baseline gap-3">
+                <span
+                  className="font-mono text-xs tabular-nums text-muted-foreground"
+                  title={fmt(copy.graph_score_line, { type: typeLabel, score: scoreLabel })}
+                >
+                  {fmt(copy.score_badge, { score: scoreLabel })}
+                </span>
+                <Link to={graphHref} className={actionLinkClass}>
+                  {copy.open_in_graph}
+                </Link>
+              </div>
+            </div>
+            {showContent ? (
+              <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground line-clamp-2">
+                {hit.node.content}
+              </p>
+            ) : null}
           </SearchResultItem>
         );
       })}
@@ -160,21 +202,29 @@ export function SearchEntityList({
         const { title, subtitle } = formatNodeRefDetail(entityId, labels);
         const graphHref = graphPath(workspaceId, { focus: entityId });
         return (
-          <SearchResultItem key={entityId}>
-            <Link to={graphHref} className={titleLinkClass}>
-              {title}
-            </Link>
-            {subtitle || hit.entity_kind ? (
-              <p className={metaLineClass}>
-                {subtitle ?? null}
-                {subtitle && hit.entity_kind ? ' · ' : null}
-                {hit.entity_kind ?? null}
+          <SearchResultItem key={entityId} category="entity">
+            <div className="flex items-baseline justify-between gap-3">
+              <div className="flex min-w-0 flex-wrap items-center gap-2">
+                <Link to={graphHref} className={titleLinkClass}>
+                  {title}
+                </Link>
+                {hit.entity_kind ? (
+                  <Badge variant="secondary" className="text-[11px] font-normal">
+                    {hit.entity_kind}
+                  </Badge>
+                ) : null}
+              </div>
+              <Link to={graphHref} className={actionLinkClass}>
+                {copy.open_in_graph}
+              </Link>
+            </div>
+            {hit.description ? (
+              <p className="mt-1 text-sm leading-relaxed text-muted-foreground line-clamp-2">
+                {hit.description}
               </p>
+            ) : subtitle ? (
+              <p className="mt-1 font-mono text-xs text-muted-foreground">{subtitle}</p>
             ) : null}
-            {hit.description ? <p className={snippetClass}>{hit.description}</p> : null}
-            <Link to={graphHref} className={secondaryLinkClass}>
-              {copy.open_in_graph}
-            </Link>
           </SearchResultItem>
         );
       })}

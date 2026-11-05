@@ -18,15 +18,9 @@ import {
 } from '@/modules/workspace/search/pages/search-results.js';
 import { Button } from '@/components/ui/button.js';
 import { Checkbox } from '@/components/ui/checkbox.js';
-import { Input } from '@/components/ui/input.js';
 import { Label } from '@/components/ui/label.js';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select.js';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs.js';
+import { DatePicker } from '@/components/app/shared/primitives/date-picker.js';
 import { Spinner } from '@/components/ui/spinner.js';
 import { useI18n } from '@/i18n/context.js';
 import { fmt, formatLocaleNumber, pickCountForm } from '@/i18n/format.js';
@@ -43,8 +37,15 @@ import {
   searchPath,
   parseSearchUrlState,
   resolveSearchScope,
+  chunkTemporalFromUrlState,
   type SearchScope,
 } from '@/modules/workspace/search/lib/search-url-state.js';
+import {
+  calendarDateFromIso,
+  endOfLocalDayIso,
+  startOfLocalDayIso,
+} from '@/modules/workspace/graph/lib/temporal/day-range.js';
+import { parseInstantMs } from '@/modules/workspace/graph/lib/temporal/instant.js';
 
 const PREVIEW_LIMIT = 8;
 const SEARCH_LIMIT = 30;
@@ -63,7 +64,10 @@ export function SearchPage() {
     resolveSearchScope(searchParams.get('scope')),
   );
   const [query, setQuery] = useState(() => searchParams.get('q') ?? '');
-  const [asOf, setAsOf] = useState(() => searchParams.get('as_of') ?? '');
+  const initialUrl = parseSearchUrlState(searchParams.toString());
+  const initialChunkTemporal = chunkTemporalFromUrlState(initialUrl);
+  const [createdAfter, setCreatedAfter] = useState(() => initialChunkTemporal.createdAfter);
+  const [createdBefore, setCreatedBefore] = useState(() => initialChunkTemporal.createdBefore);
   const [at, setAt] = useState(() => searchParams.get('at') ?? '');
 
   const [graphResults, setGraphResults] = useState<GraphSearchHit[]>([]);
@@ -88,14 +92,16 @@ export function SearchPage() {
     (opts: {
       q: string;
       scope: SearchScope;
-      asOf?: string;
+      createdAfter?: string;
+      createdBefore?: string;
       at?: string;
     }) => {
       if (!id) return;
       const href = searchPath(id, {
         scope: opts.scope,
         q: opts.q,
-        asOf: opts.asOf?.trim() || undefined,
+        createdAfter: opts.createdAfter?.trim() || undefined,
+        createdBefore: opts.createdBefore?.trim() || undefined,
         at: opts.at?.trim() || undefined,
       });
       const next = href.split('?')[1] ?? '';
@@ -105,11 +111,13 @@ export function SearchPage() {
   );
 
   const fetchChunks = useCallback(
-    async (q: string, limit: number, asOfIso: string) => {
+    async (q: string, limit: number, range: { createdAfter: string; createdBefore: string }) => {
       if (!id) return [] as ChunkHit[];
-      const trimmed = asOfIso.trim();
+      const after = range.createdAfter.trim();
+      const before = range.createdBefore.trim();
       const data = await workspaceApiClient(id).searchChunks(q, limit, {
-        ...(trimmed ? { as_of: trimmed } : {}),
+        ...(after ? { created_after: after } : {}),
+        ...(before ? { created_before: before } : {}),
       });
       return (data.chunks ?? []) as ChunkHit[];
     },
@@ -147,7 +155,7 @@ export function SearchPage() {
     async (
       activeScope: SearchScope,
       q: string,
-      temporal: { asOf: string; at: string },
+      temporal: { createdAfter: string; createdBefore: string; at: string },
     ) => {
       if (!id) return;
       const trimmed = q.trim();
@@ -162,7 +170,10 @@ export function SearchPage() {
 
       try {
         if (activeScope === 'chunks') {
-          const chunks = await fetchChunks(trimmed, limit, temporal.asOf);
+          const chunks = await fetchChunks(trimmed, limit, {
+            createdAfter: temporal.createdAfter,
+            createdBefore: temporal.createdBefore,
+          });
           setChunkResults(chunks);
           setGraphResults([]);
           setEntityResults([]);
@@ -197,10 +208,12 @@ export function SearchPage() {
 
   useEffect(() => {
     const parsed = parseSearchUrlState(searchParams.toString());
+    const chunkTemporal = chunkTemporalFromUrlState(parsed);
     setScope(parsed.scope);
     const q = searchParams.get('q');
     if (q != null) setQuery(q);
-    setAsOf(parsed.asOf ?? '');
+    setCreatedAfter(chunkTemporal.createdAfter);
+    setCreatedBefore(chunkTemporal.createdBefore);
     setAt(parsed.at ?? '');
   }, [searchParams]);
 
@@ -208,7 +221,14 @@ export function SearchPage() {
     const q = searchParams.get('q')?.trim();
     if (!q || !id) return;
     const parsed = parseSearchUrlState(searchParams.toString());
-    const key = [parsed.scope, q, parsed.asOf ?? '', parsed.at ?? ''].join('|');
+    const chunkTemporal = chunkTemporalFromUrlState(parsed);
+    const key = [
+      parsed.scope,
+      q,
+      chunkTemporal.createdAfter,
+      chunkTemporal.createdBefore,
+      parsed.at ?? '',
+    ].join('|');
     if (ranUrlQueryKey.current === key) return;
     if (parsed.scope === 'graph' && capsLoading) return;
     if (parsed.scope === 'graph' && caps && !caps.graph) {
@@ -219,7 +239,8 @@ export function SearchPage() {
     setQuery(q);
     setScope(parsed.scope);
     void runSearch(parsed.scope, q, {
-      asOf: parsed.asOf ?? '',
+      createdAfter: chunkTemporal.createdAfter,
+      createdBefore: chunkTemporal.createdBefore,
       at: parsed.at ?? '',
     });
   }, [id, searchParams, capsLoading, caps, runSearch]);
@@ -245,21 +266,33 @@ export function SearchPage() {
     return s.entity_placeholder;
   }
 
+  function scopeHint(activeScope: SearchScope): string {
+    if (activeScope === 'chunks') return s.scope_documents_hint;
+    if (activeScope === 'graph') return s.scope_graph_hint;
+    return s.scope_entities_hint;
+  }
+
+  function resultCategoryLabel(activeScope: SearchScope): string {
+    if (activeScope === 'chunks') return s.result_category_chunk;
+    if (activeScope === 'graph') return s.result_category_graph;
+    return s.result_category_entity;
+  }
+
   function onSubmit(event: FormEvent) {
     event.preventDefault();
     const q = query.trim();
     if (!id) return;
     if (scope !== 'entities' && !q) return;
-    syncSearchUrl({ q, scope, asOf, at });
-    void runSearch(scope, q, { asOf, at });
+    syncSearchUrl({ q, scope, createdAfter, createdBefore, at });
+    void runSearch(scope, q, { createdAfter, createdBefore, at });
   }
 
   function changeScope(next: SearchScope) {
     setScope(next);
-    syncSearchUrl({ q: query.trim(), scope: next, asOf, at });
+    syncSearchUrl({ q: query.trim(), scope: next, createdAfter, createdBefore, at });
     const q = query.trim();
     if (q || next === 'entities') {
-      void runSearch(next, q, { asOf, at });
+      void runSearch(next, q, { createdAfter, createdBefore, at });
     } else {
       setChunkResults([]);
       setGraphResults([]);
@@ -287,17 +320,50 @@ export function SearchPage() {
   );
 
   const showTemporal = scope === 'chunks' || scope === 'graph';
-  const temporalValue = scope === 'chunks' ? asOf : at;
-  const temporalInputId =
-    scope === 'chunks' ? 'workspace-search-as-of' : 'workspace-search-at';
+  const chunkFromDay = createdAfter.trim() ? calendarDateFromIso(createdAfter) : undefined;
+  const chunkToDay = createdBefore.trim() ? calendarDateFromIso(createdBefore) : undefined;
+  const graphAtDay = at.trim() ? calendarDateFromIso(at) : undefined;
+  const hasChunkTemporal = Boolean(createdAfter.trim() || createdBefore.trim());
+  const hasGraphTemporal = Boolean(at.trim());
+
+  function onSelectChunkFrom(day: Date | undefined) {
+    if (!day) return;
+    const fromIso = startOfLocalDayIso(day);
+    setCreatedAfter(fromIso);
+    const toMs = parseInstantMs(createdBefore);
+    const fromMs = parseInstantMs(fromIso);
+    if (toMs === null || fromMs === null || toMs < fromMs) {
+      setCreatedBefore(endOfLocalDayIso(day));
+    }
+  }
+
+  function onSelectChunkTo(day: Date | undefined) {
+    if (!day) return;
+    const toIso = endOfLocalDayIso(day);
+    const toMs = parseInstantMs(toIso);
+    const fromMs = parseInstantMs(createdAfter);
+    if (fromMs !== null && toMs !== null && toMs < fromMs) {
+      setCreatedAfter(startOfLocalDayIso(day));
+    }
+    setCreatedBefore(toIso);
+  }
+
+  function onSelectGraphAt(day: Date | undefined) {
+    if (!day) {
+      setAt('');
+      return;
+    }
+    setAt(endOfLocalDayIso(day));
+  }
 
   function clearTemporalFilter() {
     if (scope === 'chunks') {
-      setAsOf('');
-      syncSearchUrl({ q: query.trim(), scope, asOf: '', at });
+      setCreatedAfter('');
+      setCreatedBefore('');
+      syncSearchUrl({ q: query.trim(), scope, createdAfter: '', createdBefore: '', at });
     } else {
       setAt('');
-      syncSearchUrl({ q: query.trim(), scope, asOf, at: '' });
+      syncSearchUrl({ q: query.trim(), scope, createdAfter, createdBefore, at: '' });
     }
   }
 
@@ -305,7 +371,7 @@ export function SearchPage() {
     !id ? (
       <EmptyState title={s.no_results} />
     ) : !hasSearched && !query.trim() && scope !== 'entities' ? (
-      <EmptyState title={s.landing_title} description={s.landing_body} />
+      <EmptyState title={s.landing_title} description={scopeHint(scope)} />
     ) : scope === 'chunks' ? (
       <SearchChunkList workspaceId={id} hits={chunkResults} copy={s} emptyCell={emptyCell} />
     ) : scope === 'graph' ? (
@@ -351,125 +417,158 @@ export function SearchPage() {
         className="gap-6 [&>:last-child]:min-h-0 [&>:last-child]:flex-none"
       >
         <DataPanel data-testid="workspace-search-panel">
-          <form onSubmit={onSubmit} className="flex flex-col gap-2">
+          <form onSubmit={onSubmit}>
             <DataPanelToolbar
-              className="flex-nowrap"
+              className="flex-wrap gap-y-2"
               search={
+                <div className="flex flex-wrap items-center gap-2">
+                  <Tabs value={scope} onValueChange={(v) => changeScope(v as SearchScope)}>
+                    <TabsList id="workspace-search-scope" aria-label={s.scope_label}>
+                      <TabsTrigger value="chunks" className="px-3 text-xs">
+                        {s.scope_documents}
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="graph"
+                        disabled={!graphEnabled}
+                        className="px-3 text-xs"
+                      >
+                        {s.scope_graph}
+                      </TabsTrigger>
+                      <TabsTrigger value="entities" className="px-3 text-xs">
+                        {s.scope_entities}
+                      </TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+
+                  {scope === 'graph' && id && graphEnabled ? (
+                    <>
+                      <label className="flex cursor-pointer items-center gap-1.5 text-xs text-muted-foreground">
+                        <Checkbox
+                          id="search-include-archived-graph"
+                          checked={includeArchivedGraph}
+                          onCheckedChange={(checked) => {
+                            setIncludeArchivedGraph(checked === true);
+                          }}
+                        />
+                        {s.include_archived_graph}
+                      </label>
+                      <Button type="button" variant="outline" size="sm" asChild>
+                        <Link
+                          to={graphPath(id, { at: at.trim() || undefined })}
+                          data-testid="workspace-search-open-graph"
+                        >
+                          {s.open_graph_link}
+                        </Link>
+                      </Button>
+                      {at.trim() ? (
+                        <Button type="button" variant="outline" size="sm" asChild>
+                          <Link
+                            to={graphPath(id, { at: at.trim(), timeline: true })}
+                            data-testid="workspace-search-open-graph-timeline"
+                          >
+                            {s.open_graph_timeline_link}
+                          </Link>
+                        </Button>
+                      ) : null}
+                    </>
+                  ) : scope === 'chunks' && id && graphEnabled && createdBefore.trim() ? (
+                    <Button type="button" variant="outline" size="sm" asChild>
+                      <Link
+                        to={graphPath(id, { at: createdBefore.trim(), timeline: true })}
+                        data-testid="workspace-search-chunks-open-timeline"
+                      >
+                        {s.open_graph_timeline_link}
+                      </Link>
+                    </Button>
+                  ) : null}
+                </div>
+              }
+              actions={
                 <div
-                  className="flex min-w-0 flex-1 flex-nowrap items-center gap-2"
+                  className="flex flex-wrap items-center justify-end gap-2"
                   data-testid={showTemporal ? 'workspace-search-temporal' : undefined}
                 >
-                  <ToolbarSearch
-                    className="min-w-0 w-full max-w-md flex-1 sm:w-72 sm:flex-none"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    placeholder={placeholderForScope(scope)}
-                    disabled={loading && !hasSearched}
-                  />
-                  {showTemporal ? (
-                    <>
-                      <Label htmlFor={temporalInputId} className="sr-only">
-                        {scope === 'chunks' ? s.temporal_as_of_label : s.temporal_at_label}
+                  {scope === 'chunks' ? (
+                    <div className="flex items-center gap-1.5" role="group" aria-label={s.temporal_as_of_label}>
+                      <Label htmlFor="workspace-search-created-after" className="sr-only">
+                        {s.temporal_from_label}
                       </Label>
-                      <Input
-                        id={temporalInputId}
-                        data-testid={temporalInputId}
-                        value={temporalValue}
-                        onChange={(e) =>
-                          scope === 'chunks' ? setAsOf(e.target.value) : setAt(e.target.value)
-                        }
-                        placeholder="2030-01-01T00:00:00Z"
-                        title={s.temporal_hint}
-                        className="h-9 w-[10.5rem] shrink-0 font-mono text-xs sm:w-[13rem]"
-                        autoComplete="off"
+                      <DatePicker
+                        id="workspace-search-created-after"
+                        testId="workspace-search-created-after"
+                        value={chunkFromDay}
+                        placeholder={s.temporal_from_placeholder}
+                        className="h-9 w-[8.25rem] shrink-0 text-xs"
+                        onChange={onSelectChunkFrom}
                       />
-                      {temporalValue.trim() ? (
+                      <span className="text-xs text-muted-foreground" aria-hidden>
+                        –
+                      </span>
+                      <Label htmlFor="workspace-search-created-before" className="sr-only">
+                        {s.temporal_to_label}
+                      </Label>
+                      <DatePicker
+                        id="workspace-search-created-before"
+                        testId="workspace-search-created-before"
+                        value={chunkToDay}
+                        placeholder={s.temporal_to_placeholder}
+                        className="h-9 w-[8.25rem] shrink-0 text-xs"
+                        onChange={onSelectChunkTo}
+                      />
+                      {hasChunkTemporal ? (
                         <Button
                           type="button"
                           variant="ghost"
                           size="sm"
-                          className="hidden shrink-0 px-2 sm:inline-flex"
+                          className="h-8 shrink-0 px-2 text-xs text-muted-foreground"
                           onClick={clearTemporalFilter}
                         >
                           {s.clear_temporal}
                         </Button>
                       ) : null}
-                    </>
+                    </div>
+                  ) : scope === 'graph' ? (
+                    <div className="flex items-center gap-1.5" role="group" aria-label={s.temporal_at_label}>
+                      <Label htmlFor="workspace-search-at" className="sr-only">
+                        {s.temporal_at_label}
+                      </Label>
+                      <DatePicker
+                        id="workspace-search-at"
+                        testId="workspace-search-at"
+                        value={graphAtDay}
+                        placeholder={s.temporal_at_placeholder}
+                        className="h-9 w-[8.75rem] shrink-0 text-xs"
+                        onChange={onSelectGraphAt}
+                      />
+                      {hasGraphTemporal ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 shrink-0 px-2 text-xs text-muted-foreground"
+                          onClick={clearTemporalFilter}
+                        >
+                          {s.clear_temporal}
+                        </Button>
+                      ) : null}
+                    </div>
                   ) : null}
-                </div>
-              }
-              actions={
-                <div className="flex flex-wrap items-center gap-2">
-                  <Label htmlFor="workspace-search-scope" className="sr-only">
-                    {s.scope_label}
-                  </Label>
-                  <Select value={scope} onValueChange={(v) => changeScope(v as SearchScope)}>
-                    <SelectTrigger id="workspace-search-scope" className="w-[9.5rem]" size="sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="chunks">{s.scope_documents}</SelectItem>
-                      <SelectItem value="graph" disabled={!graphEnabled}>
-                        {s.scope_graph}
-                      </SelectItem>
-                      <SelectItem value="entities">{s.scope_entities}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Button type="submit" size="sm" className="min-w-[5.5rem]" disabled={loading}>
+
+                  <ToolbarSearch
+                    className="min-w-[14rem] flex-1 sm:w-64 sm:flex-none md:w-72"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder={placeholderForScope(scope)}
+                    disabled={loading && !hasSearched}
+                  />
+
+                  <Button type="submit" size="sm" className="min-w-[5rem]" disabled={loading}>
                     {loading ? <Spinner className="size-4" /> : null}
                     {loading ? s.searching : s.search}
                   </Button>
                 </div>
               }
             />
-
-            {showTemporal && id && graphEnabled ? (
-              <div className="flex flex-wrap items-center gap-1.5">
-                {scope === 'graph' ? (
-                  <>
-                    <div className="flex items-center gap-2">
-                      <Checkbox
-                        id="search-include-archived-graph"
-                        checked={includeArchivedGraph}
-                        onCheckedChange={(checked) => {
-                          setIncludeArchivedGraph(checked === true);
-                        }}
-                      />
-                      <Label htmlFor="search-include-archived-graph" className="text-xs font-normal">
-                        {s.include_archived_graph}
-                      </Label>
-                    </div>
-                    <Button type="button" variant="outline" size="sm" asChild>
-                      <Link
-                        to={graphPath(id, { at: at.trim() || undefined })}
-                        data-testid="workspace-search-open-graph"
-                      >
-                        {s.open_graph_link}
-                      </Link>
-                    </Button>
-                    {at.trim() ? (
-                      <Button type="button" variant="outline" size="sm" asChild>
-                        <Link
-                          to={graphPath(id, { at: at.trim(), timeline: true })}
-                          data-testid="workspace-search-open-graph-timeline"
-                        >
-                          {s.open_graph_timeline_link}
-                        </Link>
-                      </Button>
-                    ) : null}
-                  </>
-                ) : asOf.trim() ? (
-                  <Button type="button" variant="outline" size="sm" asChild>
-                    <Link
-                      to={graphPath(id, { at: asOf.trim(), timeline: true })}
-                      data-testid="workspace-search-chunks-open-timeline"
-                    >
-                      {s.open_graph_timeline_link}
-                    </Link>
-                  </Button>
-                ) : null}
-              </div>
-            ) : null}
           </form>
 
           <DataPanelBody padded={false} className="mt-2">
@@ -482,9 +581,18 @@ export function SearchPage() {
               </div>
             ) : (
               <>
-                {hasSearched && !error ? (
-                  <div className="flex items-center justify-between gap-2 border-b border-border/60 px-4 py-2.5">
-                    <span className="text-xs font-medium text-foreground">{s.results_title}</span>
+                {(hasSearched || (scope === 'entities' && entityResults.length > 0)) && !error ? (
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 px-4 py-2.5">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-xs font-medium text-foreground">
+                        {resultCategoryLabel(scope)}
+                      </span>
+                      {scope === 'entities' && !hasSearched && !query.trim() ? (
+                        <span className="text-xs text-muted-foreground">
+                          · {s.entity_preview_hint}
+                        </span>
+                      ) : null}
+                    </div>
                     <span className="text-xs tabular-nums text-muted-foreground">{countLabel}</span>
                   </div>
                 ) : null}

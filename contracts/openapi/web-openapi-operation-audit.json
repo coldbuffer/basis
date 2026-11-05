@@ -243,180 +243,6 @@
     {
       "file": "web/src/lib/openapi/schema-workspaces.d.ts",
       "kind": "literal",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/catalog",
-      "operationId": "list_connector_catalog_api_v1_workspaces__workspace_id__connectors_catalog_get"
-    },
-    {
-      "file": "web/src/lib/openapi/schema-workspaces.d.ts",
-      "kind": "dynamic",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/catalog/{service}",
-      "operationId": "get_connector_manifest_route_api_v1_workspaces__workspace_id__connectors_catalog__service__get"
-    },
-    {
-      "file": "web/src/lib/openapi/schema-workspaces.d.ts",
-      "kind": "literal",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/connections",
-      "operationId": "list_connector_connections_api_v1_workspaces__workspace_id__connectors_connections_get"
-    },
-    {
-      "file": "web/src/lib/openapi/schema-workspaces.d.ts",
-      "kind": "dynamic",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/connections/{service}",
-      "operationId": "upsert_connector_connection_api_v1_workspaces__workspace_id__connectors_connections__service__put"
-    },
-    {
-      "file": "web/src/lib/openapi/schema-workspaces.d.ts",
-      "kind": "dynamic",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/connections/{service}/check",
-      "operationId": "check_connector_connection_api_v1_workspaces__workspace_id__connectors_connections__service__check_post"
-    },
-    {
-      "file": "web/src/lib/openapi/schema-workspaces.d.ts",
-      "kind": "dynamic",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/connections/{service}/discover",
-      "operationId": "discover_connector_schema_api_v1_workspaces__workspace_id__connectors_connections__service__discover_get"
-    },
-    {
-      "file": "web/src/lib/openapi/schema-workspaces.d.ts",
-      "kind": "dynamic",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/connections/{service}/invoke-primitive",
-      "operationId": "invoke_connector_primitive_api_v1_workspaces__workspace_id__connectors_connections__service__invoke_primitive_post"
-    },
-    {
-      "file": "web/src/lib/openapi/schema-workspaces.d.ts",
-      "kind": "literal",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/embed/connections",
-      "operationId": "embed_list_connections_api_v1_workspaces__workspace_id__connectors_embed_connections_get"
-    },
-    {
-      "file": "web/src/lib/openapi/schema-workspaces.d.ts",
-      "kind": "dynamic",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/embed/connections/{service}",
-      "operationId": "embed_upsert_connection_api_v1_workspaces__workspace_id__connectors_embed_connections__service__put"
-    },
-    {
-      "file": "web/src/lib/openapi/schema-workspaces.d.ts",
-      "kind": "dynamic",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/embed/connections/{service}/check",
-      "operationId": "embed_check_connection_api_v1_workspaces__workspace_id__connectors_embed_connections__service__check_post"
-    },
-    {
-      "file": "web/src/lib/openapi/schema-workspaces.d.ts",
-      "kind": "dynamic",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/embed/oauth/{service}/authorize-url",
-      "operationId": "embed_oauth_authorize_url_api_v1_workspaces__workspace_id__connectors_embed_oauth__service__authorize_url_post"
-    },
-    {
-      "file": "web/src/lib/openapi/schema-workspaces.d.ts",
-      "kind": "dynamic",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/embed/oauth/{service}/exchange",
-      "operationId": "embed_oauth_exchange_api_v1_workspaces__workspace_id__connectors_embed_oauth__service__exchange_post"
-    },
-    {
-      "file": "web/src/lib/openapi/schema-workspaces.d.ts",
-      "kind": "literal",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/embed/providers",
-      "operationId": "embed_list_providers_api_v1_workspaces__workspace_id__connectors_embed_providers_get"
-    },
-    {
-      "file": "web/src/lib/openapi/schema-workspaces.d.ts",
-      "kind": "dynamic",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/oauth-configs/{service}",
-      "operationId": "get_connector_oauth_config_api_v1_workspaces__workspace_id__connectors_oauth_configs__service__get"
-    },
-    {
-      "file": "web/src/lib/openapi/schema-workspaces.d.ts",
-      "kind": "dynamic",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/oauth/{service}/authorize-url",
-      "operationId": "build_connector_oauth_authorize_url_api_v1_workspaces__workspace_id__connectors_oauth__service__authorize_url_post"
-    },
-    {
-      "file": "web/src/lib/openapi/schema-workspaces.d.ts",
-      "kind": "dynamic",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/oauth/{service}/exchange",
-      "operationId": "exchange_connector_oauth_code_api_v1_workspaces__workspace_id__connectors_oauth__service__exchange_post"
-    },
-    {
-      "file": "web/src/lib/openapi/schema-workspaces.d.ts",
-      "kind": "literal",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/outbox",
-      "operationId": "list_sync_outbox_api_v1_workspaces__workspace_id__connectors_outbox_get"
-    },
-    {
-      "file": "web/src/lib/openapi/schema-workspaces.d.ts",
-      "kind": "literal",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/outbox/propose",
-      "operationId": "propose_entity_writeback_api_v1_workspaces__workspace_id__connectors_outbox_propose_post"
-    },
-    {
-      "file": "web/src/lib/openapi/schema-workspaces.d.ts",
-      "kind": "literal",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/policy",
-      "operationId": "get_connector_policy_api_v1_workspaces__workspace_id__connectors_policy_get"
-    },
-    {
-      "file": "web/src/lib/openapi/schema-workspaces.d.ts",
-      "kind": "dynamic",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/policy/providers/{service}",
-      "operationId": "delete_workspace_connector_provider_api_v1_workspaces__workspace_id__connectors_policy_providers__service__delete"
-    },
-    {
-      "file": "web/src/lib/openapi/schema-workspaces.d.ts",
-      "kind": "dynamic",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/policy/providers/{service}/disable",
-      "operationId": "disable_workspace_connector_provider_api_v1_workspaces__workspace_id__connectors_policy_providers__service__disable_post"
-    },
-    {
-      "file": "web/src/lib/openapi/schema-workspaces.d.ts",
-      "kind": "dynamic",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/policy/providers/{service}/enable",
-      "operationId": "enable_workspace_connector_provider_api_v1_workspaces__workspace_id__connectors_policy_providers__service__enable_post"
-    },
-    {
-      "file": "web/src/lib/openapi/schema-workspaces.d.ts",
-      "kind": "literal",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/runs",
-      "operationId": "list_connector_runs_api_v1_workspaces__workspace_id__connectors_runs_get"
-    },
-    {
-      "file": "web/src/lib/openapi/schema-workspaces.d.ts",
-      "kind": "literal",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/table-mappings",
-      "operationId": "list_table_mappings_api_v1_workspaces__workspace_id__connectors_table_mappings_get"
-    },
-    {
-      "file": "web/src/lib/openapi/schema-workspaces.d.ts",
-      "kind": "literal",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/table-mappings/batch-create",
-      "operationId": "batch_create_table_mappings_api_v1_workspaces__workspace_id__connectors_table_mappings_batch_create_post"
-    },
-    {
-      "file": "web/src/lib/openapi/schema-workspaces.d.ts",
-      "kind": "literal",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/table-mappings/suggest",
-      "operationId": "suggest_table_mappings_api_v1_workspaces__workspace_id__connectors_table_mappings_suggest_post"
-    },
-    {
-      "file": "web/src/lib/openapi/schema-workspaces.d.ts",
-      "kind": "dynamic",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/table-mappings/{mapping_id}",
-      "operationId": "get_table_mapping_api_v1_workspaces__workspace_id__connectors_table_mappings__mapping_id__get"
-    },
-    {
-      "file": "web/src/lib/openapi/schema-workspaces.d.ts",
-      "kind": "dynamic",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/table-mappings/{mapping_id}/sync",
-      "operationId": "sync_table_mapping_api_v1_workspaces__workspace_id__connectors_table_mappings__mapping_id__sync_post"
-    },
-    {
-      "file": "web/src/lib/openapi/schema-workspaces.d.ts",
-      "kind": "literal",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/tools/execute",
-      "operationId": "execute_connector_tool_api_v1_workspaces__workspace_id__connectors_tools_execute_post"
-    },
-    {
-      "file": "web/src/lib/openapi/schema-workspaces.d.ts",
-      "kind": "literal",
       "path": "/api/v1/workspaces/{workspace_id}/decisions",
       "operationId": "list_decisions_api_v1_workspaces__workspace_id__decisions_get"
     },
@@ -1149,6 +975,36 @@
     {
       "file": "web/src/lib/openapi/schema-workspaces.d.ts",
       "kind": "literal",
+      "path": "/api/v1/workspaces/{workspace_id}/sql-catalog/connection-test",
+      "operationId": "test_sql_catalog_connection_api_v1_workspaces__workspace_id__sql_catalog_connection_test_post"
+    },
+    {
+      "file": "web/src/lib/openapi/schema-workspaces.d.ts",
+      "kind": "literal",
+      "path": "/api/v1/workspaces/{workspace_id}/sql-catalog/sources",
+      "operationId": "list_sql_catalog_sources_api_v1_workspaces__workspace_id__sql_catalog_sources_get"
+    },
+    {
+      "file": "web/src/lib/openapi/schema-workspaces.d.ts",
+      "kind": "dynamic",
+      "path": "/api/v1/workspaces/{workspace_id}/sql-catalog/sources/{source_id}",
+      "operationId": "upsert_sql_catalog_source_api_v1_workspaces__workspace_id__sql_catalog_sources__source_id__put"
+    },
+    {
+      "file": "web/src/lib/openapi/schema-workspaces.d.ts",
+      "kind": "dynamic",
+      "path": "/api/v1/workspaces/{workspace_id}/sql-catalog/sources/{source_id}/ontology",
+      "operationId": "apply_sql_catalog_ontology_api_v1_workspaces__workspace_id__sql_catalog_sources__source_id__ontology_post"
+    },
+    {
+      "file": "web/src/lib/openapi/schema-workspaces.d.ts",
+      "kind": "dynamic",
+      "path": "/api/v1/workspaces/{workspace_id}/sql-catalog/sources/{source_id}/snapshot",
+      "operationId": "snapshot_sql_catalog_source_api_v1_workspaces__workspace_id__sql_catalog_sources__source_id__snapshot_post"
+    },
+    {
+      "file": "web/src/lib/openapi/schema-workspaces.d.ts",
+      "kind": "literal",
       "path": "/api/v1/workspaces/{workspace_id}/temporal/bounds",
       "operationId": "temporal_bounds_api_v1_workspaces__workspace_id__temporal_bounds_get"
     },
@@ -1443,36 +1299,6 @@
     {
       "file": "web/src/lib/openapi/schema.d.ts",
       "kind": "literal",
-      "path": "/api/v1/settings/connectors",
-      "operationId": "get_connector_allowlist_settings_api_v1_settings_connectors_get"
-    },
-    {
-      "file": "web/src/lib/openapi/schema.d.ts",
-      "kind": "literal",
-      "path": "/api/v1/settings/connectors/catalog",
-      "operationId": "list_platform_connector_catalog_api_v1_settings_connectors_catalog_get"
-    },
-    {
-      "file": "web/src/lib/openapi/schema.d.ts",
-      "kind": "literal",
-      "path": "/api/v1/settings/connectors/catalog/stats",
-      "operationId": "platform_connector_catalog_stats_api_v1_settings_connectors_catalog_stats_get"
-    },
-    {
-      "file": "web/src/lib/openapi/schema.d.ts",
-      "kind": "literal",
-      "path": "/api/v1/settings/connectors/catalog/{service}",
-      "operationId": "get_platform_connector_manifest_api_v1_settings_connectors_catalog__service__get"
-    },
-    {
-      "file": "web/src/lib/openapi/schema.d.ts",
-      "kind": "literal",
-      "path": "/api/v1/settings/connectors/validate",
-      "operationId": "validate_connector_allowlist_settings_api_v1_settings_connectors_validate_post"
-    },
-    {
-      "file": "web/src/lib/openapi/schema.d.ts",
-      "kind": "literal",
       "path": "/api/v1/users",
       "operationId": "list_active_users_api_v1_users_get"
     },
@@ -1529,180 +1355,6 @@
       "kind": "literal",
       "path": "/api/v1/workspaces/{workspace_id}/capabilities",
       "operationId": "get_capabilities_api_v1_workspaces__workspace_id__capabilities_get"
-    },
-    {
-      "file": "web/src/lib/openapi/schema.d.ts",
-      "kind": "literal",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/catalog",
-      "operationId": "list_connector_catalog_api_v1_workspaces__workspace_id__connectors_catalog_get"
-    },
-    {
-      "file": "web/src/lib/openapi/schema.d.ts",
-      "kind": "dynamic",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/catalog/{service}",
-      "operationId": "get_connector_manifest_route_api_v1_workspaces__workspace_id__connectors_catalog__service__get"
-    },
-    {
-      "file": "web/src/lib/openapi/schema.d.ts",
-      "kind": "literal",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/connections",
-      "operationId": "list_connector_connections_api_v1_workspaces__workspace_id__connectors_connections_get"
-    },
-    {
-      "file": "web/src/lib/openapi/schema.d.ts",
-      "kind": "dynamic",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/connections/{service}",
-      "operationId": "upsert_connector_connection_api_v1_workspaces__workspace_id__connectors_connections__service__put"
-    },
-    {
-      "file": "web/src/lib/openapi/schema.d.ts",
-      "kind": "dynamic",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/connections/{service}/check",
-      "operationId": "check_connector_connection_api_v1_workspaces__workspace_id__connectors_connections__service__check_post"
-    },
-    {
-      "file": "web/src/lib/openapi/schema.d.ts",
-      "kind": "dynamic",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/connections/{service}/discover",
-      "operationId": "discover_connector_schema_api_v1_workspaces__workspace_id__connectors_connections__service__discover_get"
-    },
-    {
-      "file": "web/src/lib/openapi/schema.d.ts",
-      "kind": "dynamic",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/connections/{service}/invoke-primitive",
-      "operationId": "invoke_connector_primitive_api_v1_workspaces__workspace_id__connectors_connections__service__invoke_primitive_post"
-    },
-    {
-      "file": "web/src/lib/openapi/schema.d.ts",
-      "kind": "literal",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/embed/connections",
-      "operationId": "embed_list_connections_api_v1_workspaces__workspace_id__connectors_embed_connections_get"
-    },
-    {
-      "file": "web/src/lib/openapi/schema.d.ts",
-      "kind": "dynamic",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/embed/connections/{service}",
-      "operationId": "embed_upsert_connection_api_v1_workspaces__workspace_id__connectors_embed_connections__service__put"
-    },
-    {
-      "file": "web/src/lib/openapi/schema.d.ts",
-      "kind": "dynamic",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/embed/connections/{service}/check",
-      "operationId": "embed_check_connection_api_v1_workspaces__workspace_id__connectors_embed_connections__service__check_post"
-    },
-    {
-      "file": "web/src/lib/openapi/schema.d.ts",
-      "kind": "dynamic",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/embed/oauth/{service}/authorize-url",
-      "operationId": "embed_oauth_authorize_url_api_v1_workspaces__workspace_id__connectors_embed_oauth__service__authorize_url_post"
-    },
-    {
-      "file": "web/src/lib/openapi/schema.d.ts",
-      "kind": "dynamic",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/embed/oauth/{service}/exchange",
-      "operationId": "embed_oauth_exchange_api_v1_workspaces__workspace_id__connectors_embed_oauth__service__exchange_post"
-    },
-    {
-      "file": "web/src/lib/openapi/schema.d.ts",
-      "kind": "literal",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/embed/providers",
-      "operationId": "embed_list_providers_api_v1_workspaces__workspace_id__connectors_embed_providers_get"
-    },
-    {
-      "file": "web/src/lib/openapi/schema.d.ts",
-      "kind": "dynamic",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/oauth-configs/{service}",
-      "operationId": "get_connector_oauth_config_api_v1_workspaces__workspace_id__connectors_oauth_configs__service__get"
-    },
-    {
-      "file": "web/src/lib/openapi/schema.d.ts",
-      "kind": "dynamic",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/oauth/{service}/authorize-url",
-      "operationId": "build_connector_oauth_authorize_url_api_v1_workspaces__workspace_id__connectors_oauth__service__authorize_url_post"
-    },
-    {
-      "file": "web/src/lib/openapi/schema.d.ts",
-      "kind": "dynamic",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/oauth/{service}/exchange",
-      "operationId": "exchange_connector_oauth_code_api_v1_workspaces__workspace_id__connectors_oauth__service__exchange_post"
-    },
-    {
-      "file": "web/src/lib/openapi/schema.d.ts",
-      "kind": "literal",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/outbox",
-      "operationId": "list_sync_outbox_api_v1_workspaces__workspace_id__connectors_outbox_get"
-    },
-    {
-      "file": "web/src/lib/openapi/schema.d.ts",
-      "kind": "literal",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/outbox/propose",
-      "operationId": "propose_entity_writeback_api_v1_workspaces__workspace_id__connectors_outbox_propose_post"
-    },
-    {
-      "file": "web/src/lib/openapi/schema.d.ts",
-      "kind": "literal",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/policy",
-      "operationId": "get_connector_policy_api_v1_workspaces__workspace_id__connectors_policy_get"
-    },
-    {
-      "file": "web/src/lib/openapi/schema.d.ts",
-      "kind": "dynamic",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/policy/providers/{service}",
-      "operationId": "delete_workspace_connector_provider_api_v1_workspaces__workspace_id__connectors_policy_providers__service__delete"
-    },
-    {
-      "file": "web/src/lib/openapi/schema.d.ts",
-      "kind": "dynamic",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/policy/providers/{service}/disable",
-      "operationId": "disable_workspace_connector_provider_api_v1_workspaces__workspace_id__connectors_policy_providers__service__disable_post"
-    },
-    {
-      "file": "web/src/lib/openapi/schema.d.ts",
-      "kind": "dynamic",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/policy/providers/{service}/enable",
-      "operationId": "enable_workspace_connector_provider_api_v1_workspaces__workspace_id__connectors_policy_providers__service__enable_post"
-    },
-    {
-      "file": "web/src/lib/openapi/schema.d.ts",
-      "kind": "literal",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/runs",
-      "operationId": "list_connector_runs_api_v1_workspaces__workspace_id__connectors_runs_get"
-    },
-    {
-      "file": "web/src/lib/openapi/schema.d.ts",
-      "kind": "literal",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/table-mappings",
-      "operationId": "list_table_mappings_api_v1_workspaces__workspace_id__connectors_table_mappings_get"
-    },
-    {
-      "file": "web/src/lib/openapi/schema.d.ts",
-      "kind": "literal",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/table-mappings/batch-create",
-      "operationId": "batch_create_table_mappings_api_v1_workspaces__workspace_id__connectors_table_mappings_batch_create_post"
-    },
-    {
-      "file": "web/src/lib/openapi/schema.d.ts",
-      "kind": "literal",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/table-mappings/suggest",
-      "operationId": "suggest_table_mappings_api_v1_workspaces__workspace_id__connectors_table_mappings_suggest_post"
-    },
-    {
-      "file": "web/src/lib/openapi/schema.d.ts",
-      "kind": "dynamic",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/table-mappings/{mapping_id}",
-      "operationId": "get_table_mapping_api_v1_workspaces__workspace_id__connectors_table_mappings__mapping_id__get"
-    },
-    {
-      "file": "web/src/lib/openapi/schema.d.ts",
-      "kind": "dynamic",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/table-mappings/{mapping_id}/sync",
-      "operationId": "sync_table_mapping_api_v1_workspaces__workspace_id__connectors_table_mappings__mapping_id__sync_post"
-    },
-    {
-      "file": "web/src/lib/openapi/schema.d.ts",
-      "kind": "literal",
-      "path": "/api/v1/workspaces/{workspace_id}/connectors/tools/execute",
-      "operationId": "execute_connector_tool_api_v1_workspaces__workspace_id__connectors_tools_execute_post"
     },
     {
       "file": "web/src/lib/openapi/schema.d.ts",
@@ -2451,6 +2103,36 @@
     {
       "file": "web/src/lib/openapi/schema.d.ts",
       "kind": "literal",
+      "path": "/api/v1/workspaces/{workspace_id}/sql-catalog/connection-test",
+      "operationId": "test_sql_catalog_connection_api_v1_workspaces__workspace_id__sql_catalog_connection_test_post"
+    },
+    {
+      "file": "web/src/lib/openapi/schema.d.ts",
+      "kind": "literal",
+      "path": "/api/v1/workspaces/{workspace_id}/sql-catalog/sources",
+      "operationId": "list_sql_catalog_sources_api_v1_workspaces__workspace_id__sql_catalog_sources_get"
+    },
+    {
+      "file": "web/src/lib/openapi/schema.d.ts",
+      "kind": "dynamic",
+      "path": "/api/v1/workspaces/{workspace_id}/sql-catalog/sources/{source_id}",
+      "operationId": "upsert_sql_catalog_source_api_v1_workspaces__workspace_id__sql_catalog_sources__source_id__put"
+    },
+    {
+      "file": "web/src/lib/openapi/schema.d.ts",
+      "kind": "dynamic",
+      "path": "/api/v1/workspaces/{workspace_id}/sql-catalog/sources/{source_id}/ontology",
+      "operationId": "apply_sql_catalog_ontology_api_v1_workspaces__workspace_id__sql_catalog_sources__source_id__ontology_post"
+    },
+    {
+      "file": "web/src/lib/openapi/schema.d.ts",
+      "kind": "dynamic",
+      "path": "/api/v1/workspaces/{workspace_id}/sql-catalog/sources/{source_id}/snapshot",
+      "operationId": "snapshot_sql_catalog_source_api_v1_workspaces__workspace_id__sql_catalog_sources__source_id__snapshot_post"
+    },
+    {
+      "file": "web/src/lib/openapi/schema.d.ts",
+      "kind": "literal",
       "path": "/api/v1/workspaces/{workspace_id}/temporal/bounds",
       "operationId": "temporal_bounds_api_v1_workspaces__workspace_id__temporal_bounds_get"
     },
@@ -2663,60 +2345,6 @@
       "kind": "literal",
       "path": "/api/v1/audit",
       "operationId": "list_audit_api_v1_audit_get"
-    },
-    {
-      "file": "web/src/modules/admin/connectors/components/platform-connector-admin.tsx",
-      "kind": "literal",
-      "path": "/api/v1/settings/connectors",
-      "operationId": "get_connector_allowlist_settings_api_v1_settings_connectors_get"
-    },
-    {
-      "file": "web/src/modules/admin/connectors/components/platform-connector-admin.tsx",
-      "kind": "literal",
-      "path": "/api/v1/settings/connectors/catalog",
-      "operationId": "list_platform_connector_catalog_api_v1_settings_connectors_catalog_get"
-    },
-    {
-      "file": "web/src/modules/admin/connectors/components/platform-connector-admin.tsx",
-      "kind": "literal",
-      "path": "/api/v1/settings/connectors/catalog/stats",
-      "operationId": "platform_connector_catalog_stats_api_v1_settings_connectors_catalog_stats_get"
-    },
-    {
-      "file": "web/src/modules/admin/connectors/components/platform-connector-admin.tsx",
-      "kind": "literal",
-      "path": "/api/v1/settings/connectors/catalog",
-      "operationId": "list_platform_connector_catalog_api_v1_settings_connectors_catalog_get"
-    },
-    {
-      "file": "web/src/modules/admin/connectors/components/platform-connector-admin.tsx",
-      "kind": "literal",
-      "path": "/api/v1/settings/connectors/validate",
-      "operationId": "validate_connector_allowlist_settings_api_v1_settings_connectors_validate_post"
-    },
-    {
-      "file": "web/src/modules/admin/connectors/components/platform-connector-admin.tsx",
-      "kind": "literal",
-      "path": "/api/v1/settings/connectors/catalog",
-      "operationId": "list_platform_connector_catalog_api_v1_settings_connectors_catalog_get"
-    },
-    {
-      "file": "web/src/modules/admin/connectors/components/platform-connector-admin.tsx",
-      "kind": "literal",
-      "path": "/api/v1/settings/connectors/catalog",
-      "operationId": "list_platform_connector_catalog_api_v1_settings_connectors_catalog_get"
-    },
-    {
-      "file": "web/src/modules/admin/connectors/components/platform-connector-admin.tsx",
-      "kind": "literal",
-      "path": "/api/v1/settings/connectors",
-      "operationId": "get_connector_allowlist_settings_api_v1_settings_connectors_get"
-    },
-    {
-      "file": "web/src/modules/admin/connectors/components/platform-connector-manifest-dialog.tsx",
-      "kind": "literal",
-      "path": "/api/v1/settings/connectors/catalog/{param}",
-      "operationId": "get_platform_connector_manifest_api_v1_settings_connectors_catalog__service__get"
     },
     {
       "file": "web/src/modules/admin/models/components/model-catalog-tab.tsx",

@@ -29,6 +29,7 @@ export function DatePicker({
   className,
   align = "start",
   id,
+  testId,
 }: {
   value?: Date;
   onChange?: (date: Date | undefined) => void;
@@ -43,6 +44,7 @@ export function DatePicker({
   className?: string;
   align?: React.ComponentProps<typeof PopoverContent>["align"];
   id?: string;
+  testId?: string;
 }) {
   const { locale, t } = useI18n();
   const loc = locale as Locale;
@@ -55,6 +57,7 @@ export function DatePicker({
         <Button
           type="button"
           id={id}
+          data-testid={testId}
           variant="outline"
           disabled={disabled}
           data-empty={!value}

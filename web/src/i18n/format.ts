@@ -46,12 +46,26 @@ export function formatLocalePercent(
   return `${formatLocaleFixedDecimals(locale, ratio * 100, fractionDigits)}%`;
 }
 
+const ISO_WITHOUT_TZ_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?$/;
+
+function parseDateValue(value: Date | string | number): Date {
+  if (value instanceof Date) return value;
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (ISO_WITHOUT_TZ_RE.test(trimmed)) {
+      return new Date(`${trimmed}Z`);
+    }
+    return new Date(trimmed);
+  }
+  return new Date(value);
+}
+
 export function formatLocaleDateTime(
   locale: Locale,
   value: Date | string | number,
   options?: Intl.DateTimeFormatOptions,
 ): string {
-  const date = value instanceof Date ? value : new Date(value);
+  const date = parseDateValue(value);
   if (Number.isNaN(date.getTime())) {
     return '';
   }

@@ -23,5 +23,7 @@ test('graph toolbar links to graph diff workspace', async ({ page }) => {
   await diffLink.click();
   await expect(page).toHaveURL(/graph-diff/);
   await expect(page.locator('.basis-graph-diff-page')).toBeVisible({ timeout: 60_000 });
-  await expect(page.getByTestId('graph-diff-temporal-hint')).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByRole('button', { name: /^Compare$|^对比$/ })).toBeVisible({
+    timeout: 30_000,
+  });
 });
