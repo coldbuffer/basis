@@ -10,7 +10,7 @@ from basis.services.kernel.schema_base import ExtraAllowedModel
 
 
 class ListProcessingJobsInput(ExtraAllowedModel):
-    status: Literal["queued", "running", "succeeded", "failed", "cancelled"] | None = None
+    status: Literal["queued", "running", "succeeded", "failed", "cancelled", "paused"] | None = None
     limit: int = Field(default=100, ge=1, le=200)
 
 

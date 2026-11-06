@@ -10,7 +10,8 @@ import type { Locale } from '@/i18n/locale.js';
 import { messageForApiErrorCode } from '@/lib/errors/api-error-message.js';
 import {
   type ProcessingJob,
-  jobIsActive,
+  ingestCheckpoint,
+  jobInActiveFilter,
   processingJobStatusLabel,
   statusIsProcessing,
 } from '@/modules/workspace/processing/lib/processing-job.js';
@@ -28,6 +29,7 @@ function jobStatusBadgeProps(status: string): {
 } {
   if (status === 'failed') return { variant: 'destructive' };
   if (status === 'succeeded') return { variant: 'outline', className: 'badge-status-success' };
+  if (status === 'paused') return { variant: 'outline' };
   if (statusIsProcessing(status)) {
     return { variant: 'outline', className: 'badge-status-warning' };
   }
@@ -41,7 +43,7 @@ export function filterProcessingJobs(
 ): ProcessingJob[] {
   const q = query.trim().toLowerCase();
   return jobs.filter((job) => {
-    if (filter === 'active' && !jobIsActive(job.status)) return false;
+    if (filter === 'active' && !jobInActiveFilter(job.status)) return false;
     if (filter === 'failed' && job.status !== 'failed') return false;
     if (filter === 'succeeded' && job.status !== 'succeeded') return false;
     if (!q) return true;
@@ -63,6 +65,8 @@ export function ProcessingJobsList({
   search,
   filter,
   onRetry,
+  onPause,
+  onResume,
   onCopyLink,
 }: {
   workspaceId: string;
@@ -74,6 +78,8 @@ export function ProcessingJobsList({
   search: string;
   filter: ProcessingJobFilter;
   onRetry: (job: ProcessingJob) => void;
+  onPause: (job: ProcessingJob) => void;
+  onResume: (job: ProcessingJob) => void;
   onCopyLink: (jobId: string) => void;
 }) {
   const { t, locale } = useI18n();
@@ -121,13 +127,24 @@ export function ProcessingJobsList({
         width: '8.5rem',
         render: (job) => {
           const badge = jobStatusBadgeProps(job.status);
+          const checkpoint = ingestCheckpoint(job);
           return (
-            <Badge variant={badge.variant} className={cn('gap-1 font-normal', badge.className)}>
-              {statusIsProcessing(job.status) ? (
-                <Spinner className="size-3 shrink-0" />
+            <div>
+              <Badge variant={badge.variant} className={cn('gap-1 font-normal', badge.className)}>
+                {statusIsProcessing(job.status) ? (
+                  <Spinner className="size-3 shrink-0" />
+                ) : null}
+                {processingJobStatusLabel(job.status, k.job_status, emptyCell)}
+              </Badge>
+              {checkpoint ? (
+                <p className="mt-1 text-[10px] tabular-nums text-muted-foreground">
+                  {fmt(p.checkpoint_progress, {
+                    done: formatLocaleNumber(locale as Locale, checkpoint.done),
+                    total: formatLocaleNumber(locale as Locale, checkpoint.total),
+                  })}
+                </p>
               ) : null}
-              {processingJobStatusLabel(job.status, k.job_status, emptyCell)}
-            </Badge>
+            </div>
           );
         },
       },
@@ -155,10 +172,39 @@ export function ProcessingJobsList({
         key: 'actions',
         header: p.col_actions,
         align: 'right',
-        width: '9rem',
-        hideBelow: 'md',
+        width: '11rem',
         render: (job) => (
           <div className="flex justify-end gap-1">
+            {canEdit && (job.status === 'queued' || job.status === 'running') ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={busyVersionId === job.version_id}
+                data-testid={`processing-job-pause-${job.id}`}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onPause(job);
+                }}
+              >
+                {k.action_pause}
+              </Button>
+            ) : null}
+            {canEdit && job.status === 'paused' ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={busyVersionId === job.version_id}
+                data-testid={`processing-job-resume-${job.id}`}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onResume(job);
+                }}
+              >
+                {k.action_resume}
+              </Button>
+            ) : null}
             {canEdit && job.status === 'failed' ? (
               <Button
                 type="button"
@@ -184,11 +230,16 @@ export function ProcessingJobsList({
       emptyCell,
       k.copy_job_link,
       k.history_attempt,
+      k.action_pause,
+      k.action_resume,
       k.history_retry,
       k.job_status,
       locale,
       onCopyLink,
+      onPause,
+      onResume,
       onRetry,
+      p.checkpoint_progress,
       p.col_actions,
       p.col_attempt,
       p.col_created,
@@ -258,6 +309,30 @@ export function ProcessingJobsList({
                   >
                     {p.view_related_alerts}
                   </Link>
+                </Button>
+              ) : null}
+              {canEdit && (expandedJob.status === 'queued' || expandedJob.status === 'running') ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={busyVersionId === expandedJob.version_id}
+                  data-testid={`processing-job-detail-pause-${expandedJob.id}`}
+                  onClick={() => onPause(expandedJob)}
+                >
+                  {k.action_pause}
+                </Button>
+              ) : null}
+              {canEdit && expandedJob.status === 'paused' ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={busyVersionId === expandedJob.version_id}
+                  data-testid={`processing-job-detail-resume-${expandedJob.id}`}
+                  onClick={() => onResume(expandedJob)}
+                >
+                  {k.action_resume}
                 </Button>
               ) : null}
               {canEdit && expandedJob.status === 'failed' ? (

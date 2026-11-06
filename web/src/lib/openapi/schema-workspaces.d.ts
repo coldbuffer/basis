@@ -2579,6 +2579,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{workspace_id}/processing/jobs/{job_id}/pause": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Pause Processing Job
+         * @description Pause Processing Job. Stop a queued ingest immediately, or a running ingest after the current chunk. Requires workspace membership (session) or workspace API token with read/write scope. All paths are scoped to `{workspace_id}`.
+         */
+        post: operations["pause_processing_job_api_v1_workspaces__workspace_id__processing_jobs__job_id__pause_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{workspace_id}/processing/jobs/{job_id}/resume": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Resume Processing Job
+         * @description Resume Processing Job. Continue a paused ingest from the last finished chunk. Requires workspace membership (session) or workspace API token with read/write scope. All paths are scoped to `{workspace_id}`.
+         */
+        post: operations["resume_processing_job_api_v1_workspaces__workspace_id__processing_jobs__job_id__resume_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{workspace_id}/processing/jobs/{job_id}/retry": {
         parameters: {
             query?: never;
@@ -4369,6 +4409,14 @@ export interface components {
              * @description For `entity_cluster` approve: ledger entity id to keep as primary (F-GOV-04).
              */
             primary_id?: string | null;
+        };
+        /** ResumeProcessingRequest */
+        ResumeProcessingRequest: {
+            /**
+             * Wait
+             * @default false
+             */
+            wait: boolean;
         };
         /** RetryProcessingRequest */
         RetryProcessingRequest: {
@@ -9521,6 +9569,80 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    pause_processing_job_api_v1_workspaces__workspace_id__processing_jobs__job_id__pause_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                workspace_id: string;
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    resume_processing_job_api_v1_workspaces__workspace_id__processing_jobs__job_id__resume_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                workspace_id: string;
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResumeProcessingRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */

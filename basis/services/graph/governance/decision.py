@@ -87,6 +87,42 @@ def maybe_emit_governance_tripped_on_review_approve(
     )
 
 
+def _decision_metadata(detail: dict[str, Any]) -> dict[str, str]:
+    """Scalar metadata accepted by ContextGraph.record_decision (≤1000 chars)."""
+    metadata: dict[str, str] = {}
+    for key, value in detail.items():
+        key_text = str(key).strip()
+        if not key_text or len(key_text) > 100:
+            continue
+        if isinstance(value, str):
+            text = value.strip()
+        else:
+            text = json.dumps(value, default=str, ensure_ascii=False)
+        if not text:
+            continue
+        metadata[key_text] = text[:1000]
+    return metadata
+
+
+def _decision_entity_ids(detail: dict[str, Any]) -> list[str]:
+    """Entity ids as strings. ContextGraph rejects ``{id, role}`` dicts."""
+    raw_ids: list[str] = []
+    primary_id = detail.get("primary_id")
+    if isinstance(primary_id, str) and primary_id.strip():
+        raw_ids.append(primary_id.strip())
+    duplicate_ids = detail.get("duplicate_ids")
+    if isinstance(duplicate_ids, list):
+        for duplicate_id in duplicate_ids:
+            if isinstance(duplicate_id, str) and duplicate_id.strip():
+                raw_ids.append(duplicate_id.strip())
+    entities: list[str] = []
+    for entity_id in raw_ids:
+        if len(entity_id) > 200 or entity_id in entities:
+            continue
+        entities.append(entity_id)
+    return entities
+
+
 def _try_record_governance_decision(
     workspace_id: str,
     *,
@@ -108,37 +144,31 @@ def _try_record_governance_decision(
         if not hasattr(graph, "record_decision"):
             return None
         review_item_id = detail.get("review_item_id") or detail.get("item_id")
-        metadata = {**detail}
+        metadata = _decision_metadata(detail)
         if review_item_id:
-            metadata["review_item_id"] = review_item_id
+            metadata["review_item_id"] = str(review_item_id)[:1000]
         if "alert_kind" not in metadata and category == "governance":
-            metadata.setdefault("alert_kind", "governance.tripped")
+            metadata["alert_kind"] = "governance.tripped"
         reasoning_text = (
             reasoning if reasoning is not None else json.dumps(detail, default=str)
         )[:4000]
-        entities: list[dict[str, Any]] = []
-        primary_id = detail.get("primary_id")
-        duplicate_ids = detail.get("duplicate_ids")
-        if isinstance(primary_id, str) and primary_id.strip():
-            entities.append({"id": primary_id.strip(), "role": "primary"})
-        if isinstance(duplicate_ids, list):
-            for dup in duplicate_ids:
-                if isinstance(dup, str) and dup.strip():
-                    entities.append({"id": dup.strip(), "role": "duplicate"})
+        maker = actor_id.strip() if isinstance(actor_id, str) else None
+        if maker and len(maker) > 200:
+            maker = None
         decision_id = graph.record_decision(
             category=category,
             scenario=(message or "Governance gate blocked")[:500],
             reasoning=reasoning_text,
             outcome=outcome,
             confidence=1.0,
-            entities=entities,
-            decision_maker=actor_id,
+            entities=_decision_entity_ids(detail),
+            decision_maker=maker,
             metadata=metadata,
         )
         persist_graph(workspace_id)
         return str(decision_id)
     except Exception:
-        logger.debug("governance decision record skipped", exc_info=True)
+        logger.warning("governance decision record skipped", exc_info=True)
         return None
 
 

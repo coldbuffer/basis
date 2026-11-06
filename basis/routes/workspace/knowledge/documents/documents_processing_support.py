@@ -50,7 +50,7 @@ async def await_terminal_processing_job(
     deadline = asyncio.get_running_loop().time() + timeout_sec
     while asyncio.get_running_loop().time() < deadline:
         job = knowledge.get_job(workspace_id, job_id)
-        if job.status in {"succeeded", "failed", "cancelled"}:
+        if job.status in {"succeeded", "failed", "cancelled", "paused"}:
             return job
         await asyncio.sleep(0.25)
     raise AdminError(504, "job_timeout", "处理任务等待超时")
@@ -81,7 +81,7 @@ async def respond_idempotent_processing_job(
     if body.wait:
         terminal = (
             knowledge.get_job(workspace_id, job["id"])
-            if job["status"] in {"succeeded", "failed", "cancelled"}
+            if job["status"] in {"succeeded", "failed", "cancelled", "paused"}
             else await await_terminal_processing_job(
                 knowledge,
                 workspace_id,
@@ -97,6 +97,8 @@ async def respond_idempotent_processing_job(
             )
         if terminal.status == "cancelled":
             raise AdminError(409, "idempotency_replay_cancelled", "幂等键对应任务已取消")
+        if terminal.status == "paused":
+            return {**replay_meta, "status": "paused", "version_id": body.version_id}
         if terminal.result:
             return {
                 **terminal.result,

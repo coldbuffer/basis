@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from basis.services.graph.projection.session import GraphSession
+from basis.services.knowledge.services.graph_sync import is_governance_graph_node
 from basis.services.knowledge.store import KnowledgeStore
 from basis.services.ontology.hub.registry_scope import should_preserve_schema_node
 
@@ -130,6 +131,61 @@ def _copy_preserved_nodes(
             if isinstance(raw, dict):
                 props.update(raw)
         target.add_edge(edge.source_id, edge.target_id, edge.edge_type, **props)
+
+
+def _copy_props(raw: Any) -> dict[str, Any]:
+    props: dict[str, Any] = {}
+    if isinstance(raw, dict):
+        props.update(raw)
+    return props
+
+
+def _copy_governance_decisions(source: GraphSession | None, target: GraphSession) -> None:
+    """Keep review decisions across ledger rebuilds (they are not ledger rows)."""
+    if source is None:
+        return
+    kept: set[str] = set()
+    for node in source.graph.nodes.values():
+        if not is_governance_graph_node(node):
+            continue
+        props = _copy_props(getattr(node, "properties", None))
+        props.pop("content", None)
+        valid_from = props.pop("valid_from", None) or getattr(node, "valid_from", None)
+        valid_until = props.pop("valid_until", None) or getattr(node, "valid_until", None)
+        target.add_node(
+            node.node_id,
+            node.node_type,
+            content=getattr(node, "content", None),
+            **({"valid_from": valid_from} if valid_from else {}),
+            **({"valid_until": valid_until} if valid_until else {}),
+            **props,
+        )
+        kept.add(node.node_id)
+
+    edges = source.graph.edges
+    edge_values = edges.values() if isinstance(edges, dict) else edges
+    for edge in edge_values:
+        if edge.source_id not in kept and edge.target_id not in kept:
+            continue
+        if edge.source_id not in target.graph.nodes or edge.target_id not in target.graph.nodes:
+            continue
+        props = _copy_props(getattr(edge, "properties", None))
+        meta = _copy_props(getattr(edge, "metadata", None))
+        props.update(meta)
+        for reserved in ("valid_from", "valid_until", "weight", "id", "edge_id", "familyId", "family_id"):
+            props.pop(reserved, None)
+        valid_from = getattr(edge, "valid_from", None)
+        valid_until = getattr(edge, "valid_until", None)
+        weight = getattr(edge, "weight", None)
+        target.add_edge(
+            edge.source_id,
+            edge.target_id,
+            edge.edge_type,
+            **({"weight": weight} if weight is not None else {}),
+            **({"valid_from": valid_from} if valid_from else {}),
+            **({"valid_until": valid_until} if valid_until else {}),
+            **props,
+        )
 
 
 def _edge_signature(session: GraphSession) -> list[tuple[str, str, str]]:
@@ -412,6 +468,7 @@ def build_temporal_graph_from_ledger(
             edge_props["valid_until"] = invalidated_at
         session.add_edge(subject_id, target_id, edge_label, **edge_props)
 
+    _copy_governance_decisions(preserve_from, session)
     return session
 
 
@@ -613,6 +670,7 @@ def rebuild_graph_from_ledger(
                 edge_props["valid_from"] = recorded_at
             session.add_edge(subject_id, target_id, edge_label, **edge_props)
 
+        _copy_governance_decisions(preserve_from, session)
         knowledge.bump_projection_revision(workspace_id)
         return session
     except Exception:

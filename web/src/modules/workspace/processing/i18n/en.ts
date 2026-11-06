@@ -28,9 +28,10 @@ export default {
     options_relations_on: "Relation extraction enabled",
     options_embed_on: "Embeddings enabled",
     options_request_id: "Request id {id}",
+    checkpoint_progress: "{done}/{total} chunks",
   },
   page: {
-    subtitle: "Track job progress and retry failures here.",
+    subtitle: "Track progress, pause a job, and resume from the last finished chunk. Failed jobs can be retried.",
   },
   menu: {
     processing: "Jobs",

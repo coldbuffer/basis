@@ -16,6 +16,7 @@ from basis.services.knowledge.store import KnowledgeStore
 GRAPH_SYNC_DOC_ID = "__basis_graph_sync__"
 GRAPH_SYNC_PROPOSED_BY = "graph_sync"
 _SKIP_NODE_TYPES = frozenset({"document", "literal", "owl:Ontology", "projection_meta"})
+_GOVERNANCE_NODE_TYPES = frozenset({"decision", "decision_maker"})
 _LEDGER_EDGE_KEYS = ("statement_id", "typed_fact_id", "derived_fact_id")
 _LEDGER_LAYERS = frozenset({"ledger", "open", "typed", "derived"})
 
@@ -106,9 +107,20 @@ def _collapse_slug_entity_duplicate(
     )
 
 
+def is_governance_graph_node(node: Any) -> bool:
+    """Decision nodes live on the graph snapshot, not as ledger entities."""
+    node_type = str(getattr(node, "node_type", "") or "")
+    node_id = str(getattr(node, "node_id", "") or "")
+    if node_type in _GOVERNANCE_NODE_TYPES:
+        return True
+    return node_type == "category" and node_id.startswith("category_")
+
+
 def _skip_node(node: Any) -> bool:
     node_type = str(getattr(node, "node_type", "") or "")
     node_id = str(getattr(node, "node_id", "") or "")
+    if is_governance_graph_node(node):
+        return True
     if node_type in _SKIP_NODE_TYPES or ":" in node_type:
         return True
     return node_id.startswith(("literal:", "typed:", "derived:"))

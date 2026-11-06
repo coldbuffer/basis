@@ -43,6 +43,7 @@ export default {
       acted_on_behalf_of: "代表",
     },
     chain_empty_body: "该决策未找到因果链步骤。",
+    chain_load_failed: "暂时无法加载该决策的因果链。",
     causal_chain: "因果链",
     chain_step_count: "{count} 步",
     chain_step_count_one: "1 步",

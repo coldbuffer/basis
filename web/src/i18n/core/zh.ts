@@ -44,6 +44,8 @@ export default {
     idempotency_replay_cancelled: "相同请求对应的处理已取消。",
     idempotency_key_mismatch: "幂等键已用于其他文档版本。",
     job_not_retryable: "仅失败或已取消的任务可以重试。",
+    job_not_pausable: "仅排队或运行中的任务可以暂停。",
+    job_not_resumable: "仅已暂停的任务可以继续。",
     parse_failed: "文件解析失败，请检查格式或换一份文件。",
     bad_chunk_options: "分块参数无效：重叠必须小于块大小。",
     job_timeout: "处理任务等待超时。",

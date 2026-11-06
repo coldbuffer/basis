@@ -12,6 +12,13 @@ export type ProcessingJob = {
   error_detail?: { message?: string } | null;
   options: Record<string, unknown>;
   created_at: string;
+  progress?: number | null;
+  result?: {
+    checkpoint?: {
+      completed_chunk_ids?: string[];
+      chunk_count?: number;
+    };
+  } | null;
 };
 
 const PROCESSING_STATUSES = new Set([
@@ -39,6 +46,21 @@ export function processingJobStatusLabel(
 
 export function jobIsActive(status: string): boolean {
   return statusIsProcessing(status);
+}
+
+/** Queued, running, and paused jobs stay on the in-progress filter. */
+export function jobInActiveFilter(status: string): boolean {
+  return jobIsActive(status) || status === 'paused';
+}
+
+export function ingestCheckpoint(job: {
+  result?: ProcessingJob['result'];
+}): { done: number; total: number } | null {
+  const checkpoint = job.result?.checkpoint;
+  const ids = checkpoint?.completed_chunk_ids;
+  const total = checkpoint?.chunk_count;
+  if (!Array.isArray(ids) || typeof total !== 'number' || total <= 0) return null;
+  return { done: ids.length, total };
 }
 
 export function sortProcessingJobs(jobs: ProcessingJob[]): ProcessingJob[] {

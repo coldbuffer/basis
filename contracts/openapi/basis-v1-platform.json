@@ -5849,6 +5849,17 @@
         "type": "object",
         "title": "ResolveReviewRequest"
       },
+      "ResumeProcessingRequest": {
+        "properties": {
+          "wait": {
+            "type": "boolean",
+            "title": "Wait",
+            "default": false
+          }
+        },
+        "type": "object",
+        "title": "ResumeProcessingRequest"
+      },
       "RetryProcessingRequest": {
         "properties": {
           "wait": {

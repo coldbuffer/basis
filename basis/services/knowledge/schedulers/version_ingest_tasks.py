@@ -181,6 +181,20 @@ def _run_version_ingest_for_app(
                 ),
             )
             return None
+        if result.get("status") == "paused" or "ledger_status" not in result:
+            if result.get("status") == "paused":
+                logger.info(
+                    "version ingest paused workspace_id=%s version_id=%s job_id=%s",
+                    workspace_id,
+                    version_id,
+                    job_id,
+                    extra=correlation_log_extra(
+                        workspace_id=workspace_id,
+                        version_id=version_id,
+                        job_id=job_id,
+                    ),
+                )
+            return result
         ledger = knowledge.get_projection_state(workspace_id)
         logger.info(
             "version ingest completed workspace_id=%s version_id=%s job_id=%s projection_revision=%s",

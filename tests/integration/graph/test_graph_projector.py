@@ -197,6 +197,27 @@ def test_temporal_projection_lists_invalidated_statements(tmp_path: Path) -> Non
     store.close()
 
 
+def test_governance_decision_survives_rebuild(tmp_path: Path) -> None:
+    workspace_id, store = _workspace_store(tmp_path)
+    existing = GraphSession()
+    existing.add_node("entity-a", "entity", content="Alice")
+    decision_id = existing.graph.record_decision(
+        category="merge",
+        scenario="实体合并：保留 Alice",
+        reasoning="同一实体",
+        outcome="approved",
+        confidence=1.0,
+        entities=["entity-a"],
+        decision_maker="user-1",
+        metadata={"kind": "entity_merge", "review_item_id": "rev-1"},
+    )
+    rebuilt = rebuild_graph_from_ledger(store, workspace_id, preserve_from=existing)
+    assert decision_id in rebuilt.graph.nodes
+    assert rebuilt.graph.nodes[decision_id].node_type == "decision"
+    assert any(node.node_type == "category" for node in rebuilt.graph.nodes.values())
+    store.close()
+
+
 def test_ontology_node_preserved_on_rebuild(tmp_path: Path) -> None:
     workspace_id, store = _workspace_store(tmp_path)
     existing = GraphSession()

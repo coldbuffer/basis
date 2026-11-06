@@ -44,6 +44,10 @@ class RetryProcessingRequest(BaseModel):
     wait: bool = False
 
 
+class ResumeProcessingRequest(BaseModel):
+    wait: bool = False
+
+
 class CreateOntologyRequest(BaseModel):
     namespace: str = Field(min_length=1)
     name: str = Field(min_length=1)

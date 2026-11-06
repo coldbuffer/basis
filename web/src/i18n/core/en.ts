@@ -44,6 +44,8 @@ export default {
     idempotency_replay_cancelled: "The prior request for this idempotency key was cancelled.",
     idempotency_key_mismatch: "This idempotency key is tied to a different document version.",
     job_not_retryable: "Only failed or cancelled jobs can be retried.",
+    job_not_pausable: "Only queued or running jobs can be paused.",
+    job_not_resumable: "Only paused jobs can be resumed.",
     parse_failed: "Could not parse the file. Check the format or try another file.",
     bad_chunk_options: "Invalid chunk options: overlap must be smaller than chunk size.",
     job_timeout: "Timed out waiting for the processing job.",

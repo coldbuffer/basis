@@ -71,7 +71,12 @@ import {
   parseProcessingUrlState,
 } from '@/modules/workspace/processing/lib/processing-url-state.js';
 import { ProcessingOptionsSnapshot } from '@/components/app/shared/workspace/processing-options-snapshot.js';
-import { type ProcessingJob, jobIsActive, statusIsProcessing } from '@/modules/workspace/processing/lib/processing-job.js';
+import {
+  type ProcessingJob,
+  ingestCheckpoint,
+  jobIsActive,
+  statusIsProcessing,
+} from '@/modules/workspace/processing/lib/processing-job.js';
 import { parseSourcesUrlState } from '@/modules/workspace/library/lib/sources-url-state.js';
 import { formatByteSize } from '@/modules/workspace/library/lib/format-byte-size.js';
 import { DocumentTimelinePanel } from '../components/document-timeline-panel.js';
@@ -622,6 +627,34 @@ export function SourcesPage() {
     }
   }
 
+  async function pauseJob(job: ProcessingJob) {
+    setBusyVersionId(job.version_id);
+    try {
+      const body = await client.processing.pause(job.id);
+      toast.success(body.pause_requested ? k.toast_pause_requested : k.toast_paused, {
+        description: body.pause_requested ? k.pause_hint : undefined,
+      });
+      await refresh();
+    } catch (err) {
+      toast.error(apiErrorMessage(err));
+    } finally {
+      setBusyVersionId(null);
+    }
+  }
+
+  async function resumeJob(job: ProcessingJob) {
+    setBusyVersionId(job.version_id);
+    try {
+      await client.processing.resume(job.id);
+      toast.success(k.toast_resumed);
+      await refresh();
+    } catch (err) {
+      toast.error(apiErrorMessage(err));
+    } finally {
+      setBusyVersionId(null);
+    }
+  }
+
   async function confirmDeleteDocument() {
     if (!deleteTarget?.document_id) return;
     setDeletingDocument(true);
@@ -765,7 +798,10 @@ export function SourcesPage() {
               ? job.version_status
               : job?.status === 'queued'
                 ? 'queued'
-                : doc.version_status ?? job?.status;
+                : job?.status === 'paused'
+                  ? 'paused'
+                  : doc.version_status ?? job?.status;
+          const checkpoint = job ? ingestCheckpoint(job) : null;
           const statusBody = (
             <>
               {status === 'ready' ? (
@@ -776,6 +812,14 @@ export function SourcesPage() {
               <span className={status === 'failed' ? 'text-destructive' : undefined}>
                 {versionStatusLabel(status, k.version_status, emptyCell)}
               </span>
+              {checkpoint && (job?.status === 'paused' || job?.status === 'running') ? (
+                <span className="text-muted-foreground tabular-nums">
+                  {fmt(t.processing.jobs.checkpoint_progress, {
+                    done: formatLocaleNumber(locale as Locale, checkpoint.done),
+                    total: formatLocaleNumber(locale as Locale, checkpoint.total),
+                  })}
+                </span>
+              ) : null}
             </>
           );
           if (job && id) {
@@ -828,6 +872,8 @@ export function SourcesPage() {
           const busy = busyVersionId === doc.version_id;
           const canProcess =
             canEdit && doc.version_id && doc.version_status === 'uploaded';
+          const canPause = canEdit && (job?.status === 'queued' || job?.status === 'running');
+          const canResume = canEdit && job?.status === 'paused';
           const canRetry = canEdit && job?.status === 'failed';
           const canUpdate = canEdit && doc.document_id;
           const canDelete = canEdit && doc.document_id;
@@ -835,7 +881,7 @@ export function SourcesPage() {
           const canGraph =
             graphEnabled && docReadyForGraph(doc, rowJob);
 
-          if (!canProcess && !canRetry && !canUpdate && !canGraph && !canDelete) {
+          if (!canProcess && !canPause && !canResume && !canRetry && !canUpdate && !canGraph && !canDelete) {
             return <span className="text-muted-foreground">{emptyCell}</span>;
           }
 
@@ -851,6 +897,31 @@ export function SourcesPage() {
                   onClick={() => openConfig(doc.version_id!)}
                 >
                   {k.action_chunk_extract}
+                </Button>
+              ) : null}
+              {canPause && job ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className={actionClass}
+                  disabled={busy}
+                  data-testid={`sources-job-pause-${job.id}`}
+                  onClick={() => void pauseJob(job)}
+                >
+                  {k.action_pause}
+                </Button>
+              ) : null}
+              {canResume && job ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  className={actionClass}
+                  disabled={busy}
+                  data-testid={`sources-job-resume-${job.id}`}
+                  onClick={() => void resumeJob(job)}
+                >
+                  {k.action_resume}
                 </Button>
               ) : null}
               {canRetry ? (
@@ -908,6 +979,8 @@ export function SourcesPage() {
     busyVersionId,
     latestJobByVersion,
     openConfig,
+    pauseJob,
+    resumeJob,
     retry,
     openUpdate,
     graphEnabled,
@@ -917,6 +990,7 @@ export function SourcesPage() {
     openDocument,
     locale,
     emptyCell,
+    t,
   ]);
 
   const configDoc = documents.find((doc) => doc.version_id === configVersionId);

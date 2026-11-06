@@ -26,6 +26,7 @@ import { useWorkspaceCatalog } from '@/lib/workspace/context.js';
 import { useWorkspaceCapabilities } from '@/lib/workspace/capabilities.js';
 import {
   type ProcessingJob,
+  jobInActiveFilter,
   jobIsActive,
   sortProcessingJobs,
 } from '@/modules/workspace/processing/lib/processing-job.js';
@@ -94,6 +95,10 @@ export function ProcessingScreen({
     () => jobs.filter((job) => jobIsActive(job.status)).length,
     [jobs],
   );
+  const openJobCount = useMemo(
+    () => jobs.filter((job) => jobInActiveFilter(job.status)).length,
+    [jobs],
+  );
   const failedJobCount = useMemo(
     () => jobs.filter((job) => job.status === 'failed').length,
     [jobs],
@@ -140,6 +145,34 @@ export function ProcessingScreen({
       }
     }
   }, [graphEnabled, jobs, k.toast_processing_complete]);
+
+  async function pause(job: ProcessingJob) {
+    setBusyVersionId(job.version_id);
+    try {
+      const body = await client.processing.pause(job.id);
+      toast.success(body.pause_requested ? k.toast_pause_requested : k.toast_paused, {
+        description: body.pause_requested ? k.pause_hint : undefined,
+      });
+      await refresh(true);
+    } catch (err) {
+      toast.error(apiErrorMessage(err));
+    } finally {
+      setBusyVersionId(null);
+    }
+  }
+
+  async function resume(job: ProcessingJob) {
+    setBusyVersionId(job.version_id);
+    try {
+      await client.processing.resume(job.id);
+      toast.success(k.toast_resumed);
+      await refresh(true);
+    } catch (err) {
+      toast.error(apiErrorMessage(err));
+    } finally {
+      setBusyVersionId(null);
+    }
+  }
 
   async function retry(job: ProcessingJob) {
     setBusyVersionId(job.version_id);
@@ -287,9 +320,9 @@ export function ProcessingScreen({
                     </TabsTrigger>
                     <TabsTrigger value="active" className="px-3 text-xs">
                       {p.filter_active}
-                      {activeJobCount > 0 ? (
+                      {openJobCount > 0 ? (
                         <span className="ml-1 tabular-nums text-muted-foreground">
-                          ({formatLocaleNumber(locale as Locale, activeJobCount)})
+                          ({formatLocaleNumber(locale as Locale, openJobCount)})
                         </span>
                       ) : null}
                     </TabsTrigger>
@@ -335,6 +368,8 @@ export function ProcessingScreen({
                 search={search}
                 filter={filter}
                 onRetry={(job) => void retry(job)}
+                onPause={(job) => void pause(job)}
+                onResume={(job) => void resume(job)}
                 onCopyLink={(jobId) => void copyJobDeepLink(jobId)}
               />
             )}

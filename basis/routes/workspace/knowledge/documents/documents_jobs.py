@@ -28,9 +28,11 @@ from basis.services.knowledge.pipeline.extract_timeout import ExtractionTimeoutE
 from basis.services.knowledge.pipeline.version_ingest import ExtractTextTooLargeError, TooManyChunksError
 from basis.infra.observability.request_context import current_request_id
 from basis.routes.workspace.knowledge.documents.documents_models import (
+    ResumeProcessingRequest,
     RetryProcessingRequest,
     StartProcessingRequest,
 )
+from basis.services.knowledge.pipeline.ingest_control import clear_ingest_pause, pause_ingest_job
 from basis.services.tenancy.catalog.remote_models import fetch_remote_models
 from basis.routes.workspace.knowledge.documents.documents_processing_support import (
     processing_options,
@@ -38,6 +40,65 @@ from basis.routes.workspace.knowledge.documents.documents_processing_support imp
 )
 
 router = APIRouter(tags=["workspaces"])
+
+_RESUME_OPTION_FIELDS = {
+    name
+    for name in StartProcessingRequest.model_fields
+    if name not in {"version_id", "wait", "idempotency_key"}
+}
+
+
+def _start_request_from_job(previous: Any, *, wait: bool) -> StartProcessingRequest:
+    stored = previous.options or {}
+    kwargs = {
+        key: stored[key]
+        for key in _RESUME_OPTION_FIELDS
+        if key in stored and stored[key] is not None
+    }
+    return StartProcessingRequest(version_id=previous.subject_id, wait=wait, **kwargs)
+
+
+async def _execute_ingest(
+    request: Request,
+    workspace_id: str,
+    version_id: str,
+    job_id: str,
+    context: dict[str, Any],
+    options: Any,
+    *,
+    wait: bool,
+    trigger_request_id: str | None,
+) -> Any:
+    session = graph_for(request, workspace_id) if wait else None
+
+    def _run() -> Any:
+        return respond_ingest(
+            request.app,
+            workspace_id,
+            version_id,
+            job_id,
+            context["document_id"],
+            wait=wait,
+            filename=context["filename"],
+            graph_doc_id=context["doc_id"],
+            options=options,
+            graph_session=session,
+            trigger_request_id=trigger_request_id,
+        )
+
+    try:
+        result = await asyncio.to_thread(_run)
+    except FileParseError as exc:
+        raise AdminError(422, "parse_failed", exc.message) from exc
+    except ExtractTextTooLargeError as exc:
+        raise AdminError(413, "extract_text_too_large", exc.message) from exc
+    except TooManyChunksError as exc:
+        raise AdminError(413, "too_many_chunks", exc.message) from exc
+    except ExtractionTimeoutError as exc:
+        raise AdminError(504, "extract_timeout", exc.message) from exc
+    if wait and not (isinstance(result, dict) and result.get("status") == "paused"):
+        save_graph(request, workspace_id)
+    return result
 
 
 @router.get("/{workspace_id}/processing/llm-providers")
@@ -149,36 +210,16 @@ Start Processing Job. Document processing jobs (extract, chunk, project). Requir
             context,
             timeout_sec=job_timeout,
         )
-    session = graph_for(request, workspace_id) if body.wait else None
-
-    def _run() -> Any:
-        return respond_ingest(
-            request.app,
-            workspace_id,
-            body.version_id,
-            job["id"],
-            context["document_id"],
-            wait=body.wait,
-            filename=context["filename"],
-            graph_doc_id=context["doc_id"],
-            options=options,
-            graph_session=session,
-            trigger_request_id=trigger_rid,
-        )
-
-    try:
-        result = await asyncio.to_thread(_run)
-    except FileParseError as exc:
-        raise AdminError(422, "parse_failed", exc.message) from exc
-    except ExtractTextTooLargeError as exc:
-        raise AdminError(413, "extract_text_too_large", exc.message) from exc
-    except TooManyChunksError as exc:
-        raise AdminError(413, "too_many_chunks", exc.message) from exc
-    except ExtractionTimeoutError as exc:
-        raise AdminError(504, "extract_timeout", exc.message) from exc
-    if body.wait:
-        save_graph(request, workspace_id)
-    return result
+    return await _execute_ingest(
+        request,
+        workspace_id,
+        body.version_id,
+        job["id"],
+        context,
+        options,
+        wait=body.wait,
+        trigger_request_id=trigger_rid,
+    )
 
 
 @router.get("/{workspace_id}/processing/jobs/{job_id}")
@@ -214,6 +255,67 @@ Get Processing Job. Document processing jobs (extract, chunk, project). Requires
             "finished_at": job.finished_at,
         }
     }
+
+
+@router.post("/{workspace_id}/processing/jobs/{job_id}/pause")
+async def pause_processing_job(
+    workspace_id: str,
+    job_id: str,
+    request: Request,
+    user: User = Depends(get_current_user),
+    store: AdminStore = Depends(get_store),
+    knowledge: KnowledgeStore = Depends(get_knowledge_store),
+) -> dict[str, Any]:
+    """
+Pause Processing Job. Stop a queued ingest immediately, or a running ingest after the current chunk. Requires workspace membership (session) or workspace API token with read/write scope. All paths are scoped to `{workspace_id}`.
+    """
+    get_workspace_for_editor(request, user, workspace_id, store)
+    return pause_ingest_job(knowledge, workspace_id, job_id)
+
+
+@router.post("/{workspace_id}/processing/jobs/{job_id}/resume", response_model=None)
+async def resume_processing_job(
+    workspace_id: str,
+    job_id: str,
+    body: ResumeProcessingRequest,
+    request: Request,
+    user: User = Depends(get_current_user),
+    store: AdminStore = Depends(get_store),
+    knowledge: KnowledgeStore = Depends(get_knowledge_store),
+) -> Any:
+    """
+Resume Processing Job. Continue a paused ingest from the last finished chunk. Requires workspace membership (session) or workspace API token with read/write scope. All paths are scoped to `{workspace_id}`.
+    """
+    get_workspace_for_editor(request, user, workspace_id, store)
+    previous = knowledge.get_job(workspace_id, job_id)
+    if (
+        previous.kind != "ingest"
+        or previous.subject_type != "document_version"
+        or previous.status != "paused"
+    ):
+        raise AdminError(409, "job_not_resumable", "仅已暂停的任务可继续")
+    context = knowledge.get_processing_context(workspace_id, previous.subject_id)
+    request_body = _start_request_from_job(previous, wait=body.wait)
+    options, _payload = processing_options(request_body, store, filename=context["filename"])
+    clear_ingest_pause(previous.id)
+    if not knowledge.try_transition_job_status(
+        workspace_id,
+        previous.id,
+        "queued",
+        expect={"paused"},
+    ):
+        raise AdminError(409, "job_not_resumable", "仅已暂停的任务可继续")
+    knowledge.set_version_status(workspace_id, previous.subject_id, "queued")
+    return await _execute_ingest(
+        request,
+        workspace_id,
+        previous.subject_id,
+        previous.id,
+        context,
+        options,
+        wait=body.wait,
+        trigger_request_id=current_request_id(),
+    )
 
 
 @router.post("/{workspace_id}/processing/jobs/{job_id}/retry", response_model=None)
@@ -260,7 +362,7 @@ async def list_ingest_jobs(
 ) -> dict[str, Any]:
     """F-SRC-08: document ingest jobs (alias of ``GET .../processing/jobs``)."""
     get_workspace_for_viewer(request, user, workspace_id, store)
-    if status and status not in {"queued", "running", "succeeded", "failed", "cancelled"}:
+    if status and status not in {"queued", "running", "succeeded", "failed", "cancelled", "paused"}:
         raise AdminError(422, "bad_status", "任务状态无效")
     return {
         "jobs": knowledge.list_processing_jobs(

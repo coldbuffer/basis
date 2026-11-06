@@ -63,6 +63,41 @@ def test_sync_graph_to_ledger_keeps_imported_edge_across_rebuild(tmp_path: Path)
     assert third == {"entities_created": 0, "statements_created": 0}
 
 
+def test_sync_skips_governance_decision_nodes(tmp_path: Path) -> None:
+    client = TestClient(create_app(Settings(data_dir=tmp_path)))
+    admin = client.post(
+        "/api/v1/auth/register",
+        json={"email": "dec-sync@example.com", "password": "password1", "display_name": "Dec"},
+    ).json()
+    headers = {"Authorization": f"Bearer {admin['token']}"}
+    workspace_id = client.get("/api/v1/workspaces", headers=headers).json()["workspaces"][0]["id"]
+    knowledge: KnowledgeStore = client.app.state.knowledge_store
+
+    session = GraphSession()
+    session.graph.record_decision(
+        category="governance",
+        scenario="Review approve: graph_import",
+        reasoning="ok",
+        outcome="approved",
+        confidence=1.0,
+        entities=[],
+        decision_maker="user-1",
+        metadata={"item_id": "item-1", "kind": "graph_import"},
+    )
+    synced = sync_graph_to_ledger(knowledge, workspace_id, session)
+    assert synced == {"entities_created": 0, "statements_created": 0}
+    labels = {
+        row["canonical_label"]
+        for row in client.get(
+            f"/api/v1/workspaces/{workspace_id}/ledger/entities?limit=20",
+            headers=headers,
+        ).json()["entities"]
+    }
+    assert "Review approve: graph_import" not in labels
+    assert "category_governance" not in labels
+    assert not any(str(label).startswith("maker_") for label in labels)
+
+
 def test_sync_graph_mcp_slug_id_uses_display_label_once(tmp_path: Path) -> None:
     """MCP add_entity uses slug id + display content; ledger must not duplicate both."""
     client = TestClient(create_app(Settings(data_dir=tmp_path)))

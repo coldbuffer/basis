@@ -142,7 +142,7 @@ def op_reset_workspace(ctx: WorkspaceCoreContext, args: dict[str, Any]) -> dict[
 
 def op_list_processing_jobs(ctx: WorkspaceCoreContext, args: dict[str, Any]) -> dict[str, Any]:
     status = str(args.get("status") or "").strip() or None
-    if status and status not in {"queued", "running", "succeeded", "failed", "cancelled"}:
+    if status and status not in {"queued", "running", "succeeded", "failed", "cancelled", "paused"}:
         return {"error": "invalid status"}
     limit = min(max(1, int(args.get("limit", 100))), 200)
     jobs = ctx.knowledge.list_processing_jobs(ctx.workspace.id, status=status, limit=limit)

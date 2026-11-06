@@ -209,6 +209,70 @@ def update_job_result(conn: Any, workspace_id: str, job_id: str, result_json: st
     )
 
 
+def update_job_checkpoint(
+    conn: Any,
+    workspace_id: str,
+    job_id: str,
+    result_json: str,
+    progress: float,
+) -> int:
+    """Store resume progress without forcing the job to complete."""
+    cursor = conn.execute(
+        """
+        UPDATE jobs
+        SET result_json = ?, progress = ?
+        WHERE id = ? AND workspace_id = ?
+          AND status IN ('queued', 'running', 'paused')
+        """,
+        (result_json, progress, job_id, workspace_id),
+    )
+    return int(cursor.rowcount or 0)
+
+
+def list_live_ingest_job_keys(conn: Any) -> list[Any]:
+    return conn.execute(
+        """
+        SELECT workspace_id, id, subject_id
+        FROM jobs
+        WHERE kind = 'ingest' AND subject_type = 'document_version'
+          AND status IN ('queued', 'running')
+        """
+    ).fetchall()
+
+
+def transition_job_status(
+    conn: Any,
+    workspace_id: str,
+    job_id: str,
+    status: str,
+    *,
+    expect: tuple[str, ...],
+    started_at: str | None,
+) -> int:
+    if not expect:
+        return 0
+    placeholders = ", ".join("?" for _ in expect)
+    if started_at:
+        cursor = conn.execute(
+            f"""
+            UPDATE jobs
+            SET status = ?, started_at = COALESCE(started_at, ?)
+            WHERE id = ? AND workspace_id = ? AND status IN ({placeholders})
+            """,
+            (status, started_at, job_id, workspace_id, *expect),
+        )
+    else:
+        cursor = conn.execute(
+            f"""
+            UPDATE jobs
+            SET status = ?
+            WHERE id = ? AND workspace_id = ? AND status IN ({placeholders})
+            """,
+            (status, job_id, workspace_id, *expect),
+        )
+    return int(cursor.rowcount or 0)
+
+
 def update_job_status(
     conn: Any,
     workspace_id: str,

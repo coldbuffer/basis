@@ -91,3 +91,24 @@ def test_approve_graph_import_deletes_staged_blob(tmp_path) -> None:
         assert False, "staged blob should be removed after approve"
     except Exception:
         pass
+
+    decision_id = approved.json()["decision_id"]
+    assert isinstance(decision_id, str) and decision_id
+    chain = client.get(
+        f"/api/v1/workspaces/{workspace_id}/decisions/{decision_id}/chain",
+        headers=headers,
+    )
+    assert chain.status_code == 200
+    assert chain.json()["decision_id"] == decision_id
+    listed = client.get(f"/api/v1/workspaces/{workspace_id}/decisions", headers=headers)
+    assert listed.status_code == 200
+    assert any(row["decision_id"] == decision_id for row in listed.json())
+    labels = {
+        row["canonical_label"]
+        for row in client.get(
+            f"/api/v1/workspaces/{workspace_id}/ledger/entities?limit=20",
+            headers=headers,
+        ).json()["entities"]
+    }
+    assert "Review approve: graph_import" not in labels
+    assert "category_governance" not in labels

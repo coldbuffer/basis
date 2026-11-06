@@ -6,7 +6,7 @@ import {
   decisionChainStepTypeLabel,
 } from '@/modules/workspace/decisions/i18n/screen-copy.js';
 import { useI18n } from '@/i18n/context.js';
-import { workspaceOpenApiGET } from '@/lib/openapi/client.js';
+import { workspaceOpenApiResponse } from '@/lib/openapi/client.js';
 import { reviewDecisionPath } from '@/modules/workspace/review/lib/review-url-state.js';
 
 type ChainStep = {
@@ -40,22 +40,36 @@ export function ReviewDecisionNarrative({
   const [chain, setChain] = useState<ChainStep[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [partial, setPartial] = useState(false);
 
   useEffect(() => {
     const ctrl = new AbortController();
     setLoading(true);
     setError(false);
-    workspaceOpenApiGET<ChainResponse>(workspaceId, `decisions/${encodeURIComponent(decisionId)}/chain`)
-      .then((body) => {
+    setPartial(false);
+    void (async () => {
+      try {
+        const response = await workspaceOpenApiResponse(
+          'GET',
+          workspaceId,
+          `decisions/${encodeURIComponent(decisionId)}/chain`,
+          { signal: ctrl.signal },
+        );
+        const body = (await response.json().catch(() => ({}))) as ChainResponse & { message?: string };
         if (ctrl.signal.aborted) return;
+        if (response.status === 207) setPartial(true);
+        if (!response.ok) {
+          setError(true);
+          return;
+        }
         setChain(Array.isArray(body.chain) ? body.chain : []);
-      })
-      .catch(() => {
-        if (!ctrl.signal.aborted) setError(true);
-      })
-      .finally(() => {
+      } catch (err) {
+        if (ctrl.signal.aborted || (err instanceof Error && err.name === 'AbortError')) return;
+        setError(true);
+      } finally {
         if (!ctrl.signal.aborted) setLoading(false);
-      });
+      }
+    })();
     return () => ctrl.abort();
   }, [workspaceId, decisionId]);
 
@@ -93,7 +107,7 @@ export function ReviewDecisionNarrative({
           {t.core.common.loading}
         </p>
       ) : error ? (
-        <p className="mt-2 text-[11px] text-destructive">{dec.partial_load_chain}</p>
+        <p className="mt-2 text-[11px] leading-snug text-muted-foreground">{dec.chain_load_failed}</p>
       ) : visible.length === 0 ? (
         <p className="mt-2 text-[11px] leading-snug text-muted-foreground">{dec.chain_empty_body}</p>
       ) : (
@@ -115,6 +129,9 @@ export function ReviewDecisionNarrative({
           ))}
         </ol>
       )}
+      {partial ? (
+        <p className="mt-2 text-[11px] text-destructive">{dec.partial_load_chain}</p>
+      ) : null}
       {truncated ? (
         <p className="mt-2 text-[10px] text-muted-foreground">{r.decision_narrative_truncated}</p>
       ) : null}

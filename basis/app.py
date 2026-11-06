@@ -44,10 +44,19 @@ from basis.infra.observability.logging_setup import configure_basis_logging
 
 @asynccontextmanager
 async def _app_lifespan(app: FastAPI):
+    import logging
+
     from basis.infra.observability.process_ready import emit_process_ready
+    from basis.services.knowledge.pipeline.ingest_control import pause_orphaned_ingest_jobs
 
     settings = app.state.settings
     emit_process_ready(settings)
+    orphans = pause_orphaned_ingest_jobs(app.state.knowledge_store)
+    if orphans:
+        logging.getLogger(__name__).info(
+            "paused %s ingest jobs left running by the previous process",
+            orphans,
+        )
     tasks: list[asyncio.Task[None]] = []
     if graph_runtime_available():
         interval = max(30, app.state.settings.graph_session_evict_interval_seconds)

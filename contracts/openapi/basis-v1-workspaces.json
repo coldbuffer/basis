@@ -9481,6 +9481,158 @@
         "x-basis-auth": "session-or-workspace-api-token"
       }
     },
+    "/api/v1/workspaces/{workspace_id}/processing/jobs/{job_id}/pause": {
+      "post": {
+        "tags": [
+          "workspaces",
+          "workspaces"
+        ],
+        "summary": "Pause Processing Job",
+        "description": "Pause Processing Job. Stop a queued ingest immediately, or a running ingest after the current chunk. Requires workspace membership (session) or workspace API token with read/write scope. All paths are scoped to `{workspace_id}`.",
+        "operationId": "pause_processing_job_api_v1_workspaces__workspace_id__processing_jobs__job_id__pause_post",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Workspace Id"
+            }
+          },
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Pause Processing Job Api V1 Workspaces  Workspace Id  Processing Jobs  Job Id  Pause Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-basis-surface": "workspaces",
+        "x-basis-auth": "session-or-workspace-api-token"
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/processing/jobs/{job_id}/resume": {
+      "post": {
+        "tags": [
+          "workspaces",
+          "workspaces"
+        ],
+        "summary": "Resume Processing Job",
+        "description": "Resume Processing Job. Continue a paused ingest from the last finished chunk. Requires workspace membership (session) or workspace API token with read/write scope. All paths are scoped to `{workspace_id}`.",
+        "operationId": "resume_processing_job_api_v1_workspaces__workspace_id__processing_jobs__job_id__resume_post",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Workspace Id"
+            }
+          },
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResumeProcessingRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "x-basis-surface": "workspaces",
+        "x-basis-auth": "session-or-workspace-api-token"
+      }
+    },
     "/api/v1/workspaces/{workspace_id}/processing/jobs/{job_id}/retry": {
       "post": {
         "tags": [
@@ -15677,6 +15829,17 @@
         },
         "type": "object",
         "title": "ResolveReviewRequest"
+      },
+      "ResumeProcessingRequest": {
+        "properties": {
+          "wait": {
+            "type": "boolean",
+            "title": "Wait",
+            "default": false
+          }
+        },
+        "type": "object",
+        "title": "ResumeProcessingRequest"
       },
       "RetryProcessingRequest": {
         "properties": {

@@ -43,6 +43,7 @@ export default {
       acted_on_behalf_of: "acted on behalf of",
     },
     chain_empty_body: "No causal chain steps were found for this decision.",
+    chain_load_failed: "The decision chain could not be loaded.",
     causal_chain: "Causal chain",
     chain_step_count: "{count} steps",
     chain_step_count_one: "1 step",

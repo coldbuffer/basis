@@ -186,6 +186,22 @@ export class WorkspaceWsClient {
           body: JSON.stringify({ wait: false }),
         },
       ),
+    pause: (jobId: string) =>
+      this.request<{ job_id: string; status: string; pause_requested: boolean }>(
+        `processing/jobs/${encodeURIComponent(jobId)}/pause`,
+        {
+          method: 'POST',
+          body: JSON.stringify({}),
+        },
+      ),
+    resume: (jobId: string) =>
+      this.request<{ job_id?: string; accepted?: boolean; status?: string }>(
+        `processing/jobs/${encodeURIComponent(jobId)}/resume`,
+        {
+          method: 'POST',
+          body: JSON.stringify({ wait: false }),
+        },
+      ),
   };
 
   ingest = {

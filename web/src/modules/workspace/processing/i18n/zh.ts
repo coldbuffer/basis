@@ -28,9 +28,10 @@ export default {
     options_relations_on: "已启用关系抽取",
     options_embed_on: "已启用嵌入",
     options_request_id: "请求 ID {id}",
+    checkpoint_progress: "已完成 {done}/{total} 块",
   },
   page: {
-    subtitle: "查看处理进度；失败任务可在此重试。",
+    subtitle: "查看处理进度。进行中的任务可暂停，并从上次完成的片段继续；失败任务可重试。",
   },
   menu: {
     processing: "处理任务",

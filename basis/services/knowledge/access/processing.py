@@ -217,6 +217,7 @@ class ProcessingJobsAccess:
             "ready",
             "failed",
             "stale",
+            "paused",
         }
         if status not in allowed:
             raise AdminError(422, "bad_status", "版本状态无效")
@@ -228,8 +229,64 @@ class ProcessingJobsAccess:
             )
             self._store._conn.commit()
 
+    def set_job_checkpoint(
+        self,
+        workspace_id: str,
+        job_id: str,
+        checkpoint: dict[str, Any],
+        progress: float,
+    ) -> None:
+        with self._store._lock:
+            conn = self._store._conn
+            if not job_persist.job_exists(conn, workspace_id, job_id):
+                raise AdminError(404, "not_found", "任务不存在")
+            current = job_persist.fetch_job_row(conn, workspace_id, job_id)
+            result = dict(current.result or {})
+            result["checkpoint"] = checkpoint
+            job_persist.update_job_checkpoint(
+                conn,
+                workspace_id,
+                job_id,
+                json.dumps(result, ensure_ascii=False, default=str),
+                max(0.0, min(1.0, float(progress))),
+            )
+            conn.commit()
+
+    def try_transition_job_status(
+        self,
+        workspace_id: str,
+        job_id: str,
+        status: str,
+        *,
+        expect: set[str],
+    ) -> bool:
+        if status not in {"queued", "running", "succeeded", "failed", "cancelled", "paused"}:
+            raise AdminError(422, "bad_status", "任务状态无效")
+        if not expect:
+            return False
+        with self._store._lock:
+            conn = self._store._conn
+            if not job_persist.job_exists(conn, workspace_id, job_id):
+                raise AdminError(404, "not_found", "任务不存在")
+            started = _now() if status == "running" else None
+            changed = job_persist.transition_job_status(
+                conn,
+                workspace_id,
+                job_id,
+                status,
+                expect=tuple(sorted(expect)),
+                started_at=started,
+            )
+            conn.commit()
+            return changed == 1
+
+    def list_live_ingest_jobs(self) -> list[tuple[str, str, str]]:
+        with self._store._lock:
+            rows = job_persist.list_live_ingest_job_keys(self._store._conn)
+        return [(row["workspace_id"], row["id"], row["subject_id"]) for row in rows]
+
     def set_job_status(self, workspace_id: str, job_id: str, status: str) -> None:
-        if status not in {"queued", "running", "succeeded", "failed", "cancelled"}:
+        if status not in {"queued", "running", "succeeded", "failed", "cancelled", "paused"}:
             raise AdminError(422, "bad_status", "任务状态无效")
         with self._store._lock:
             conn = self._store._conn
