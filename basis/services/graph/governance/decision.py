@@ -104,6 +104,21 @@ def _decision_metadata(detail: dict[str, Any]) -> dict[str, str]:
     return metadata
 
 
+def _link_decision_to_existing_entities(graph: Any, decision_id: str, entity_ids: list[str]) -> None:
+    """Attach ABOUT edges without creating or replacing entity nodes.
+
+    ``ContextGraph.record_decision`` inserts every entity id with ``add_node``,
+    which overwrites an existing node and puts a merged entity back on the graph.
+    """
+    nodes = getattr(graph, "nodes", None)
+    if not isinstance(nodes, dict) or not entity_ids or not hasattr(graph, "add_edge"):
+        return
+    for entity_id in entity_ids:
+        if entity_id not in nodes:
+            continue
+        graph.add_edge(decision_id, entity_id, "ABOUT")
+
+
 def _decision_entity_ids(detail: dict[str, Any]) -> list[str]:
     """Entity ids as strings. ContextGraph rejects ``{id, role}`` dicts."""
     raw_ids: list[str] = []
@@ -155,16 +170,18 @@ def _try_record_governance_decision(
         maker = actor_id.strip() if isinstance(actor_id, str) else None
         if maker and len(maker) > 200:
             maker = None
+        entity_ids = _decision_entity_ids(detail)
         decision_id = graph.record_decision(
             category=category,
             scenario=(message or "Governance gate blocked")[:500],
             reasoning=reasoning_text,
             outcome=outcome,
             confidence=1.0,
-            entities=_decision_entity_ids(detail),
+            entities=[],
             decision_maker=maker,
             metadata=metadata,
         )
+        _link_decision_to_existing_entities(graph, str(decision_id), entity_ids)
         persist_graph(workspace_id)
         return str(decision_id)
     except Exception:

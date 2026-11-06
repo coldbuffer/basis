@@ -813,6 +813,18 @@
     {
       "file": "web/src/lib/openapi/schema-workspaces.d.ts",
       "kind": "dynamic",
+      "path": "/api/v1/workspaces/{workspace_id}/processing/jobs/{job_id}/pause",
+      "operationId": "pause_processing_job_api_v1_workspaces__workspace_id__processing_jobs__job_id__pause_post"
+    },
+    {
+      "file": "web/src/lib/openapi/schema-workspaces.d.ts",
+      "kind": "dynamic",
+      "path": "/api/v1/workspaces/{workspace_id}/processing/jobs/{job_id}/resume",
+      "operationId": "resume_processing_job_api_v1_workspaces__workspace_id__processing_jobs__job_id__resume_post"
+    },
+    {
+      "file": "web/src/lib/openapi/schema-workspaces.d.ts",
+      "kind": "dynamic",
       "path": "/api/v1/workspaces/{workspace_id}/processing/jobs/{job_id}/retry",
       "operationId": "retry_processing_job_api_v1_workspaces__workspace_id__processing_jobs__job_id__retry_post"
     },
@@ -1955,6 +1967,18 @@
       "kind": "dynamic",
       "path": "/api/v1/workspaces/{workspace_id}/processing/jobs/{job_id}",
       "operationId": "get_processing_job_api_v1_workspaces__workspace_id__processing_jobs__job_id__get"
+    },
+    {
+      "file": "web/src/lib/openapi/schema.d.ts",
+      "kind": "dynamic",
+      "path": "/api/v1/workspaces/{workspace_id}/processing/jobs/{job_id}/pause",
+      "operationId": "pause_processing_job_api_v1_workspaces__workspace_id__processing_jobs__job_id__pause_post"
+    },
+    {
+      "file": "web/src/lib/openapi/schema.d.ts",
+      "kind": "dynamic",
+      "path": "/api/v1/workspaces/{workspace_id}/processing/jobs/{job_id}/resume",
+      "operationId": "resume_processing_job_api_v1_workspaces__workspace_id__processing_jobs__job_id__resume_post"
     },
     {
       "file": "web/src/lib/openapi/schema.d.ts",

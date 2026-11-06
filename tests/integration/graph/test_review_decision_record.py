@@ -43,6 +43,8 @@ def test_build_entity_merge_decision_uses_labels(tmp_path: Path) -> None:
 
 def test_record_merge_decision_links_entity_ids() -> None:
     session = GraphSession()
+    session.graph.add_node("entity-a", "entity", content="Alice")
+    session.graph.add_node("entity-b", "entity", content="Bob")
     runtime = GraphRuntime(
         workspace_id="ws",
         projection_revision=0,
@@ -57,7 +59,7 @@ def test_record_merge_decision_links_entity_ids() -> None:
             "kind": "entity_merge",
             "review_item_id": "rev-1",
             "primary_id": "entity-a",
-            "duplicate_ids": ["entity-b"],
+            "duplicate_ids": ["entity-b", "entity-gone"],
             "duplicate_labels": {"entity-b": "Bob"},
         },
         actor_id="user-1",
@@ -72,3 +74,7 @@ def test_record_merge_decision_links_entity_ids() -> None:
     neighbor_ids = {row["id"] for row in session.graph.get_neighbors(decision_id, hops=1)}
     assert "entity-a" in neighbor_ids
     assert "entity-b" in neighbor_ids
+    assert "entity-gone" not in session.graph.nodes
+    kept = session.graph.nodes["entity-a"]
+    assert kept.node_type == "entity"
+    assert kept.content == "Alice"
